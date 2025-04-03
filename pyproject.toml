@@ -9,13 +9,14 @@ authors = [
     { name = "AgenticFleet Team" }
 ]
 dependencies = [
-    "semantic-kernel[openai]>=1.2.1",  # Core SK with OpenAI support only
+    "semantic-kernel[openai]>=1.2.1", # Core SK with OpenAI support only
     "chainlit==2.4.400",
     "python-dotenv>=1.0.0",
-    "pydantic>=2.0.0",  # Core Pydantic only
-    "requests>=2.31.0",  # For web requests
-    "beautifulsoup4>=4.12.0",  # For web scraping
-    "python-magic>=0.4.27",  # For file type detection
+    "pydantic>=2.0.0", # Core Pydantic only
+    "requests>=2.31.0", # For web requests
+    "beautifulsoup4>=4.12.0", # For web scraping
+    "python-magic>=0.4.27", # For file type detection
+    "playwright>=1.51.0",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +32,13 @@ dev = [
     "isort>=5.13.0",
     "mypy>=1.8.0",
     "ruff>=0.2.0"
+]
+azure = [
+    "azure-ai-inference >= 1.0.0b6",
+    "azure-ai-projects >= 1.0.0b7",
+    "azure-core-tracing-opentelemetry >= 1.0.0b11",
+    "azure-search-documents >= 11.6.0b4",
+    "azure-cosmos ~= 4.7"
 ]
 
 [build-system]
