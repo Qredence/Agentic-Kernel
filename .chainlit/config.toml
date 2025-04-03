@@ -11,6 +11,13 @@ chat_settings = true
 chat_profiles = true
 streaming_enabled = true
 
+[features.mcp.sse]
+enabled = true
+
+[features.mcp.stdio]
+enabled = true
+allowed_executables = ["npx", "uvx"]
+
 [UI]
 name = "AgenticFleet"
 description = "Enhanced AutoGen Framework with Custom Agents"

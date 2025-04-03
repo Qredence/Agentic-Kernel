@@ -23,6 +23,13 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+azure = [
+    { name = "azure-ai-inference" },
+    { name = "azure-ai-projects" },
+    { name = "azure-core-tracing-opentelemetry" },
+    { name = "azure-cosmos" },
+    { name = "azure-search-documents" },
+]
 dev = [
     { name = "black" },
     { name = "isort" },
@@ -39,6 +46,11 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "azure-ai-inference", marker = "extra == 'azure'", specifier = ">=1.0.0b6" },
+    { name = "azure-ai-projects", marker = "extra == 'azure'", specifier = ">=1.0.0b7" },
+    { name = "azure-core-tracing-opentelemetry", marker = "extra == 'azure'", specifier = ">=1.0.0b11" },
+    { name = "azure-cosmos", marker = "extra == 'azure'", specifier = "~=4.7" },
+    { name = "azure-search-documents", marker = "extra == 'azure'", specifier = ">=11.6.0b4" },
     { name = "beautifulsoup4", specifier = ">=4.12.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.0.0" },
     { name = "chainlit", specifier = "==2.4.400" },
@@ -57,7 +69,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.2.0" },
     { name = "semantic-kernel", extras = ["openai"], specifier = ">=1.2.1" },
 ]
-provides-extras = ["test", "dev"]
+provides-extras = ["test", "dev", "azure"]
 
 [[package]]
 name = "aiofiles"
@@ -320,6 +332,43 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-ai-inference"
+version = "1.0.0b9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4e/6a/ed85592e5c64e08c291992f58b1a94dab6869f28fb0f40fd753dced73ba6/azure_ai_inference-1.0.0b9.tar.gz", hash = "sha256:1feb496bd84b01ee2691befc04358fa25d7c344d8288e99364438859ad7cd5a4", size = 182408 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4f/0f/27520da74769db6e58327d96c98e7b9a07ce686dff582c9a5ec60b03f9dd/azure_ai_inference-1.0.0b9-py3-none-any.whl", hash = "sha256:49823732e674092dad83bb8b0d1b65aa73111fab924d61349eb2a8cdc0493990", size = 124885 },
+]
+
+[[package]]
+name = "azure-ai-projects"
+version = "1.0.0b8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/83/85/66da3fe4affd182aa7788f212a1936a56a700bcbcafe157147a416f38e11/azure_ai_projects-1.0.0b8.tar.gz", hash = "sha256:9e48bf15710cdf40dd3fa1ac0448266bf599dc10c6477aa69ac5c250daef236e", size = 310017 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/c3/9071dcf8e383cf193253baccbbcdd5eeab181a388628ce51f98a7fb4c104/azure_ai_projects-1.0.0b8-py3-none-any.whl", hash = "sha256:9636aeaa573449d4cff6a38c44cfc16ad08a4f7a598e953654eece5a9f209ec2", size = 190835 },
+]
+
+[[package]]
+name = "azure-common"
+version = "1.1.28"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/71/f6f71a276e2e69264a97ad39ef850dca0a04fce67b12570730cb38d0ccac/azure-common-1.1.28.zip", hash = "sha256:4ac0cd3214e36b6a1b6a442686722a5d8cc449603aa833f3f0f40bda836704a3", size = 20914 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/55/7f118b9c1b23ec15ca05d15a578d8207aa1706bc6f7c87218efffbbf875d/azure_common-1.1.28-py2.py3-none-any.whl", hash = "sha256:5c12d3dcf4ec20599ca6b0d3e09e86e146353d443e7fcc050c9a19c1f9df20ad", size = 14462 },
+]
+
+[[package]]
 name = "azure-core"
 version = "1.32.0"
 source = { registry = "https://pypi.org/simple" }
@@ -331,6 +380,32 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/cc/ee/668328306a9e963a5ad9f152cd98c7adad86c822729fd1d2a01613ad1e67/azure_core-1.32.0.tar.gz", hash = "sha256:22b3c35d6b2dae14990f6c1be2912bf23ffe50b220e708a28ab1bb92b1c730e5", size = 279128 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/83/325bf5e02504dbd8b4faa98197a44cdf8a325ef259b48326a2b6f17f8383/azure_core-1.32.0-py3-none-any.whl", hash = "sha256:eac191a0efb23bfa83fddf321b27b122b4ec847befa3091fa736a5c32c50d7b4", size = 198855 },
+]
+
+[[package]]
+name = "azure-core-tracing-opentelemetry"
+version = "1.0.0b12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "opentelemetry-api" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/7f/5de13a331a5f2919417819cc37dcf7c897018f02f83aa82b733e6629a6a6/azure_core_tracing_opentelemetry-1.0.0b12.tar.gz", hash = "sha256:bb454142440bae11fd9d68c7c1d67ae38a1756ce808c5e4d736730a7b4b04144", size = 26010 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/5e/97a471f66935e7f89f521d0e11ae49c7f0871ca38f5c319dccae2155c8d8/azure_core_tracing_opentelemetry-1.0.0b12-py3-none-any.whl", hash = "sha256:38fd42709f1cc4bbc4f2797008b1c30a6a01617e49910c05daa3a0d0c65053ac", size = 11962 },
+]
+
+[[package]]
+name = "azure-cosmos"
+version = "4.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/be/7c/a4e7810f85e7f83d94265ef5ff0fb1efad55a768de737d940151ea2eec45/azure_cosmos-4.9.0.tar.gz", hash = "sha256:c70db4cbf55b0ff261ed7bb8aa325a5dfa565d3c6eaa43d75d26ae5e2ad6d74f", size = 1824155 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/dc/380f843744535497acd0b85aacb59565c84fc28bf938c8d6e897a858cd95/azure_cosmos-4.9.0-py3-none-any.whl", hash = "sha256:3b60eaa01a16a857d0faf0cec304bac6fa8620a81bc268ce760339032ef617fe", size = 303157 },
 ]
 
 [[package]]
@@ -347,6 +422,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/a1/f1a683672e7a88ea0e3119f57b6c7843ed52650fdcac8bfa66ed84e86e40/azure_identity-1.21.0.tar.gz", hash = "sha256:ea22ce6e6b0f429bc1b8d9212d5b9f9877bd4c82f1724bfa910760612c07a9a6", size = 266445 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/9f/1f9f3ef4f49729ee207a712a5971a9ca747f2ca47d9cbf13cf6953e3478a/azure_identity-1.21.0-py3-none-any.whl", hash = "sha256:258ea6325537352440f71b35c3dffe9d240eae4a5126c1b7ce5efd5766bd9fd9", size = 189190 },
+]
+
+[[package]]
+name = "azure-search-documents"
+version = "11.6.0b11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-common" },
+    { name = "azure-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/9e/49a87dacdebdbe76543c092d5eb09ee716a51c124d578bcfb5acd0b6971a/azure_search_documents-11.6.0b11.tar.gz", hash = "sha256:6c38bc4f9d3c2a79fda1f4d95b16f06ba8dacb26b6c8753e56146535c61561f8", size = 337947 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/d3/0a44553976f133def4543dd35e370366217c8e49bfe59ff9e21a868596ba/azure_search_documents-11.6.0b11-py3-none-any.whl", hash = "sha256:8f0882c9ac3b54936fa5c3e69ed4312cc94219462c5b0f2258b0062a727905f1", size = 338377 },
 ]
 
 [[package]]

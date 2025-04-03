@@ -2,8 +2,11 @@
 
 import os
 import logging
+import asyncio
 from pathlib import Path
+from dotenv import load_dotenv
 import chainlit as cl
+from mcp import ClientSession
 import semantic_kernel as sk
 from semantic_kernel.connectors.ai.function_choice_behavior import (
     FunctionChoiceBehavior,
@@ -13,12 +16,16 @@ from semantic_kernel.connectors.ai.open_ai import (
     AzureChatPromptExecutionSettings,
 )
 from semantic_kernel.contents import ChatHistory
-from typing import Optional, AsyncGenerator
+from typing import Optional, AsyncGenerator, Dict, Any, List
+import json
 
 from agenticfleet.config.loader import ConfigLoader
 from agenticfleet.agents.base import AgentConfig, BaseAgent
 from agenticfleet.plugins.web_surfer import WebSurferPlugin
 from agenticfleet.plugins.file_surfer import FileSurferPlugin
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -32,10 +39,11 @@ config_loader = ConfigLoader()
 llm_config = config_loader.llm_config
 
 # Environment variables
-AZURE_OPENAI_API_KEY = os.environ.get("AZURE_OPENAI_API_KEY")
-AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT")
-AZURE_OPENAI_API_VERSION = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+NEON_MCP_TOKEN = os.getenv("NEON_MCP_TOKEN")
 
 # Get default model configuration
 default_config = llm_config.default_config
@@ -66,9 +74,16 @@ class ChatAgent(BaseAgent):
         try:
             self.chat_history.add_user_message(message)
             
+            # Get available MCP tools
+            mcp_tools = cl.user_session.get("mcp_tools", {})
+            available_tools = []
+            for connection_tools in mcp_tools.values():
+                available_tools.extend(connection_tools)
+            
             execution_settings = AzureChatPromptExecutionSettings(
                 service_id="azure_openai",
                 function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                tools=available_tools if available_tools else None
             )
             
             # Get model configuration
@@ -94,6 +109,30 @@ class ChatAgent(BaseAgent):
             
             async for chunk in stream:
                 if chunk is not None:
+                    # Check if the chunk contains a tool call
+                    if hasattr(chunk, 'tool_calls') and chunk.tool_calls:
+                        for tool_call in chunk.tool_calls:
+                            # Find the appropriate MCP session for this tool
+                            for connection_name, tools in mcp_tools.items():
+                                if any(t['name'] == tool_call.function.name for t in tools):
+                                    mcp_session = cl.user_session.get("mcp_sessions", {}).get(connection_name)
+                                    if mcp_session:
+                                        try:
+                                            # Parse tool arguments
+                                            args = json.loads(tool_call.function.arguments)
+                                            # Execute the tool call
+                                            tool_result = await mcp_session.call_tool(
+                                                tool_call.function.name,
+                                                args
+                                            )
+                                            response += f"\nTool {tool_call.function.name} result: {tool_result}\n"
+                                            yield f"\nTool {tool_call.function.name} result: {tool_result}\n"
+                                        except Exception as e:
+                                            error_msg = f"\nError executing tool {tool_call.function.name}: {str(e)}\n"
+                                            response += error_msg
+                                            yield error_msg
+                                    break
+                    
                     response += str(chunk)
                     yield str(chunk)
             
@@ -137,6 +176,51 @@ async def on_chat_start():
     kernel.add_plugin(WebSurferPlugin(), plugin_name="WebSurfer")
     kernel.add_plugin(FileSurferPlugin(), plugin_name="FileSurfer")
 
+    # Initialize MCP session for Neon
+    if NEON_MCP_TOKEN:
+        try:
+            # Start the MCP server in a separate terminal
+            await cl.Message(
+                content="Please start the MCP server in a separate terminal with:\n```bash\nnpx -y @neondatabase/mcp-server-neon start " + NEON_MCP_TOKEN + "\n```"
+            ).send()
+            
+            # Wait for user confirmation
+            await cl.Message(
+                content="After starting the MCP server, the tools will be available for use."
+            ).send()
+            
+            # Store MCP tools
+            mcp_tools = {"neon": [
+                {
+                    "name": "mcp_Neon_list_projects",
+                    "description": "List all Neon projects in your account."
+                },
+                {
+                    "name": "mcp_Neon_create_project",
+                    "description": "Create a new Neon project."
+                },
+                {
+                    "name": "mcp_Neon_delete_project",
+                    "description": "Delete a Neon project"
+                },
+                {
+                    "name": "mcp_Neon_describe_project",
+                    "description": "Describes a Neon project"
+                },
+                {
+                    "name": "mcp_Neon_run_sql",
+                    "description": "Execute a single SQL statement against a Neon database"
+                }
+            ]}
+            cl.user_session.set("mcp_tools", mcp_tools)
+            
+            logger.info(f"MCP tools registered")
+        except Exception as e:
+            logger.error(f"Failed to initialize MCP session: {e}", exc_info=True)
+            await cl.Message(
+                content=f"Failed to initialize MCP session: {e}"
+            ).send()
+
     # Initialize chat agent
     agent_config = AgentConfig(
         name="chat_agent",
@@ -152,7 +236,7 @@ async def on_chat_start():
     
     logger.info("Chat session initialized successfully")
     await cl.Message(
-        content="I'm ready to help! I can search the web and work with files. What would you like to do?"
+        content="I'm ready to help! I can search the web, work with files, and interact with your Neon database. What would you like to do?"
     ).send()
 
 
@@ -182,3 +266,42 @@ async def on_message(message: cl.Message):
         return
 
     await answer_msg.update()
+
+
+@cl.on_mcp_connect
+async def on_mcp_connect(connection, session: ClientSession):
+    """Called when an MCP connection is established."""
+    try:
+        # List available tools
+        result = await session.list_tools()
+        
+        # Process tool metadata
+        tools = [{
+            "name": t.name,
+            "description": t.description,
+            "input_schema": t.inputSchema,
+        } for t in result.tools]
+        
+        # Store tools for later use
+        mcp_tools = cl.user_session.get("mcp_tools", {})
+        mcp_tools[connection.name] = tools
+        cl.user_session.set("mcp_tools", mcp_tools)
+        
+        logger.info(f"MCP connection established: {connection.name}")
+    except Exception as e:
+        logger.error(f"Error in MCP connection: {str(e)}", exc_info=True)
+        raise
+
+@cl.on_mcp_disconnect
+async def on_mcp_disconnect(name: str, session: ClientSession):
+    """Called when an MCP connection is terminated."""
+    try:
+        # Clean up stored tools
+        mcp_tools = cl.user_session.get("mcp_tools", {})
+        if name in mcp_tools:
+            del mcp_tools[name]
+        cl.user_session.set("mcp_tools", mcp_tools)
+        
+        logger.info(f"MCP connection terminated: {name}")
+    except Exception as e:
+        logger.error(f"Error in MCP disconnection: {str(e)}", exc_info=True)

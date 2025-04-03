@@ -11,12 +11,26 @@ authors = [
 dependencies = [
     "semantic-kernel[openai]>=1.2.1", # Core SK with OpenAI support only
     "chainlit==2.4.400",
+
+    
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0", # Core Pydantic only
     "requests>=2.31.0", # For web requests
     "beautifulsoup4>=4.12.0", # For web scraping
     "python-magic>=0.4.27", # For file type detection
     "playwright>=1.51.0",
+    "mcp>=0.1.0",   
+    "azure-ai-search>=1.0.0b4",
+    "azure-cosmos>=4.1.0",
+    "azure-core>=1.30.0",
+    "azure-identity>=1.11.0",
+    "azure-storage-blob>=12.16.0",
+    "azure-storage-queue>=12.16.0",
+    "azure-storage-table>=12.16.0",
+    "azure-storage-file-share>=12.16.0",
+    "azure-ai-projects>=1.0.0b7",
+    "azure-core-tracing-opentelemetry>=1.0.0b11",
+    "azure-search-documents>=11.6.0b4", 
 ]
 
 [project.optional-dependencies]
