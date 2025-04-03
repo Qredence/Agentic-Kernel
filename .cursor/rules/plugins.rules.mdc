@@ -1,0 +1,32 @@
+# Plugin Development Rules
+
+## Structure
+```rules
+plugin_structure:
+  required:
+    interface: "Abstract base class"
+    implementation: "Concrete class"
+    tests: "Unit and integration"
+    docs: "API documentation"
+    
+  optional:
+    config: "JSON configuration"
+    examples: "Usage examples"
+```
+
+## Patterns
+```rules
+plugin_patterns:
+  naming:
+    class: "*Plugin"
+    interface: "I*Plugin"
+    config: "{plugin_name}.json"
+    
+  registration:
+    method: auto-discovery
+    location: "plugins/__init__.py"
+    
+  lifecycle:
+    init: required
+    cleanup: recommended
+``` 

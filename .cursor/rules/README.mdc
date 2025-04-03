@@ -1,0 +1,57 @@
+# Cursor Rules Directory
+
+This directory contains the development rules and guidelines for the AgenticFleet project. The rules are organized into focused, single-responsibility files using MDC (Markdown Configuration) format.
+
+## Rule Files
+
+```rules
+files:
+  structure.rules.mdc: "Project structure and file organization"
+  style.rules.mdc: "Code style and formatting"
+  testing.rules.mdc: "Testing requirements and patterns"
+  llm.rules.mdc: "LLM integration and configuration"
+  plugins.rules.mdc: "Plugin development guidelines"
+  agents.rules.mdc: "Agent development guidelines"
+  security.rules.mdc: "Security requirements and practices"
+  git.rules.mdc: "Version control and Git workflow"
+```
+
+## MDC Format
+
+Each rule file follows the MDC format which combines markdown with structured configuration blocks:
+
+```rules
+example:
+  section:
+    key: value
+    list:
+      - item1: value1
+      - item2: value2
+```
+
+## Rule Structure
+
+Each rule file:
+- Contains a single aspect of development
+- Is limited to 50 lines
+- Uses clear, hierarchical organization
+- Includes descriptive comments
+- Follows consistent formatting
+
+## Enforcement
+
+Rules are enforced through:
+```rules
+enforcement:
+  tools:
+    - cursor: "IDE configuration"
+    - pre-commit: "Git hooks"
+    - ci: "Pipeline checks"
+    
+  process:
+    - reviews: "Code review checklist"
+    - automation: "Automated checks"
+    - documentation: "Living documentation"
+```
+
+For questions or suggestions about the rules, please open an issue or discussion in the project repository. 

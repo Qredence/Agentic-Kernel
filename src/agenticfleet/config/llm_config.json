@@ -1,0 +1,182 @@
+{
+    "version": "0.2.0",
+    "endpoints": {
+        "azure_openai": {
+            "type": "azure_openai",
+            "models": {
+                "gpt-4o": {
+                    "model_name": "gpt-4o",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "gpt-4o-mini": {
+                    "model_name": "gpt-4o-mini",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "o3-mini": {
+                    "model_name": "o3-mini",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "computer-use": {
+                    "model_name": "computer-use-preview",
+                    "max_tokens": 8192,
+                    "temperature": 0.3,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                }
+            }
+        },
+        "azure_foundry": {
+            "type": "azure_foundry",
+            "models": {
+                "deepseek-r1": {
+                    "model_name": "deepseek-coder-33b-r1",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "deepseek-v3": {
+                    "model_name": "deepseek-coder-33b-v3",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "phi-4": {
+                    "model_name": "phi-4",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "phi-4-mini": {
+                    "model_name": "phi-4-mini",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0
+                },
+                "phi-multimodal": {
+                    "model_name": "Phi-4-multimodal-instruct",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "vision_enabled": true
+                }
+            }
+        },
+        "gemini": {
+            "type": "gemini",
+            "models": {
+                "gemini-2.5-pro-exp-03-25": {
+                    "model_name": "gemini-2.5-pro-exp-03-25",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "Enhanced thinking and reasoning, multimodal understanding, advanced coding"
+                },
+                "gemini-2.0-flash": {
+                    "model_name": "gemini-2.0-flash",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "Next generation features, speed, thinking, realtime streaming, and multimodal generation"
+                },
+                "gemini-2.0-flash-lite": {
+                    "model_name": "gemini-2.0-flash-lite",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "Cost efficiency and low latency"
+                },
+                "gemini-1.5-flash": {
+                    "model_name": "gemini-1.5-flash",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "Fast and versatile performance across diverse tasks"
+                },
+                "gemini-1.5-flash-8b": {
+                    "model_name": "gemini-1.5-flash-8b",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "High volume and lower intelligence tasks"
+                },
+                "gemini-1.5-pro": {
+                    "model_name": "gemini-1.5-pro",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": true,
+                    "optimized_for": "Complex reasoning tasks requiring more intelligence"
+                },
+                "gemini-embedding-exp": {
+                    "model_name": "gemini-embedding-exp",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": false,
+                    "optimized_for": "Measuring the relatedness of text strings"
+                },
+                "imagen-3.0-generate-002": {
+                    "model_name": "imagen-3.0-generate-002",
+                    "max_tokens": 1024,
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "presence_penalty": 0,
+                    "frequency_penalty": 0,
+                    "multimodal": false,
+                    "optimized_for": "Advanced image generation"
+                }
+            }
+        }
+    },
+    "default_config": {
+        "endpoint": "azure_openai",
+        "model": "gpt-4o",
+        "cache_seed": 42,
+        "temperature": 0.7,
+        "request_timeout": 300,
+        "retry_on_failure": true,
+        "max_retries": 3
+    }
+} 

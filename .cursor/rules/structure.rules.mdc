@@ -1,0 +1,40 @@
+# Project Structure Rules
+
+```rules
+directory_structure:
+  src/agenticfleet:
+    agents: "Agent implementations"
+    plugins: "Plugin modules"
+    config: "Configuration files"
+    utils: "Utility functions"
+    workflows: "Agent workflows"
+  
+  tests:
+    agents: "Agent tests"
+    plugins: "Plugin tests"
+    workflows: "Workflow tests"
+  
+  docs:
+    api: "API documentation"
+    guides: "User guides"
+    examples: "Code examples"
+
+  config:
+    env: "Environment configurations"
+    llm: "LLM configurations"
+    plugins: "Plugin configurations"
+```
+
+## File Naming
+```rules
+naming:
+  python:
+    source: "snake_case.py"
+    test: "test_*.py"
+    init: "__init__.py"
+  
+  config:
+    env: ".env[.*]?"
+    json: "snake_case.json"
+    yaml: "snake_case.yaml"
+``` 

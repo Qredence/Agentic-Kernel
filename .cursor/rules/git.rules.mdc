@@ -1,0 +1,36 @@
+# Version Control Rules
+
+## Branches
+```rules
+git_branches:
+  main:
+    name: main
+    protection: true
+    reviews: required
+    
+  development:
+    name: develop
+    protection: true
+    
+  features:
+    pattern: "feature/*"
+    base: develop
+    
+  fixes:
+    pattern: "bugfix/*"
+    base: develop
+```
+
+## Commits
+```rules
+git_commits:
+  format:
+    pattern: "<type>(<scope>): <description>"
+    types: [feat, fix, docs, style, refactor, test, chore]
+    max_length: 72
+    
+  content:
+    atomic: true
+    descriptive: true
+    references: required
+``` 
