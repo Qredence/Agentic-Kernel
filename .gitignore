@@ -3,7 +3,9 @@
 
 # Environment variables
 .env
-.env.*
+.env.local
+.env.development
+.env.production
 
 # Python
 __pycache__/
@@ -31,6 +33,7 @@ wheels/
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .idea/
@@ -45,3 +48,6 @@ ENV/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# IDE
+/.cursor
