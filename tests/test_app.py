@@ -7,7 +7,7 @@ import chainlit as cl
 import semantic_kernel as sk
 from agenticfleet.config.loader import ConfigLoader
 from agenticfleet.agents.base import AgentConfig
-from agenticfleet.app import ChatAgent, on_chat_start, on_message
+from agenticfleet.app import ChatAgent, on_chat_start, on_message, chat_profile
 
 class AsyncIterator:
     """Helper class to create an async iterator."""
@@ -176,4 +176,80 @@ async def test_on_message_no_agent(mock_chainlit, mock_chainlit_context):
         await on_message(mock_message)
     
     mock_response.send.assert_called_once()
-    assert "not initialized" in mock_response.content 
+    assert "not initialized" in mock_response.content
+
+@pytest.mark.asyncio
+async def test_chat_profile():
+    """Test chat profile configuration."""
+    profiles = await chat_profile()
+    assert len(profiles) == 2
+    
+    # Test Fast profile
+    fast_profile = next((p for p in profiles if p.name == "Fast"), None)
+    assert fast_profile is not None
+    assert "gpt-4o-mini" in fast_profile.markdown_description.lower()
+    
+    # Test Max profile
+    max_profile = next((p for p in profiles if p.name == "Max"), None)
+    assert max_profile is not None
+    assert "gpt-4o" in max_profile.markdown_description.lower()
+
+@pytest.mark.asyncio
+async def test_on_chat_start_with_fast_profile(mock_env_vars, mock_config_loader, mock_chainlit, mock_chainlit_context):
+    """Test chat initialization with Fast profile."""
+    # Mock the chat profile selection
+    mock_chainlit.get.side_effect = lambda key: "Fast" if key == "chat_profile" else None
+    
+    mock_message = AsyncMock()
+    with patch('chainlit.Message', return_value=mock_message):
+        await on_chat_start()
+    
+    # Verify the correct model was selected
+    mock_config_loader.return_value.get_model_config.assert_called_with(
+        endpoint="azure_openai",
+        model="gpt-4o-mini"
+    )
+    
+    # Verify welcome message contains profile info
+    assert "Fast" in mock_message.content
+    mock_message.send.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_on_chat_start_with_max_profile(mock_env_vars, mock_config_loader, mock_chainlit, mock_chainlit_context):
+    """Test chat initialization with Max profile."""
+    # Mock the chat profile selection
+    mock_chainlit.get.side_effect = lambda key: "Max" if key == "chat_profile" else None
+    
+    mock_message = AsyncMock()
+    with patch('chainlit.Message', return_value=mock_message):
+        await on_chat_start()
+    
+    # Verify the correct model was selected
+    mock_config_loader.return_value.get_model_config.assert_called_with(
+        endpoint="azure_openai",
+        model="gpt-4o"
+    )
+    
+    # Verify welcome message contains profile info
+    assert "Max" in mock_message.content
+    mock_message.send.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_on_chat_start_with_invalid_profile(mock_env_vars, mock_config_loader, mock_chainlit, mock_chainlit_context):
+    """Test chat initialization with invalid profile."""
+    # Mock an invalid chat profile selection
+    mock_chainlit.get.side_effect = lambda key: "Invalid" if key == "chat_profile" else None
+    
+    mock_message = AsyncMock()
+    with patch('chainlit.Message', return_value=mock_message):
+        await on_chat_start()
+    
+    # Verify fallback to default configuration
+    mock_config_loader.return_value.get_model_config.assert_called_with(
+        endpoint="azure_openai",
+        model="gpt-4o"  # Default model
+    )
+    
+    # Verify error message
+    assert "Unknown chat profile" in mock_message.content
+    mock_message.send.assert_called() 

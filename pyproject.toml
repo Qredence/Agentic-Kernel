@@ -19,40 +19,41 @@ dependencies = [
     "beautifulsoup4>=4.12.0", # For web scraping
     "python-magic>=0.4.27", # For file type detection
     "playwright>=1.51.0",
-    "mcp>=0.1.0",   
-    "azure-ai-search>=1.0.0b4",
-    "azure-cosmos>=4.1.0",
-    "azure-core>=1.30.0",
-    "azure-identity>=1.11.0",
-    "azure-storage-blob>=12.16.0",
-    "azure-storage-queue>=12.16.0",
-    "azure-storage-table>=12.16.0",
-    "azure-storage-file-share>=12.16.0",
-    "azure-ai-projects>=1.0.0b7",
-    "azure-core-tracing-opentelemetry>=1.0.0b11",
-    "azure-search-documents>=11.6.0b4", 
+    "mcp",   
+    "azure-search-documents>=11.6.0b9",
+    "azure-cosmos>=4.7.0",
+    "azure-core>=1.32.0",
+    "azure-identity>=1.21.0",
+    "azure-storage-blob>=12.12.0",
+    "azure-storage-queue>=12.12.0",
+    "azure-data-tables>=12.4.0",
+    "azure-storage-file-share>=12.12.0",
+    "azure-ai-projects>=1.0.0b4",
+    "azure-core-tracing-opentelemetry>=1.0.0b12",
 ]
 
 [project.optional-dependencies]
 test = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "pytest-cov>=4.1.0",
-    "pytest-mock>=3.12.0",  # For mocking in tests
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "pytest-cov>=6.1.0",
+    "pytest-mock>=3.14.0",  # For mocking in tests
     "responses>=0.24.1",  # For mocking HTTP requests in tests
 ]
 dev = [
-    "black>=24.0.0",
-    "isort>=5.13.0",
-    "mypy>=1.8.0",
-    "ruff>=0.2.0"
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "ruff>=0.11.2"
 ]
 azure = [
-    "azure-ai-inference >= 1.0.0b6",
-    "azure-ai-projects >= 1.0.0b7",
-    "azure-core-tracing-opentelemetry >= 1.0.0b11",
-    "azure-search-documents >= 11.6.0b4",
-    "azure-cosmos ~= 4.7"
+    "azure-ai-inference>=1.0.0b9",
+    "azure-search-documents>=11.6.0b9",
+    "azure-cosmos>=4.7.0"
+]
+
+sql = [
+    "pyodbc>=5.2.0"
 ]
 
 [build-system]

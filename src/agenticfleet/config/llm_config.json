@@ -1,7 +1,7 @@
 {
     "version": "0.2.0",
     "endpoints": {
-        "azure_openai": {
+        "https://agentic-azopenai-sweden.openai.azure.com": {
             "type": "azure_openai",
             "models": {
                 "gpt-4o": {
@@ -10,7 +10,12 @@
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
-                    "frequency_penalty": 0
+                    "frequency_penalty": 0,
+                    "store": true,
+                    "metadata": {
+                        "user": "agenticfleet",
+                        "category": "agentic-kernel"
+                    }
                 },
                 "gpt-4o-mini": {
                     "model_name": "gpt-4o-mini",
@@ -18,7 +23,12 @@
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
-                    "frequency_penalty": 0
+                    "frequency_penalty": 0,
+                    "store": true,
+                    "metadata": {
+                        "user": "agenticfleet",
+                        "category": "agentic-kernel"
+                    }
                 },
                 "o3-mini": {
                     "model_name": "o3-mini",
@@ -26,7 +36,12 @@
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
-                    "frequency_penalty": 0
+                    "frequency_penalty": 0,
+                    "store": true,
+                    "metadata": {
+                        "user": "agenticfleet",
+                        "category": "agentic-kernel"
+                    }
                 },
                 "computer-use": {
                     "model_name": "computer-use-preview",
@@ -42,7 +57,7 @@
             "type": "azure_foundry",
             "models": {
                 "deepseek-r1": {
-                    "model_name": "deepseek-coder-33b-r1",
+                    "model_name": "deepseek-r1",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
@@ -50,7 +65,7 @@
                     "frequency_penalty": 0
                 },
                 "deepseek-v3": {
-                    "model_name": "deepseek-coder-33b-v3",
+                    "model_name": "deepseek-v3",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
@@ -171,12 +186,17 @@
         }
     },
     "default_config": {
-        "endpoint": "azure_openai",
+        "endpoint": "https://agentic-azopenai-sweden.openai.azure.com",
         "model": "gpt-4o",
         "cache_seed": 42,
         "temperature": 0.7,
         "request_timeout": 300,
         "retry_on_failure": true,
-        "max_retries": 3
+        "max_retries": 3,
+        "store": true,
+        "metadata": {
+            "user": "agenticfleet",
+            "category": "agentic-kernel"
+        }
     }
-} 
+}
