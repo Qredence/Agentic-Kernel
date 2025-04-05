@@ -1,4 +1,4 @@
-# AgenticFleet Labs: Powerful Plugins for Semantic Kernel
+# Agentic Kernel, inspired by Semantic Kernel and Autogen
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- Add other badges: PyPI version, build status, etc. -->
