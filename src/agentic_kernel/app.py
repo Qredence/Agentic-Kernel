@@ -13,10 +13,10 @@ from semantic_kernel.connectors.ai.open_ai import (
 )
 from semantic_kernel.contents import ChatHistory
 
-from agenticfleet.config.loader import ConfigLoader
-from agenticfleet.agents.base import AgentConfig, BaseAgent
-from agenticfleet.plugins.web_surfer import WebSurferPlugin
-from agenticfleet.plugins.file_surfer import FileSurferPlugin
+from agentic_kernel.config.loader import ConfigLoader
+from agentic_kernel.agents.base import AgentConfig, BaseAgent
+from agentic_kernel.plugins.web_surfer import WebSurferPlugin
+from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 
 # Load configuration
 config_loader = ConfigLoader()

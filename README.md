@@ -13,7 +13,7 @@ The WebSurfer plugin provides web search and webpage summarization capabilities:
 
 Example usage:
 ```python
-from agenticfleet.plugins.web_surfer import WebSurferPlugin
+from agentic_kernel.plugins.web_surfer import WebSurferPlugin
 
 # Initialize the plugin
 web_surfer = WebSurferPlugin()
@@ -42,7 +42,7 @@ The FileSurfer plugin provides file system operations with safety features:
 Example usage:
 ```python
 from pathlib import Path
-from agenticfleet.plugins.file_surfer import FileSurferPlugin
+from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 
 # Initialize the plugin with a base path for safety
 file_surfer = FileSurferPlugin(base_path=Path("/safe/directory"))

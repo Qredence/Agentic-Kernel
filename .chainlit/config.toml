@@ -9,7 +9,17 @@ multi_modal = true
 code_execution = true
 chat_settings = true
 chat_profiles = true
-streaming_enabled = true
+streaming = true
+prompt_playground = true
+display_chat_history = true
+speech_to_text = false
+file_upload = true
+user_settings = true
+citations = true
+human_feedback = true
+custom_elements = true
+ask_user = true
+data_persistence = true
 
 [features.mcp.sse]
 enabled = true
@@ -21,12 +31,15 @@ allowed_executables = ["npx", "uvx"]
 [UI]
 name = "AgenticFleet"
 description = "Enhanced AutoGen Framework with Custom Agents"
-default_expand_messages = false
+default_expand_messages = true
+custom_css = "/public/custom.css"
+custom_theme = "/public/theme.json"
 hide_cot = false
 github = "https://github.com/yourusername/AgenticFleet-Labs"
 mcp = true
 theme = "dark"
 show_prompt_playground = true
+tool_call = "full"
 
 [meta]
 generated_by = "AgenticFleet"

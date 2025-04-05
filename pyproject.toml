@@ -9,27 +9,12 @@ authors = [
     { name = "AgenticFleet Team" }
 ]
 dependencies = [
-    "semantic-kernel[openai]>=1.2.1", # Core SK with OpenAI support only
+    "semantic-kernel",
     "chainlit==2.4.400",
-
-    
     "python-dotenv>=1.0.0",
-    "pydantic>=2.0.0", # Core Pydantic only
-    "requests>=2.31.0", # For web requests
-    "beautifulsoup4>=4.12.0", # For web scraping
-    "python-magic>=0.4.27", # For file type detection
-    "playwright>=1.51.0",
-    "mcp",   
-    "azure-search-documents>=11.6.0b9",
-    "azure-cosmos>=4.7.0",
-    "azure-core>=1.32.0",
-    "azure-identity>=1.21.0",
-    "azure-storage-blob>=12.12.0",
-    "azure-storage-queue>=12.12.0",
-    "azure-data-tables>=12.4.0",
-    "azure-storage-file-share>=12.12.0",
-    "azure-ai-projects>=1.0.0b4",
-    "azure-core-tracing-opentelemetry>=1.0.0b12",
+    "pydantic>=2.0.0",
+    "requests>=2.31.0",
+    "openai>=1.51.0"
 ]
 
 [project.optional-dependencies]
@@ -37,8 +22,8 @@ test = [
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "pytest-cov>=6.1.0",
-    "pytest-mock>=3.14.0",  # For mocking in tests
-    "responses>=0.24.1",  # For mocking HTTP requests in tests
+    "pytest-mock>=3.14.0",
+    "responses>=0.24.1"
 ]
 dev = [
     "black>=25.1.0",
@@ -46,22 +31,13 @@ dev = [
     "mypy>=1.15.0",
     "ruff>=0.11.2"
 ]
-azure = [
-    "azure-ai-inference>=1.0.0b9",
-    "azure-search-documents>=11.6.0b9",
-    "azure-cosmos>=4.7.0"
-]
-
-sql = [
-    "pyodbc>=5.2.0"
-]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agenticfleet"]
+packages = ["src/agentic_kernel"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

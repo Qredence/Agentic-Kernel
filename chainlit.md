@@ -1,6 +1,20 @@
-# Welcome to Chainlit! 🚀🤖
+# Welcome to AgenticFleet! 🚀
 
-Hi there, Developer! 👋 We're excited to have you on board. Chainlit is a powerful tool designed to help you prototype, debug and share applications built on top of LLMs.
+## Features
+- Dynamic tool integration with MCP
+- Support for multiple chat profiles (Fast and Max)
+- Real-time tool execution and streaming responses
+- Database integration with Neon
+- Step-by-step execution visibility
+
+## Getting Started
+1. Choose a chat profile:
+   - **Fast**: Uses GPT-4o-mini for quicker responses
+   - **Max**: Uses GPT-4o for highest quality responses
+2. Start chatting! The assistant will automatically use available tools based on your needs.
+
+## Available Tools
+Tools will be displayed when they become available through MCP connections.
 
 ## Useful Links 🔗
 

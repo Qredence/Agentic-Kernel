@@ -16,13 +16,14 @@ from semantic_kernel.connectors.ai.open_ai import (
     AzureChatPromptExecutionSettings,
 )
 from semantic_kernel.contents import ChatHistory
-from typing import Optional, AsyncGenerator, Dict, Any, List
+from typing import Optional, AsyncGenerator, Dict, Any, List, Callable
 import json
+import importlib
 
-from agenticfleet.config.loader import ConfigLoader
-from agenticfleet.agents.base import AgentConfig, BaseAgent
-from agenticfleet.plugins.web_surfer import WebSurferPlugin
-from agenticfleet.plugins.file_surfer import FileSurferPlugin
+from agentic_kernel.config.loader import ConfigLoader
+from agentic_kernel.agents.base import AgentConfig, BaseAgent
+from agentic_kernel.plugins.web_surfer import WebSurferPlugin
+from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 
 # Load environment variables from .env file
 load_dotenv()
@@ -69,107 +70,156 @@ async def chat_profile():
         ),
     ]
 
-class ChatAgent(BaseAgent):
-    """Chat agent implementation."""
+class MCPToolRegistry:
+    """Registry for MCP tools and their handlers."""
+    
+    def __init__(self):
+        self.tools: Dict[str, Dict[str, Any]] = {}
+        self.sessions: Dict[str, ClientSession] = {}
+        
+    def register_connection(self, name: str, tools: List[Dict], session: ClientSession):
+        """Register a new MCP connection with its tools."""
+        self.tools[name] = tools
+        self.sessions[name] = session
+        
+    def unregister_connection(self, name: str):
+        """Unregister an MCP connection."""
+        self.tools.pop(name, None)
+        self.sessions.pop(name, None)
+        
+    def get_all_tools(self) -> List[Dict]:
+        """Get all registered tools across all connections."""
+        all_tools = []
+        for tools in self.tools.values():
+            all_tools.extend(tools)
+        return all_tools
+    
+    def get_session_for_tool(self, tool_name: str) -> Optional[tuple[str, ClientSession]]:
+        """Get the session that can handle a specific tool."""
+        for connection_name, tools in self.tools.items():
+            if any(t['function']['name'] == tool_name for t in tools):
+                return connection_name, self.sessions[connection_name]
+        return None
+    
+    def is_empty(self) -> bool:
+        """Check if there are any registered tools."""
+        return len(self.tools) == 0
+
+class DynamicChatAgent(BaseAgent):
+    """Enhanced chat agent with dynamic MCP tool support."""
     
     def __init__(self, config: AgentConfig, kernel: sk.Kernel, config_loader: Optional[ConfigLoader] = None):
         super().__init__(config=config)
         self.kernel = kernel
         self.chat_history = ChatHistory()
         self._config_loader = config_loader or ConfigLoader()
+        self.mcp_registry = MCPToolRegistry()
         
         # Initialize chat history with system message
         self.chat_history.add_system_message(
-            "I am an AI assistant that can help you with web searches, file operations, and Neon database management. "
-            "I have access to various tools and can execute commands on your behalf."
+            "I am an AI assistant that can help you with various tasks using available tools. "
+            "My capabilities adapt based on the tools that are connected."
         )
     
-    async def handle_message(self, message: str) -> AsyncGenerator[str, None]:
-        """Handle incoming chat message.
+    def register_mcp_connection(self, name: str, tools: List[Dict], session: ClientSession):
+        """Register a new MCP connection."""
+        self.mcp_registry.register_connection(name, tools, session)
         
-        Args:
-            message: The user's message
-            
-        Yields:
-            Content updates from the LLM response
-            
-        Raises:
-            Exception: If there is an error processing the message
-        """
+    def unregister_mcp_connection(self, name: str):
+        """Unregister an MCP connection."""
+        self.mcp_registry.unregister_connection(name)
+    
+    async def handle_message(self, message: str) -> AsyncGenerator[str, None]:
+        """Handle incoming chat message with dynamic tool support."""
         try:
-            self.chat_history.add_user_message(message)
-            
-            # Get available MCP tools
-            mcp_tools = cl.user_session.get("mcp_tools", {})
-            available_tools = []
-            for connection_tools in mcp_tools.values():
-                available_tools.extend(connection_tools)
-            
-            execution_settings = AzureChatPromptExecutionSettings(
-                service_id="azure_openai",
-                function_choice_behavior=FunctionChoiceBehavior.Auto(),
-                tools=available_tools if available_tools else None
-            )
-            
-            # Get model configuration
-            model_config = self._config_loader.get_model_config(
-                endpoint=self.config.endpoint,
-                model=self.config.model
-            )
-            
-            # Update execution settings with model configuration
-            for key, value in model_config.items():
-                if hasattr(execution_settings, key):
-                    setattr(execution_settings, key, value)
-            
-            response = ""
-            service = self.kernel.get_service("azure_openai")
-            
-            # Get streaming content
-            stream = service.get_streaming_chat_message_content(
-                chat_history=self.chat_history,
-                settings=execution_settings,
-                kernel=self.kernel
-            )
-            
-            async for chunk in stream:
-                if chunk is not None:
-                    # Check if the chunk contains a tool call
-                    if hasattr(chunk, 'tool_calls') and chunk.tool_calls:
-                        for tool_call in chunk.tool_calls:
-                            # Find the appropriate MCP session for this tool
-                            for connection_name, tools in mcp_tools.items():
-                                if any(t['function']['name'] == tool_call.function.name for t in tools):
-                                    mcp_session = cl.user_session.get("mcp_sessions", {}).get(connection_name)
-                                    if mcp_session:
+            async with cl.Step(name="Process Message", type="agent") as step:
+                step.input = message
+                self.chat_history.add_user_message(message)
+                
+                # Get all available tools
+                available_tools = self.mcp_registry.get_all_tools()
+                
+                execution_settings = AzureChatPromptExecutionSettings(
+                    service_id="azure_openai",
+                    function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                    tools=available_tools if available_tools else None
+                )
+                
+                # Get model configuration
+                model_config = self._config_loader.get_model_config(
+                    endpoint=self.config.endpoint,
+                    model=self.config.model
+                )
+                
+                # Update execution settings with model configuration
+                for key, value in model_config.items():
+                    if hasattr(execution_settings, key):
+                        setattr(execution_settings, key, value)
+                
+                response = ""
+                service = self.kernel.get_service("azure_openai")
+                
+                # Get streaming content
+                async with cl.Step(name="LLM Stream", type="llm", show_input=True) as llm_step:
+                    llm_step.input = {
+                        "chat_history": str(self.chat_history),
+                        "settings": str(execution_settings),
+                        "available_tools": [t['function']['name'] for t in available_tools] if available_tools else []
+                    }
+                    
+                    stream = service.get_streaming_chat_message_content(
+                        chat_history=self.chat_history,
+                        settings=execution_settings,
+                        kernel=self.kernel
+                    )
+                    
+                    async for chunk in stream:
+                        if chunk is not None:
+                            # Handle tool calls dynamically
+                            if hasattr(chunk, 'tool_calls') and chunk.tool_calls:
+                                for tool_call in chunk.tool_calls:
+                                    # Find the appropriate session for this tool
+                                    session_info = self.mcp_registry.get_session_for_tool(tool_call.function.name)
+                                    if session_info:
+                                        connection_name, session = session_info
                                         try:
-                                            # Parse tool arguments
-                                            args = json.loads(tool_call.function.arguments)
-                                            # Execute the tool call
-                                            tool_result = await mcp_session.call_tool(
-                                                tool_call.function.name,
-                                                args
-                                            )
-                                            response += f"\nTool {tool_call.function.name} result: {tool_result}\n"
-                                            yield f"\nTool {tool_call.function.name} result: {tool_result}\n"
+                                            async with cl.Step(name=f"Tool: {tool_call.function.name}", type="tool", show_input=True) as tool_step:
+                                                args = json.loads(tool_call.function.arguments)
+                                                tool_step.input = args
+                                                
+                                                tool_result = await session.call_tool(
+                                                    tool_call.function.name,
+                                                    args
+                                                )
+                                                tool_step.output = tool_result
+                                                response += f"\nTool {tool_call.function.name} result: {tool_result}\n"
+                                                yield f"\nTool {tool_call.function.name} result: {tool_result}\n"
                                         except Exception as e:
                                             error_msg = f"\nError executing tool {tool_call.function.name}: {str(e)}\n"
                                             response += error_msg
                                             yield error_msg
-                                    break
+                            
+                            response += str(chunk)
+                            await llm_step.stream_token(str(chunk))
+                            yield str(chunk)
                     
-                    response += str(chunk)
-                    yield str(chunk)
-            
-            self.chat_history.add_assistant_message(response)
+                    llm_step.output = response
+                
+                self.chat_history.add_assistant_message(response)
+                step.output = response
+                
         except Exception as e:
             logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
             raise
 
+# Create a global chat agent instance
+chat_agent = None
 
 @cl.on_chat_start
 async def start_chat():
-    """Initialize the chat session based on the selected profile."""
+    """Initialize the chat session with dynamic tool support."""
+    global chat_agent
+    
     # Get the selected chat profile
     selected_profile = cl.user_session.get("chat_profile")
     
@@ -187,8 +237,8 @@ async def start_chat():
     # Setup Semantic Kernel
     kernel = sk.Kernel()
 
-    # Add Azure OpenAI Chat Completion service
     try:
+        # Add Azure OpenAI Chat Completion service
         ai_service = AzureChatCompletion(
             service_id="azure_openai",
             api_key=AZURE_OPENAI_API_KEY,
@@ -197,126 +247,71 @@ async def start_chat():
             deployment_name=deployment_name,
         )
         kernel.add_service(ai_service)
-        logger.info(f"Successfully initialized Azure OpenAI service with deployment {deployment_name}")
-    except Exception as e:
-        logger.error(f"Failed to initialize Azure OpenAI service with deployment {deployment_name}: {e}", exc_info=True)
+        
+        # Initialize the chat agent
+        config = AgentConfig(
+            name=f"AgenticFleet-{selected_profile}" if selected_profile else "AgenticFleet",
+            endpoint=AZURE_OPENAI_ENDPOINT,
+            model=deployment_name
+        )
+        chat_agent = DynamicChatAgent(config=config, kernel=kernel, config_loader=config_loader)
+        
+        # Store in session
+        cl.user_session.set("chat_agent", chat_agent)
+        cl.user_session.set("selected_profile", selected_profile)
+        
+        profile_info = f" using the **{selected_profile}** profile" if selected_profile else ""
         await cl.Message(
-            content=f"Failed to initialize Azure OpenAI service: {e}"
+            content=f"I'm ready to help{profile_info}! I'll adapt to any tools that become available."
         ).send()
+        
+    except Exception as e:
+        error_msg = f"Failed to initialize chat agent: {e}"
+        logger.error(error_msg, exc_info=True)
+        await cl.Message(content=error_msg).send()
         return
-
-    # Store components in session
-    cl.user_session.set("kernel", kernel)
-    cl.user_session.set("chat_history", ChatHistory())
-    cl.user_session.set("selected_profile", selected_profile)
-    cl.user_session.set("deployment_name", deployment_name)
-    
-    profile_info = f" using the **{selected_profile}** profile" if selected_profile else ""
-    await cl.Message(
-        content=f"I'm ready to help{profile_info}! What would you like to do?"
-    ).send()
-
 
 @cl.on_message
 async def on_message(msg: cl.Message):
-    """Handle incoming messages."""
-    chat_history = cl.user_session.get("chat_history")
-    chat_history.add_user_message(msg.content)
-    
-    # Get kernel from session
-    kernel = cl.user_session.get("kernel")
-    if not kernel:
+    """Handle incoming messages with dynamic tool support."""
+    chat_agent = cl.user_session.get("chat_agent")
+    if not chat_agent:
         await cl.Message(
             content="Chat session not initialized properly. Please restart the chat."
         ).send()
         return
 
-    # Get available MCP tools
-    mcp_tools = cl.user_session.get("mcp_tools", {})
-    available_tools = []
-    for connection_tools in mcp_tools.values():
-        available_tools.extend(connection_tools)
-
-    # Create a Chainlit message for the response stream
-    answer_msg = cl.Message(content="")
-    await answer_msg.send()
-
-    try:
-        execution_settings = AzureChatPromptExecutionSettings(
-            service_id="azure_openai",
-            function_choice_behavior=FunctionChoiceBehavior.Auto(),
-            tools=available_tools if available_tools else None,
-            temperature=0.7,
-            top_p=0.95,
-        )
-
-        service = kernel.get_service("azure_openai")
+    async with cl.Step(name="Message Processing", type="system") as step:
+        step.input = msg.content
         
-        # Get streaming content
-        stream = service.get_streaming_chat_message_content(
-            chat_history=chat_history,
-            settings=execution_settings,
-            kernel=kernel
-        )
-        
-        response = ""
-        async for chunk in stream:
-            if chunk is not None:
-                # Check if the chunk contains a tool call
-                if hasattr(chunk, 'tool_calls') and chunk.tool_calls:
-                    for tool_call in chunk.tool_calls:
-                        # Find the appropriate MCP session for this tool
-                        for connection_name, tools in mcp_tools.items():
-                            if any(t['function']['name'] == tool_call.function.name for t in tools):
-                                mcp_session = cl.user_session.get("mcp_sessions", {}).get(connection_name)
-                                if mcp_session:
-                                    try:
-                                        # Parse tool arguments
-                                        args = json.loads(tool_call.function.arguments)
-                                        # Execute the tool call directly through MCP
-                                        tool_result = await mcp_session.call_tool(
-                                            tool_call.function.name,
-                                            args
-                                        )
-                                        result_msg = f"\nTool {tool_call.function.name} result: {tool_result}\n"
-                                        response += result_msg
-                                        await answer_msg.stream_token(result_msg)
-                                        
-                                        # Add tool result to chat history
-                                        chat_history.add_message(
-                                            "assistant",
-                                            f"Tool {tool_call.function.name} was called with result: {tool_result}"
-                                        )
-                                    except Exception as e:
-                                        error_msg = f"\nError executing tool {tool_call.function.name}: {str(e)}\n"
-                                        response += error_msg
-                                        await answer_msg.stream_token(error_msg)
-                                        logger.error(f"Tool execution error: {str(e)}", exc_info=True)
-                                break
-                
-                response += str(chunk)
-                await answer_msg.stream_token(str(chunk))
-        
-        chat_history.add_assistant_message(response)
-        await answer_msg.update()
-        
-    except Exception as e:
-        logger.error(f"Error processing message: {str(e)}", exc_info=True)
-        await cl.Message(
-            content=f"An error occurred while processing your message: {e}"
-        ).send()
+        # Create a Chainlit message for the response stream
+        answer_msg = cl.Message(content="")
+        await answer_msg.send()
 
+        try:
+            async for content in chat_agent.handle_message(msg.content):
+                await answer_msg.stream_token(content)
+            
+            await answer_msg.update()
+            step.output = "Message processed successfully"
+            
+        except Exception as e:
+            error_msg = f"Error processing message: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            step.output = error_msg
+            await answer_msg.update()
+            raise
 
 @cl.on_mcp_connect
 async def on_mcp(connection, session: ClientSession):
-    """Called when an MCP connection is established."""
+    """Register new MCP connection and its tools."""
     try:
         result = await session.list_tools()
         tools = [{
-            "type": "function",  # Required by Azure OpenAI
+            "type": "function",
             "function": {
                 "name": t.name,
-                "description": t.description[:1024] if t.description else "",  # Truncate to 1024 chars
+                "description": t.description[:1024] if t.description else "",
                 "parameters": {
                     "type": "object",
                     "properties": t.inputSchema.get("properties", {}),
@@ -325,37 +320,75 @@ async def on_mcp(connection, session: ClientSession):
             }
         } for t in result.tools]
         
-        # Store tools in session
-        mcp_tools = cl.user_session.get("mcp_tools", {})
-        mcp_tools[connection.name] = tools
-        cl.user_session.set("mcp_tools", mcp_tools)
-        
-        # Store session in user_session
-        mcp_sessions = cl.user_session.get("mcp_sessions", {})
-        mcp_sessions[connection.name] = session
-        cl.user_session.set("mcp_sessions", mcp_sessions)
-        
-        logger.info(f"MCP connection established: {connection.name}")
-        await cl.Message(f"Connected to {connection.name} MCP server with {len(tools)} tools available.").send()
+        # Get chat agent from session
+        chat_agent = cl.user_session.get("chat_agent")
+        if chat_agent:
+            # Register the new connection
+            chat_agent.register_mcp_connection(connection.name, tools, session)
+            
+            logger.info(f"MCP connection established: {connection.name}")
+            await cl.Message(
+                f"Connected to {connection.name} MCP server with {len(tools)} tools available. "
+                "I can now use these tools to assist you!"
+            ).send()
     except Exception as e:
         logger.error(f"Error in on_mcp: {str(e)}", exc_info=True)
         await cl.Message(f"Error connecting to MCP server: {str(e)}").send()
 
-
 @cl.on_mcp_disconnect
 async def on_mcp_disconnect(name: str, session: ClientSession):
-    """Called when an MCP connection is terminated."""
+    """Handle MCP connection termination."""
     try:
-        # Remove tools and session
-        mcp_tools = cl.user_session.get("mcp_tools", {})
-        mcp_tools.pop(name, None)
-        cl.user_session.set("mcp_tools", mcp_tools)
-        
-        mcp_sessions = cl.user_session.get("mcp_sessions", {})
-        mcp_sessions.pop(name, None)
-        cl.user_session.set("mcp_sessions", mcp_sessions)
+        # Get chat agent from session
+        chat_agent = cl.user_session.get("chat_agent")
+        if chat_agent:
+            # Unregister the connection
+            chat_agent.unregister_mcp_connection(name)
         
         logger.info(f"MCP connection disconnected: {name}")
-        await cl.Message(f"Disconnected from {name} MCP server.").send()
+        await cl.Message(
+            f"Disconnected from {name} MCP server. Related tools are no longer available."
+        ).send()
     except Exception as e:
         logger.error(f"Error in on_mcp_disconnect: {str(e)}", exc_info=True)
+
+async def list_database_tables(msg: cl.Message):
+    """List all tables in the database with detailed steps."""
+    async with cl.Step(name="Database Tables", type="database", show_input=True) as step:
+        step.input = "Fetching all tables from public schema"
+        
+        try:
+            # Execute the SQL query
+            async with cl.Step(name="Execute SQL", type="sql", show_input=True) as sql_step:
+                sql_step.input = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+                
+                result = await mcp_Neon_run_sql(params={
+                    "sql": sql_step.input,
+                    "databaseName": "neondb",
+                    "projectId": "dark-boat-45105135"
+                })
+                
+                sql_step.output = result
+            
+            # Format the results
+            if result and isinstance(result, list):
+                tables = [row.get("table_name") for row in result if row.get("table_name")]
+                if tables:
+                    response = "Found the following tables in the database:\n\n"
+                    for table in tables:
+                        response += f"- `{table}`\n"
+                else:
+                    response = "No tables found in the public schema."
+            else:
+                response = "No tables found or unexpected response format."
+            
+            step.output = response
+            
+            # Send the formatted response
+            await cl.Message(content=response).send()
+            
+        except Exception as e:
+            error_msg = f"Error listing database tables: {str(e)}"
+            step.output = error_msg
+            await cl.Message(content=error_msg).send()
+            logger.error(error_msg, exc_info=True)

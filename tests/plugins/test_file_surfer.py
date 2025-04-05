@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from unittest.mock import patch
 
-from agenticfleet.plugins.file_surfer import FileSurferPlugin, FileInfo
+from agentic_kernel.plugins.file_surfer import FileSurferPlugin, FileInfo
 
 @pytest.fixture
 def temp_dir(tmp_path):

@@ -1,5 +1,5 @@
 def main():
-    print("Hello from agenticfleet-labs!")
+    print("Hello from agentic-kernel!")
 
 
 if __name__ == "__main__":

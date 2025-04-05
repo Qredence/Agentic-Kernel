@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from agenticfleet.agents.base import AgentConfig, BaseAgent
+from agentic_kernel.agents.base import AgentConfig, BaseAgent
 
 
 def test_agent_config_validation():

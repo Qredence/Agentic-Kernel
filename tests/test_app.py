@@ -5,9 +5,9 @@ import pytest
 from semantic_kernel.contents import ChatHistory
 import chainlit as cl
 import semantic_kernel as sk
-from agenticfleet.config.loader import ConfigLoader
-from agenticfleet.agents.base import AgentConfig
-from agenticfleet.app import ChatAgent, on_chat_start, on_message, chat_profile
+from agentic_kernel.config.loader import ConfigLoader
+from agentic_kernel.agents.base import AgentConfig
+from agentic_kernel.app import ChatAgent, on_chat_start, on_message, chat_profile
 
 class AsyncIterator:
     """Helper class to create an async iterator."""
@@ -47,7 +47,7 @@ def mock_config():
 @pytest.fixture
 def mock_config_loader(mock_config):
     """Mock ConfigLoader."""
-    with patch('agenticfleet.app.ConfigLoader') as mock:
+    with patch('agentic_kernel.app.ConfigLoader') as mock:
         mock.return_value.llm_config = mock_config
         mock.return_value.get_model_config.return_value = {
             'temperature': 0.7,

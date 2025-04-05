@@ -4,7 +4,7 @@ import pytest
 import responses
 from pydantic import HttpUrl
 
-from agenticfleet.plugins.web_surfer import WebSurferPlugin, WebSearchResult
+from agentic_kernel.plugins.web_surfer import WebSurferPlugin, WebSearchResult
 
 @pytest.fixture
 def web_surfer():

@@ -1,0 +1,13 @@
+autogen-agentchat
+autogen-ext
+autogen-core
+chainlit==2.4.400
+pydantic
+python-dotenv
+gunicorn
+uvicorn[standard]
+
+semantic-kernel
+azure-ai-inference
+azure-search-documents
+azure-cosmos
