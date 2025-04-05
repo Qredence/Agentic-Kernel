@@ -7,7 +7,7 @@ name = "agentic-kernel"
 version = "0.1.0"
 description = "A Python library for building agentic applications"
 authors = [
-    {name = "Qredence.io", email = "support@qredence.io"},
+    {name = "Qredence.ai", email = "contact@qredence.ai"},
 ]
 dependencies = [
     "pydantic>=2.6.3",
