@@ -1,10 +1,11 @@
 """Main application entry point using Semantic Kernel, Chainlit, and AgenticFleet."""
 
 import os
-
+from typing import Dict, Any, AsyncGenerator
 import chainlit as cl
 import semantic_kernel as sk
-from agentic_kernel.agents.base import AgentConfig, BaseAgent
+from agentic_kernel.config import AgentConfig
+from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.config.loader import ConfigLoader
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin
@@ -19,7 +20,7 @@ from semantic_kernel.contents import ChatHistory
 
 # Load configuration
 config_loader = ConfigLoader()
-llm_config = config_loader.llm_config
+config = config_loader.config
 
 # Environment variables
 AZURE_OPENAI_API_KEY = os.environ.get("AZURE_OPENAI_API_KEY")
@@ -28,7 +29,7 @@ AZURE_OPENAI_API_VERSION = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-02-1
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Get default model configuration
-default_config = llm_config.default_config
+default_config = config.default_config
 AZURE_DEPLOYMENT_NAME = default_config.get("model", "gpt-4o")
 
 

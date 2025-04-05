@@ -11,3 +11,7 @@ semantic-kernel
 azure-ai-inference
 azure-search-documents
 azure-cosmos
+
+# Testing dependencies
+psutil
+responses

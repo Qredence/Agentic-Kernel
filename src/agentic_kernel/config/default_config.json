@@ -3,31 +3,37 @@
     "endpoints": {
         "azure_openai": {
             "type": "azure_openai",
-            "endpoint_url": "YOUR_AZURE_ENDPOINT",
+            "endpoint_url": "https://agentic-azopenai-sweden.openai.azure.com",
             "api_version": "2024-02-15-preview",
-            "api_key": "YOUR_API_KEY",
-            "default_model": "gpt-4",
+            "api_key": "$AZURE_OPENAI_API_KEY",
+            "default_model": "gpt-4o-mini",
             "models": {
-                "gpt-4": {
-                    "model_name": "gpt-4",
+                "gpt-4o-mini": {
+                    "model_name": "gpt-4o-mini",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
                     "frequency_penalty": 0,
                     "store": true,
-                    "metadata": {},
+                    "metadata": {
+                        "user": "gpt-4o-mini",
+                        "category": "agentic-kernel"
+                    },
                     "multimodal": false
                 },
-                "gpt-4-vision": {
-                    "model_name": "gpt-4-vision",
+                "gpt-4o": {
+                    "model_name": "gpt-4o",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
                     "frequency_penalty": 0,
                     "store": true,
-                    "metadata": {},
+                    "metadata": {
+                        "user": "gpt-4o",
+                        "category": "agentic-kernel"
+                    },
                     "multimodal": true
                 }
             }
@@ -35,36 +41,42 @@
         "openai": {
             "type": "openai",
             "endpoint_url": "https://api.openai.com/v1",
-            "api_key": "YOUR_API_KEY",
-            "default_model": "gpt-4-turbo-preview",
+            "api_key": "$OPENAI_API_KEY",
+            "default_model": "gpt-4o-mini",
             "models": {
-                "gpt-4-turbo-preview": {
-                    "model_name": "gpt-4-turbo-preview",
+                "gpt-4o-mini": {
+                    "model_name": "gpt-4o-mini",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
                     "frequency_penalty": 0,
                     "store": true,
-                    "metadata": {},
+                    "metadata": {
+                        "user": "gpt-4o-mini",
+                        "category": "agentic-kernel"
+                    },
                     "multimodal": false
                 },
-                "gpt-4-vision-preview": {
-                    "model_name": "gpt-4-vision-preview",
+                "gpt-4o": {
+                    "model_name": "gpt-4o",
                     "max_tokens": 4096,
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "presence_penalty": 0,
                     "frequency_penalty": 0,
                     "store": true,
-                    "metadata": {},
+                    "metadata": {
+                        "user": "gpt-4o",
+                        "category": "agentic-kernel"
+                    },
                     "multimodal": true
                 }
             }
         }
     },
-    "default_endpoint": null,
-    "default_model": null,
+    "default_endpoint": "azure_openai",
+    "default_model": "gpt-4o-mini",
     "request_timeout": 300,
     "retry_on_failure": true,
     "max_retries": 3,
@@ -79,9 +91,14 @@
                     "type": "OrchestratorAgent",
                     "description": "Agent responsible for planning, task delegation, and coordination",
                     "llm_mapping": {
-                        "model": "gpt-4-turbo-preview",
+                        "model": "gpt-4o-mini",
                         "temperature": 0.7,
-                        "max_tokens": 2000
+                        "max_tokens": 2000,
+                        "store": true,
+                        "metadata": {
+                            "user": "orchestrator",
+                            "category": "agentic-kernel"
+                        }
                     },
                     "config": {}
                 },
@@ -90,9 +107,14 @@
                     "type": "WebSurferAgent",
                     "description": "Agent for web search and information retrieval",
                     "llm_mapping": {
-                        "model": "gpt-4-turbo-preview",
+                        "model": "gpt-4o-mini",
                         "temperature": 0.5,
-                        "max_tokens": 1500
+                        "max_tokens": 1500,
+                        "store": true,
+                        "metadata": {
+                            "user": "web_surfer",
+                            "category": "agentic-kernel"
+                        }
                     },
                     "config": {
                         "max_search_results": 5,
@@ -104,9 +126,14 @@
                     "type": "FileSurferAgent",
                     "description": "Agent for file operations and content analysis",
                     "llm_mapping": {
-                        "model": "gpt-3.5-turbo",
+                        "model": "gpt-4o-mini",
                         "temperature": 0.3,
-                        "max_tokens": 1000
+                        "max_tokens": 1000,
+                        "store": true,
+                        "metadata": {
+                            "user": "file_surfer",
+                            "category": "agentic-kernel"
+                        }   
                     },
                     "config": {
                         "max_file_size": 10000000,
@@ -118,9 +145,14 @@
                     "type": "CoderAgent",
                     "description": "Agent for code generation and analysis",
                     "llm_mapping": {
-                        "model": "gpt-4-turbo-preview",
+                        "model": "gpt-4o-mini",
                         "temperature": 0.2,
-                        "max_tokens": 3000
+                        "max_tokens": 3000,
+                        "store": true,
+                        "metadata": {
+                            "user": "coder",
+                            "category": "agentic-kernel"
+                        }   
                     },
                     "config": {}
                 },
@@ -129,9 +161,14 @@
                     "type": "TerminalAgent",
                     "description": "Agent for secure command execution",
                     "llm_mapping": {
-                        "model": "gpt-4-turbo-preview",
+                        "model": "gpt-4o-mini",
                         "temperature": 0.2,
-                        "max_tokens": 1000
+                        "max_tokens": 1000,
+                        "store": true,
+                        "metadata": {
+                            "user": "terminal",
+                            "category": "agentic-kernel"
+                        }   
                     },
                     "config": {
                         "sandbox_type": "docker",
@@ -140,7 +177,7 @@
                         "timeout": 30,
                         "working_directory": "/workspace",
                         "sandbox_options": {
-                            "image": "python:3.9-alpine",
+                            "image": "python:3.11-alpine",
                             "read_only": true,
                             "network": "none"
                         }
@@ -157,7 +194,7 @@
                 "max_parallel_tasks": 3,
                 "max_tokens_per_request": 4000,
                 "terminal_sandbox": {
-                    "image": "python:3.9-alpine",
+                    "image": "python:3.11-alpine",
                     "network": "none",
                     "memory_limit": "512m",
                     "cpu_limit": 1,

@@ -10,6 +10,10 @@ class LLMMapping(BaseModel):
         default="gpt-4o-mini",
         description="The LLM model to use (e.g., gpt-4, gpt-3.5-turbo)"
     )
+    endpoint: constr(min_length=1) = Field(
+        default="azure_openai",
+        description="The endpoint to use (e.g., azure_openai)"
+    )
     temperature: float = Field(
         default=0.7,
         ge=0.0,

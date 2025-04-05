@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
 # Cursor Rules Directory
 
 This directory contains the development rules and guidelines for the AgenticFleet project. The rules are organized into focused, single-responsibility files using MDC (Markdown Configuration) format.

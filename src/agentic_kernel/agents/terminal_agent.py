@@ -3,7 +3,7 @@
 import os
 import re
 from typing import Dict, Any, Optional, List, Union
-from .base import Agent
+from .base import BaseAgent
 from .sandbox import Sandbox, DockerSandbox
 
 

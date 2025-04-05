@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional, List
 
 from pydantic import ValidationError
 
-from agentic_kernel.agents.base import Agent
+from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin, FileInfo
 
 # Simple keywords to guess the desired action

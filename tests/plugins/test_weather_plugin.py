@@ -1,6 +1,6 @@
 """Tests for the WeatherPlugin."""
 import pytest
-from src.agenticfleet.plugins.weather_plugin import WeatherPlugin
+from agentic_kernel.plugins.weather_plugin import WeatherPlugin
 
 @pytest.fixture
 def weather_plugin():

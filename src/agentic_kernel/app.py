@@ -21,7 +21,7 @@ import json
 import importlib
 
 from agentic_kernel.config.loader import ConfigLoader
-from agentic_kernel.config import AgentConfig
+from agentic_kernel.config import AgentConfig, LLMMapping
 from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin
@@ -54,7 +54,7 @@ DEPLOYMENT_NAMES = {
 }
 
 # Get default model configuration
-default_config = config.default_config
+default_config = config.default_model
 DEFAULT_DEPLOYMENT = "gpt-4o-mini"  # Changed default to Fast profile's model
 
 @cl.set_chat_profiles
@@ -106,7 +106,7 @@ class MCPToolRegistry:
         """Check if there are any registered tools."""
         return len(self.tools) == 0
 
-class DynamicChatAgent(BaseAgent):
+class ChatAgent(BaseAgent):
     """Enhanced chat agent with dynamic MCP tool support."""
     
     def __init__(self, config: AgentConfig, kernel: sk.Kernel, config_loader: Optional[ConfigLoader] = None):
@@ -148,8 +148,8 @@ class DynamicChatAgent(BaseAgent):
                 
                 # Get model configuration
                 model_config = self._config_loader.get_model_config(
-                    endpoint=self.config.endpoint,
-                    model=self.config.model
+                    endpoint=self.config.llm_mapping.endpoint,
+                    model=self.config.llm_mapping.model
                 )
                 
                 # Update execution settings with model configuration
@@ -199,197 +199,166 @@ class DynamicChatAgent(BaseAgent):
                                             error_msg = f"\nError executing tool {tool_call.function.name}: {str(e)}\n"
                                             response += error_msg
                                             yield error_msg
-                            
-                            response += str(chunk)
-                            await llm_step.stream_token(str(chunk))
-                            yield str(chunk)
-                    
-                    llm_step.output = response
+                            else:
+                                # Handle regular text content
+                                content = chunk.content if hasattr(chunk, 'content') else str(chunk)
+                                if content:
+                                    response += content
+                                    yield content
                 
+                # Add assistant's response to chat history
                 self.chat_history.add_assistant_message(response)
-                step.output = response
                 
         except Exception as e:
-            logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
-            raise
-
-# Create a global chat agent instance
-chat_agent = None
+            error_msg = f"Error processing message: {str(e)}"
+            logger.error(error_msg)
+            yield error_msg
 
 @cl.on_chat_start
-async def start_chat():
-    """Initialize the chat session with dynamic tool support."""
-    global chat_agent
-    
-    # Get the selected chat profile
-    selected_profile = cl.user_session.get("chat_profile")
-    
-    # Determine deployment name based on profile
-    if selected_profile in DEPLOYMENT_NAMES:
-        deployment_name = DEPLOYMENT_NAMES[selected_profile]
-        logger.info(f"Using deployment {deployment_name} for profile {selected_profile}")
-    else:
-        deployment_name = DEFAULT_DEPLOYMENT
-        if selected_profile:
-            logger.warning(f"Unknown profile {selected_profile}, using default deployment {deployment_name}")
-        else:
-            logger.warning(f"No profile selected, using default deployment {deployment_name}")
-    
-    # Setup Semantic Kernel
-    kernel = sk.Kernel()
-
+async def on_chat_start():
+    """Initialize chat session."""
     try:
-        # Add Azure OpenAI Chat Completion service
-        ai_service = AzureChatCompletion(
-            service_id="azure_openai",
+        # Check for required environment variables
+        if not all([AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT]):
+            msg = "Required environment variables (AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT) are not set."
+            await cl.Message(content=msg).send()
+            return
+
+        # Initialize kernel with Azure OpenAI service
+        kernel = sk.Kernel()
+        
+        # Get the selected profile or use default
+        profile = cl.user_session.get("chat_profile")
+        deployment = DEPLOYMENT_NAMES.get(profile, DEFAULT_DEPLOYMENT)
+        
+        # Configure Azure OpenAI service
+        azure_chat_service = AzureChatCompletion(
+            deployment_name=deployment,
+            endpoint=AZURE_OPENAI_ENDPOINT,
             api_key=AZURE_OPENAI_API_KEY,
-            endpoint=AZURE_OPENAI_ENDPOINT,
             api_version=AZURE_OPENAI_API_VERSION,
-            deployment_name=deployment_name,
         )
-        kernel.add_service(ai_service)
+        kernel.add_service("azure_openai", azure_chat_service)
         
-        # Initialize the chat agent
-        config = AgentConfig(
-            name=f"AgenticFleet-{selected_profile}" if selected_profile else "AgenticFleet",
-            endpoint=AZURE_OPENAI_ENDPOINT,
-            model=deployment_name
+        # Create chat agent with selected profile configuration
+        agent_config = AgentConfig(
+            name="chat_agent",
+            type="ChatAgent",
+            description="A chat agent that helps users with various tasks",
+            llm_mapping=LLMMapping(
+                model=deployment,
+                endpoint="azure_openai"
+            )
         )
-        chat_agent = DynamicChatAgent(config=config, kernel=kernel, config_loader=config_loader)
+        chat_agent = ChatAgent(config=agent_config, kernel=kernel)
         
-        # Store in session
+        # Store components in session
+        cl.user_session.set("kernel", kernel)
+        cl.user_session.set("ai_service", azure_chat_service)
         cl.user_session.set("chat_agent", chat_agent)
-        cl.user_session.set("selected_profile", selected_profile)
         
-        profile_info = f" using the **{selected_profile}** profile" if selected_profile else ""
-        await cl.Message(
-            content=f"I'm ready to help{profile_info}! I'll adapt to any tools that become available."
-        ).send()
+        # Send welcome message
+        welcome_msg = (
+            "👋 Hello! I'm your AI assistant. I can help you with various tasks.\n\n"
+            "💡 I'm powered by Azure OpenAI and can adapt my capabilities based on the tools available."
+        )
+        await cl.Message(content=welcome_msg).send()
         
     except Exception as e:
-        error_msg = f"Failed to initialize chat agent: {e}"
-        logger.error(error_msg, exc_info=True)
+        error_msg = f"Error initializing chat: {str(e)}"
+        logger.error(error_msg)
         await cl.Message(content=error_msg).send()
-        return
 
 @cl.on_message
 async def on_message(msg: cl.Message):
-    """Handle incoming messages with dynamic tool support."""
-    chat_agent = cl.user_session.get("chat_agent")
-    if not chat_agent:
-        await cl.Message(
-            content="Chat session not initialized properly. Please restart the chat."
-        ).send()
-        return
-
-    async with cl.Step(name="Message Processing", type="system") as step:
-        step.input = msg.content
+    """Handle incoming chat messages."""
+    try:
+        chat_agent = cl.user_session.get("chat_agent")
+        if not chat_agent:
+            await cl.Message(
+                content="Chat agent not initialized properly. Please restart the chat."
+            ).send()
+            return
         
-        # Create a Chainlit message for the response stream
-        answer_msg = cl.Message(content="")
-        await answer_msg.send()
-
-        try:
-            async for content in chat_agent.handle_message(msg.content):
-                await answer_msg.stream_token(content)
-            
-            await answer_msg.update()
-            step.output = "Message processed successfully"
-            
-        except Exception as e:
-            error_msg = f"Error processing message: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            step.output = error_msg
-            await answer_msg.update()
-            raise
+        response = cl.Message(content="")
+        async for chunk in chat_agent.handle_message(msg.content):
+            await response.stream_token(chunk)
+        
+        await response.send()
+        
+    except Exception as e:
+        error_msg = f"Error processing message: {str(e)}"
+        logger.error(error_msg)
+        await cl.Message(content=error_msg).send()
 
 @cl.on_mcp_connect
 async def on_mcp(connection, session: ClientSession):
-    """Register new MCP connection and its tools."""
+    """Handle MCP connection and register tools."""
     try:
-        result = await session.list_tools()
-        tools = [{
-            "type": "function",
-            "function": {
-                "name": t.name,
-                "description": t.description[:1024] if t.description else "",
-                "parameters": {
-                    "type": "object",
-                    "properties": t.inputSchema.get("properties", {}),
-                    "required": t.inputSchema.get("required", [])
-                }
-            }
-        } for t in result.tools]
-        
-        # Get chat agent from session
         chat_agent = cl.user_session.get("chat_agent")
-        if chat_agent:
-            # Register the new connection
-            chat_agent.register_mcp_connection(connection.name, tools, session)
-            
-            logger.info(f"MCP connection established: {connection.name}")
-            await cl.Message(
-                f"Connected to {connection.name} MCP server with {len(tools)} tools available. "
-                "I can now use these tools to assist you!"
-            ).send()
+        if not chat_agent:
+            logger.warning("Chat agent not found in session during MCP connection")
+            return
+        
+        # Register the connection and its tools with the chat agent
+        chat_agent.register_mcp_connection(
+            name=connection.name,
+            tools=connection.tools,
+            session=session
+        )
+        
+        # Notify user about new capabilities
+        tool_names = [t['function']['name'] for t in connection.tools]
+        msg = (
+            f"✨ Connected to {connection.name}!\n\n"
+            f"New capabilities added:\n"
+            f"- " + "\n- ".join(tool_names)
+        )
+        await cl.Message(content=msg).send()
+        
     except Exception as e:
-        logger.error(f"Error in on_mcp: {str(e)}", exc_info=True)
-        await cl.Message(f"Error connecting to MCP server: {str(e)}").send()
+        error_msg = f"Error handling MCP connection: {str(e)}"
+        logger.error(error_msg)
+        await cl.Message(content=error_msg).send()
 
 @cl.on_mcp_disconnect
 async def on_mcp_disconnect(name: str, session: ClientSession):
-    """Handle MCP connection termination."""
+    """Handle MCP disconnection."""
     try:
-        # Get chat agent from session
         chat_agent = cl.user_session.get("chat_agent")
         if chat_agent:
-            # Unregister the connection
             chat_agent.unregister_mcp_connection(name)
+            
+        msg = f"🔌 Disconnected from {name}. Related capabilities have been removed."
+        await cl.Message(content=msg).send()
         
-        logger.info(f"MCP connection disconnected: {name}")
-        await cl.Message(
-            f"Disconnected from {name} MCP server. Related tools are no longer available."
-        ).send()
     except Exception as e:
-        logger.error(f"Error in on_mcp_disconnect: {str(e)}", exc_info=True)
+        error_msg = f"Error handling MCP disconnection: {str(e)}"
+        logger.error(error_msg)
+        await cl.Message(content=error_msg).send()
 
+@cl.action_callback("list_tables")
 async def list_database_tables(msg: cl.Message):
-    """List all tables in the database with detailed steps."""
-    async with cl.Step(name="Database Tables", type="database", show_input=True) as step:
-        step.input = "Fetching all tables from public schema"
+    """List tables in the connected database."""
+    try:
+        chat_agent = cl.user_session.get("chat_agent")
+        if not chat_agent:
+            await cl.Message(content="Chat agent not initialized.").send()
+            return
         
-        try:
-            # Execute the SQL query
-            async with cl.Step(name="Execute SQL", type="sql", show_input=True) as sql_step:
-                sql_step.input = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
-                
-                result = await mcp_Neon_run_sql(params={
-                    "sql": sql_step.input,
-                    "databaseName": "neondb",
-                    "projectId": "dark-boat-45105135"
-                })
-                
-                sql_step.output = result
-            
-            # Format the results
-            if result and isinstance(result, list):
-                tables = [row.get("table_name") for row in result if row.get("table_name")]
-                if tables:
-                    response = "Found the following tables in the database:\n\n"
-                    for table in tables:
-                        response += f"- `{table}`\n"
-                else:
-                    response = "No tables found in the public schema."
-            else:
-                response = "No tables found or unexpected response format."
-            
-            step.output = response
-            
-            # Send the formatted response
-            await cl.Message(content=response).send()
-            
-        except Exception as e:
-            error_msg = f"Error listing database tables: {str(e)}"
-            step.output = error_msg
-            await cl.Message(content=error_msg).send()
-            logger.error(error_msg, exc_info=True)
+        # Check if we have database tools available
+        if chat_agent.mcp_registry.is_empty():
+            await cl.Message(content="No database connection available.").send()
+            return
+        
+        # Use the chat agent to handle the request
+        response = cl.Message(content="")
+        async for chunk in chat_agent.handle_message("List all tables in the database"):
+            await response.stream_token(chunk)
+        
+        await response.send()
+        
+    except Exception as e:
+        error_msg = f"Error listing database tables: {str(e)}"
+        logger.error(error_msg)
+        await cl.Message(content=error_msg).send() 

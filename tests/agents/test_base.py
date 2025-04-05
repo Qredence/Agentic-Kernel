@@ -2,8 +2,10 @@
 
 import pytest
 from pydantic import ValidationError
-
-from agentic_kernel.agents.base import AgentConfig, BaseAgent
+from unittest.mock import MagicMock
+from agentic_kernel.config import AgentConfig
+from agentic_kernel.agents.base import BaseAgent
+from agentic_kernel.types import Task
 
 
 def test_agent_config_validation():

@@ -1,7 +1,7 @@
 """CoderAgent implementation for code generation, review, and refactoring."""
 
 from typing import Dict, Any, Optional, List
-from .base import Agent
+from .base import BaseAgent
 
 
 class CoderAgent(Agent):

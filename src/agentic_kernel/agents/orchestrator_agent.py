@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 import psutil
 
-from .base import Agent
+from .base import BaseAgent
 from ..ledgers import TaskLedger, ProgressLedger, PlanStep, ProgressEntry
 
 logger = logging.getLogger(__name__)

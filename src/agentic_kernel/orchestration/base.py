@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import List, Dict, Any, Optional
 
-from agentic_kernel.agents.base import Agent
+from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.ledgers.base import TaskLedger, ProgressLedger
 
 class Orchestrator(Agent):
