@@ -12,6 +12,7 @@ The WebSurfer plugin provides web search and webpage summarization capabilities:
 - `summarize_webpage(url: HttpUrl)`: Fetches and summarizes the content of a webpage
 
 Example usage:
+
 ```python
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin
 
@@ -40,6 +41,7 @@ The FileSurfer plugin provides file system operations with safety features:
 - `search_files(text: str, file_pattern: str = "*")`: Searches for files containing specific text
 
 Example usage:
+
 ```python
 from pathlib import Path
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin
@@ -69,12 +71,14 @@ for file in matching_files:
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/AgenticFleet/AgenticFleet-Labs.git
 cd AgenticFleet-Labs
 ```
 
 2. Install the package with all dependencies:
+
 ```bash
 pip install -e ".[test,dev]"
 ```
@@ -82,6 +86,7 @@ pip install -e ".[test,dev]"
 ## Development
 
 1. Set up the development environment:
+
 ```bash
 # Install development dependencies
 pip install -e ".[test,dev]"
@@ -91,11 +96,13 @@ pre-commit install
 ```
 
 2. Run tests:
+
 ```bash
 pytest
 ```
 
 3. Run linters:
+
 ```bash
 # Format code
 black .
@@ -119,3 +126,38 @@ ruff check .
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Codebase Maintenance
+
+This project includes tools to help maintain a clean and well-organized codebase:
+
+### Maintenance Script
+
+The `maintain.sh` script provides several commands to help with codebase maintenance:
+
+```bash
+# Clean up Python cache files
+./maintain.sh clean
+
+# Check for potential duplicate files
+./maintain.sh duplicates
+
+# Format Python code with black and isort
+./maintain.sh format
+
+# Run tests
+./maintain.sh test
+
+# Run all maintenance tasks
+./maintain.sh all
+```
+
+### Development Guidelines
+
+- Use a single virtual environment (.venv) for development
+- Keep the source code in `src/agentic_kernel` clean and focused
+- Place examples and demos in the `examples/` directory
+- Add tests for new functionality in the `tests/` directory
+- Follow the rules in `.cursor/rules/` for consistent development
+
+For more detailed maintenance guidelines, see `.cursor/rules/maintenance.rules.mdc`.

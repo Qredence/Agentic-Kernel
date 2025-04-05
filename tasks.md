@@ -3,12 +3,19 @@
 ## Completed Tasks
 
 ### Core Infrastructure
+
 - [x] Set up project structure
 - [x] Configure development environment
 - [x] Set up testing framework
 - [x] Add linting and formatting tools
+- [x] Clean up codebase structure and remove redundant files
+  - [x] Created maintenance scripts and tools (maintain.sh)
+  - [x] Removed duplicate virtual environments and cache files
+  - [x] Added maintenance rules in .cursor/rules/
+  - [x] Created CLEANUP_SUMMARY.md with detailed findings and next steps
 
 ### Plugins
+
 - [x] Implement WebSurfer plugin
   - [x] Basic web search functionality using DuckDuckGo
   - [x] Webpage summarization
@@ -23,6 +30,7 @@
   - [x] Unit tests with temporary files
 
 ### Documentation
+
 - [x] Create README.md with usage examples
 - [x] Document plugin APIs
 - [x] Add development setup instructions
@@ -50,12 +58,14 @@
 ## Pending Tasks
 
 ### Core Infrastructure
+
 - [ ] Add CI/CD pipeline
 - [ ] Set up code coverage reporting
 - [ ] Add pre-commit hooks
 - [ ] Create CONTRIBUTING.md guidelines
 
 ### Plugins
+
 - [ ] Enhance WebSurfer plugin
   - [ ] Add support for multiple search engines
   - [ ] Implement rate limiting
@@ -70,30 +80,35 @@
   - [ ] Add integration tests
 
 ### Documentation
+
 - [ ] Add API reference documentation
 - [ ] Create user guide with advanced examples
 - [ ] Add architecture documentation
 - [ ] Create changelog
 
 ### Testing
+
 - [ ] Add integration tests
 - [ ] Add performance tests
 - [ ] Add security tests
 - [ ] Add load tests
 
 ### Security
+
 - [ ] Add input validation
 - [ ] Implement rate limiting
 - [ ] Add authentication support
 - [ ] Add authorization controls
 
 ### Features
+
 - [ ] Add support for more search engines
 - [ ] Add support for more file types
 - [ ] Add support for cloud storage
 - [ ] Add support for databases
 
 ### Magentic-One Multi-Agent Workflow Integration (Continued)
+
 - [ ] **Phase 5: Testing (TDD) (`tests/`)**
   - [ ] Add Unit Tests for Agents (with mocks), Ledgers, Orchestrator components
   - [ ] Add Integration Tests for multi-agent workflows (including `TerminalAgent` sandboxing tests)
@@ -103,6 +118,7 @@
   - [ ] Add examples demonstrating complex task execution with the workflow
 
 ## Future Enhancements
+
 - [ ] Add support for more LLM providers
 - [ ] Add support for more languages
 - [ ] Add support for more platforms
@@ -111,6 +127,7 @@
 ## Refactoring for PyPI (agentic-kernel)
 
 ### Phase 1: Core Library Isolation
+
 - [x] Rename `src/agenticfleet` directory to `src/agentic_kernel`
 - [x] Update build target in `pyproject.toml`
 - [x] Refactor configuration management to be library-friendly
@@ -127,21 +144,25 @@
   - [x] Create CLI workflow example
   - [ ] Create FastAPI integration example
   - [ ] Create Jupyter notebook example
+- [x] Clean up redundant files, Python environments, and optimize project structure
 - [ ] Update documentation to reflect new structure
 
 ### Phase 2: API Refinement
+
 - [ ] Review and document all public APIs
 - [ ] Implement proper versioning
 - [ ] Add type hints and docstrings
 - [ ] Create API reference documentation
 
 ### Phase 3: Testing and Quality
+
 - [ ] Set up test infrastructure
 - [ ] Write unit tests for core functionality
 - [ ] Add integration tests
 - [ ] Set up CI/CD pipeline
 
 ### Phase 4: Documentation and Examples
+
 - [ ] Write comprehensive README
 - [ ] Create quickstart guide
 - [ ] Add API documentation
@@ -149,8 +170,9 @@
 - [ ] Add contributing guidelines
 
 ### Phase 5: Publication
+
 - [ ] Choose license
 - [ ] Set up package metadata
 - [ ] Create PyPI account
 - [ ] Test package installation
-- [ ] Publish to PyPI 
+- [ ] Publish to PyPI

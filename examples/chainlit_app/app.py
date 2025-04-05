@@ -1,9 +1,13 @@
 """Main application entry point using Semantic Kernel, Chainlit, and AgenticFleet."""
 
 import os
-from pathlib import Path
+
 import chainlit as cl
 import semantic_kernel as sk
+from agentic_kernel.agents.base import AgentConfig, BaseAgent
+from agentic_kernel.config.loader import ConfigLoader
+from agentic_kernel.plugins.file_surfer import FileSurferPlugin
+from agentic_kernel.plugins.web_surfer import WebSurferPlugin
 from semantic_kernel.connectors.ai.function_choice_behavior import (
     FunctionChoiceBehavior,
 )
@@ -12,11 +16,6 @@ from semantic_kernel.connectors.ai.open_ai import (
     AzureChatPromptExecutionSettings,
 )
 from semantic_kernel.contents import ChatHistory
-
-from agentic_kernel.config.loader import ConfigLoader
-from agentic_kernel.agents.base import AgentConfig, BaseAgent
-from agentic_kernel.plugins.web_surfer import WebSurferPlugin
-from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 
 # Load configuration
 config_loader = ConfigLoader()
@@ -35,33 +34,33 @@ AZURE_DEPLOYMENT_NAME = default_config.get("model", "gpt-4o")
 
 class ChatAgent(BaseAgent):
     """Chat agent implementation."""
-    
+
     def __init__(self, config: AgentConfig, kernel: sk.Kernel):
         """Initialize chat agent with config and kernel."""
         self.config = config
         self.kernel = kernel
         self.chat_history = ChatHistory()
-    
+
     async def handle_message(self, message: str) -> str:
         """Handle incoming chat message."""
         self.chat_history.add_user_message(message)
-        
+
         execution_settings = AzureChatPromptExecutionSettings(
             service_id="azure_openai",
             function_choice_behavior=FunctionChoiceBehavior.Auto(),
         )
-        
+
         # Get model configuration
         model_config = config_loader.get_model_config(
             endpoint=self.config.endpoint,
             model=self.config.model
         )
-        
+
         # Update execution settings with model configuration
         for key, value in model_config.items():
             if hasattr(execution_settings, key):
                 setattr(execution_settings, key, value)
-        
+
         response = ""
         async for update, _ in self.kernel.get_service("azure_openai").get_streaming_chat_message_content(
             chat_history=self.chat_history,
@@ -71,7 +70,7 @@ class ChatAgent(BaseAgent):
             if update is not None:
                 response += str(update)
                 yield str(update)
-        
+
         self.chat_history.add_assistant_message(response)
 
 
@@ -137,7 +136,7 @@ async def on_message(message: cl.Message):
 
     # Create a Chainlit message for the response stream
     answer_msg = cl.Message(content="")
-    
+
     try:
         async for content_chunk in chat_agent.handle_message(message.content):
             await answer_msg.stream_token(content_chunk)

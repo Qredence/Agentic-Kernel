@@ -34,6 +34,7 @@ venv/
 env/
 ENV/
 .venv/
+.venv_*/
 
 # IDE
 .idea/
@@ -51,3 +52,21 @@ htmlcov/
 
 # IDE
 /.cursor
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+.DS_Store
+.files/
+
+# Build artifacts
+node_modules/
+
+# Local scripts for maintenance (not required for the codebase itself)
+cleanup.py
+check_duplicates.py
