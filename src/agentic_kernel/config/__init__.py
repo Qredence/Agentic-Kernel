@@ -1,15 +1,17 @@
-"""Configuration management for agentic-kernel."""
+"""Configuration module for agentic-kernel."""
 
-from .loader import (
-    ConfigLoader,
-    KernelConfig,
-    EndpointConfig,
-    ModelConfig,
+from .agent_team import (
+    AgentTeamConfig,
+    AgentConfig,
+    LLMMapping,
+    SecurityPolicy,
+    DockerSandboxConfig
 )
 
 __all__ = [
-    "ConfigLoader",
-    "KernelConfig",
-    "EndpointConfig",
-    "ModelConfig",
+    "AgentTeamConfig",
+    "AgentConfig",
+    "LLMMapping",
+    "SecurityPolicy",
+    "DockerSandboxConfig"
 ] 

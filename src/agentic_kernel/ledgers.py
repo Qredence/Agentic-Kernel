@@ -1,247 +1,181 @@
-"""Ledger implementations for tracking tasks and progress in the agentic kernel."""
+"""Ledger implementations for tracking tasks and progress."""
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from dataclasses import dataclass, field
+import asyncio
+import json
 
-
-@dataclass
-class TaskEntry:
-    """A single task entry in the task ledger."""
-    id: str
-    description: str
-    assigned_agent: str
-    created_at: datetime = field(default_factory=datetime.now)
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ProgressEntry:
-    """A single progress entry in the progress ledger."""
-    task_id: str
-    status: str  # 'pending', 'in_progress', 'completed', 'failed'
-    result: Optional[Dict[str, Any]] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
-    metrics: Dict[str, Any] = field(default_factory=dict)
+from .types import Task, WorkflowStep
 
 
 class TaskLedger:
-    """Manages and tracks tasks in the workflow."""
+    """Ledger for tracking task execution and status.
+    
+    Attributes:
+        tasks: Dictionary mapping task IDs to task details
+        task_results: Dictionary mapping task IDs to execution results
+        task_metrics: Dictionary mapping task IDs to performance metrics
+    """
 
     def __init__(self):
         """Initialize the task ledger."""
-        self.tasks: Dict[str, TaskEntry] = {}
-        self.task_counter = 0
+        self.tasks: Dict[str, Task] = {}
+        self.task_results: Dict[str, Dict[str, Any]] = {}
+        self.task_metrics: Dict[str, Dict[str, Any]] = {}
+        self._lock = asyncio.Lock()
 
-    def add_task(
-        self,
-        description: str,
-        assigned_agent: str,
-        dependencies: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> str:
-        """Add a new task to the ledger.
+    async def add_task(self, task: Task) -> str:
+        """Add a task to the ledger.
         
         Args:
-            description: Description of the task
-            assigned_agent: Name of the agent assigned to the task
-            dependencies: Optional list of task IDs this task depends on
-            metadata: Optional additional task metadata
+            task: Task object to add
             
         Returns:
-            The ID of the newly created task
+            Task ID
         """
-        self.task_counter += 1
-        task_id = f"task_{self.task_counter}"
-        
-        self.tasks[task_id] = TaskEntry(
-            id=task_id,
-            description=description,
-            assigned_agent=assigned_agent,
-            dependencies=dependencies or [],
-            metadata=metadata or {}
-        )
-        
-        return task_id
+        async with self._lock:
+            task_id = f"{task.name}_{datetime.now().timestamp()}"
+            self.tasks[task_id] = task
+            return task_id
 
-    def get_task(self, task_id: str) -> Optional[TaskEntry]:
-        """Retrieve a task by its ID.
+    async def get_task(self, task_id: str) -> Optional[Task]:
+        """Get a task by ID.
         
         Args:
-            task_id: The ID of the task to retrieve
+            task_id: ID of the task to retrieve
             
         Returns:
-            The task entry if found, None otherwise
+            Task object if found, None otherwise
         """
         return self.tasks.get(task_id)
 
-    def update_task(self, task_id: str, **updates) -> bool:
-        """Update a task's attributes.
+    async def update_task_result(self, task_id: str, result: Dict[str, Any]):
+        """Update the result of a task.
         
         Args:
-            task_id: The ID of the task to update
-            **updates: Keyword arguments of attributes to update
-            
-        Returns:
-            True if the task was updated, False if not found
+            task_id: ID of the task
+            result: Task execution result
         """
-        if task_id not in self.tasks:
-            return False
-            
-        task = self.tasks[task_id]
-        for key, value in updates.items():
-            if hasattr(task, key):
-                setattr(task, key, value)
-        return True
+        async with self._lock:
+            self.task_results[task_id] = result
 
-    def get_dependent_tasks(self, task_id: str) -> List[TaskEntry]:
-        """Get all tasks that depend on the given task.
+    async def update_task_metrics(self, task_id: str, metrics: Dict[str, Any]):
+        """Update metrics for a task.
         
         Args:
-            task_id: The ID of the task to find dependents for
+            task_id: ID of the task
+            metrics: Task performance metrics
+        """
+        async with self._lock:
+            self.task_metrics[task_id] = metrics
+
+    def get_task_history(self, task_id: str) -> Dict[str, Any]:
+        """Get the complete history of a task.
+        
+        Args:
+            task_id: ID of the task
             
         Returns:
-            List of task entries that depend on the given task
+            Dictionary containing task details, results, and metrics
         """
-        return [
-            task for task in self.tasks.values()
-            if task_id in task.dependencies
-        ]
+        return {
+            "task": self.tasks.get(task_id),
+            "result": self.task_results.get(task_id),
+            "metrics": self.task_metrics.get(task_id)
+        }
 
-    def get_all_tasks(self) -> List[TaskEntry]:
-        """Get all tasks in the ledger.
+    def export_ledger(self) -> str:
+        """Export the ledger data as JSON.
         
         Returns:
-            List of all task entries
+            JSON string containing ledger data
         """
-        return list(self.tasks.values())
+        data = {
+            "tasks": {k: v.dict() for k, v in self.tasks.items()},
+            "results": self.task_results,
+            "metrics": self.task_metrics
+        }
+        return json.dumps(data, indent=2)
 
 
 class ProgressLedger:
-    """Tracks the progress and results of task execution."""
+    """Ledger for tracking workflow progress.
+    
+    Attributes:
+        workflows: Dictionary mapping workflow IDs to workflow details
+        step_status: Dictionary mapping step IDs to execution status
+        dependencies: Dictionary mapping step IDs to dependency information
+    """
 
     def __init__(self):
         """Initialize the progress ledger."""
-        self.entries: Dict[str, ProgressEntry] = {}
+        self.workflows: Dict[str, List[WorkflowStep]] = {}
+        self.step_status: Dict[str, str] = {}
+        self.dependencies: Dict[str, List[str]] = {}
+        self._lock = asyncio.Lock()
 
-    def record_progress(
-        self,
-        task_id: str,
-        result: Optional[Dict[str, Any]] = None,
-        status: str = "in_progress",
-        error: Optional[str] = None,
-        metrics: Optional[Dict[str, Any]] = None
-    ) -> None:
-        """Record progress for a task.
+    async def register_workflow(self, workflow_id: str, steps: List[WorkflowStep]):
+        """Register a new workflow.
         
         Args:
-            task_id: The ID of the task to record progress for
-            result: Optional result data from task execution
-            status: Current status of the task
-            error: Optional error message if task failed
-            metrics: Optional metrics about task execution
+            workflow_id: ID for the workflow
+            steps: List of workflow steps
         """
-        now = datetime.now()
-        
-        if task_id not in self.entries:
-            self.entries[task_id] = ProgressEntry(
-                task_id=task_id,
-                status=status,
-                started_at=now,
-                result=result,
-                error=error,
-                metrics=metrics or {}
-            )
-        else:
-            entry = self.entries[task_id]
-            entry.status = status
-            if result:
-                entry.result = result
-            if error:
-                entry.error = error
-            if metrics:
-                entry.metrics.update(metrics)
-            if status in ["completed", "failed"]:
-                entry.completed_at = now
+        async with self._lock:
+            self.workflows[workflow_id] = steps
+            for step in steps:
+                step_id = f"{workflow_id}_{step.task.name}"
+                self.step_status[step_id] = "pending"
+                self.dependencies[step_id] = step.dependencies
 
-    def get_progress(self, task_id: str) -> Optional[ProgressEntry]:
-        """Get the progress entry for a task.
+    async def update_step_status(self, workflow_id: str, step_name: str, status: str):
+        """Update the status of a workflow step.
         
         Args:
-            task_id: The ID of the task to get progress for
+            workflow_id: ID of the workflow
+            step_name: Name of the step
+            status: New status value
+        """
+        async with self._lock:
+            step_id = f"{workflow_id}_{step_name}"
+            self.step_status[step_id] = status
+
+    def get_workflow_progress(self, workflow_id: str) -> Dict[str, Any]:
+        """Get the progress of a workflow.
+        
+        Args:
+            workflow_id: ID of the workflow
             
         Returns:
-            The progress entry if found, None otherwise
+            Dictionary containing workflow progress information
         """
-        return self.entries.get(task_id)
+        steps = self.workflows.get(workflow_id, [])
+        progress = {}
+        for step in steps:
+            step_id = f"{workflow_id}_{step.task.name}"
+            progress[step.task.name] = {
+                "status": self.step_status.get(step_id, "unknown"),
+                "dependencies": self.dependencies.get(step_id, [])
+            }
+        return progress
 
-    def get_all_progress(self) -> List[ProgressEntry]:
-        """Get all progress entries.
+    def get_ready_steps(self, workflow_id: str) -> List[str]:
+        """Get steps that are ready to execute.
         
+        Args:
+            workflow_id: ID of the workflow
+            
         Returns:
-            List of all progress entries
+            List of step names that are ready to execute
         """
-        return list(self.entries.values())
-
-    def get_success_rate(self) -> float:
-        """Calculate the success rate of completed tasks.
-        
-        Returns:
-            Float between 0 and 1 representing the success rate
-        """
-        completed = sum(1 for entry in self.entries.values()
-                       if entry.status == "completed")
-        total = len(self.entries)
-        return completed / total if total > 0 else 0.0
-
-    def get_failed_tasks(self) -> List[ProgressEntry]:
-        """Get all failed task entries.
-        
-        Returns:
-            List of progress entries for failed tasks
-        """
-        return [
-            entry for entry in self.entries.values()
-            if entry.status == "failed"
-        ]
-
-    def get_metrics_summary(self) -> Dict[str, Any]:
-        """Get a summary of all recorded metrics.
-        
-        Returns:
-            Dictionary containing aggregated metrics
-        """
-        summary = {}
-        for entry in self.entries.values():
-            for metric_name, metric_value in entry.metrics.items():
-                if isinstance(metric_value, (int, float)):
-                    if metric_name not in summary:
-                        summary[metric_name] = {
-                            "total": 0,
-                            "count": 0,
-                            "min": metric_value,
-                            "max": metric_value
-                        }
-                    summary[metric_name]["total"] += metric_value
-                    summary[metric_name]["count"] += 1
-                    summary[metric_name]["min"] = min(
-                        summary[metric_name]["min"],
-                        metric_value
-                    )
-                    summary[metric_name]["max"] = max(
-                        summary[metric_name]["max"],
-                        metric_value
-                    )
-        
-        # Calculate averages
-        for metric_data in summary.values():
-            metric_data["average"] = (
-                metric_data["total"] / metric_data["count"]
-                if metric_data["count"] > 0
-                else 0
-            )
-        
-        return summary 
+        ready_steps = []
+        for step in self.workflows.get(workflow_id, []):
+            step_id = f"{workflow_id}_{step.task.name}"
+            if self.step_status.get(step_id) == "pending":
+                deps_completed = all(
+                    self.step_status.get(f"{workflow_id}_{dep}", "") == "completed"
+                    for dep in step.dependencies
+                )
+                if deps_completed:
+                    ready_steps.append(step.task.name)
+        return ready_steps 

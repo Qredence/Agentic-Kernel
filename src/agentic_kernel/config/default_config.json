@@ -68,5 +68,106 @@
     "request_timeout": 300,
     "retry_on_failure": true,
     "max_retries": 3,
-    "cache_seed": null
+    "cache_seed": null,
+    "agent_teams": {
+        "default_team": {
+            "team_name": "default_team",
+            "description": "Default agent team for general tasks",
+            "agents": [
+                {
+                    "name": "orchestrator",
+                    "type": "OrchestratorAgent",
+                    "description": "Agent responsible for planning, task delegation, and coordination",
+                    "llm_mapping": {
+                        "model": "gpt-4-turbo-preview",
+                        "temperature": 0.7,
+                        "max_tokens": 2000
+                    },
+                    "config": {}
+                },
+                {
+                    "name": "web_surfer",
+                    "type": "WebSurferAgent",
+                    "description": "Agent for web search and information retrieval",
+                    "llm_mapping": {
+                        "model": "gpt-4-turbo-preview",
+                        "temperature": 0.5,
+                        "max_tokens": 1500
+                    },
+                    "config": {
+                        "max_search_results": 5,
+                        "timeout": 30
+                    }
+                },
+                {
+                    "name": "file_surfer",
+                    "type": "FileSurferAgent",
+                    "description": "Agent for file operations and content analysis",
+                    "llm_mapping": {
+                        "model": "gpt-3.5-turbo",
+                        "temperature": 0.3,
+                        "max_tokens": 1000
+                    },
+                    "config": {
+                        "max_file_size": 10000000,
+                        "allowed_extensions": [".txt", ".md", ".py", ".json"]
+                    }
+                },
+                {
+                    "name": "coder",
+                    "type": "CoderAgent",
+                    "description": "Agent for code generation and analysis",
+                    "llm_mapping": {
+                        "model": "gpt-4-turbo-preview",
+                        "temperature": 0.2,
+                        "max_tokens": 3000
+                    },
+                    "config": {}
+                },
+                {
+                    "name": "terminal",
+                    "type": "TerminalAgent",
+                    "description": "Agent for secure command execution",
+                    "llm_mapping": {
+                        "model": "gpt-4-turbo-preview",
+                        "temperature": 0.2,
+                        "max_tokens": 1000
+                    },
+                    "config": {
+                        "sandbox_type": "docker",
+                        "allowed_commands": ["ls", "cat", "grep", "find", "python", "pip"],
+                        "max_output_size": 1048576,
+                        "timeout": 30,
+                        "working_directory": "/workspace",
+                        "sandbox_options": {
+                            "image": "python:3.9-alpine",
+                            "read_only": true,
+                            "network": "none"
+                        }
+                    }
+                }
+            ],
+            "security_policy": {
+                "allowed_domains": ["github.com", "docs.python.org", "stackoverflow.com", "python.org"],
+                "blocked_domains": ["example.com"],
+                "allowed_file_extensions": [".txt", ".md", ".py", ".json", ".yaml", ".yml", ".csv"],
+                "blocked_file_extensions": [".exe", ".sh", ".bat"],
+                "allowed_commands": ["ls", "cat", "grep", "find", "python", "pip"],
+                "blocked_commands": ["rm", "sudo", "chmod"],
+                "max_parallel_tasks": 3,
+                "max_tokens_per_request": 4000,
+                "terminal_sandbox": {
+                    "image": "python:3.9-alpine",
+                    "network": "none",
+                    "memory_limit": "512m",
+                    "cpu_limit": 1,
+                    "read_only": true,
+                    "volumes": [],
+                    "environment": {},
+                    "working_directory": "/workspace"
+                }
+            }
+        }
+    },
+    "default_team": "default_team"
 } 

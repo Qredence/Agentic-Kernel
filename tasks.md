@@ -40,6 +40,12 @@
   - [x] Implement `FileSurferAgent` (wrapping existing plugin functionality)
   - [x] Implement `CoderAgent` (integrating LLM for code generation/analysis)
   - [x] Implement `TerminalAgent` ( **Focus: Secure Execution Sandbox** - e.g., Docker integration)
+- [x] **Phase 3: Workflow Execution Logic (`agentic_kernel.orchestration`)**
+  - [x] Implement Orchestrator's Outer Loop (task lifecycle, planning, re-planning logic in `OrchestratorAgent`)
+  - [x] Implement Orchestrator's Inner Loop (step execution, reflection, delegation logic in `OrchestratorAgent`)
+- [x] **Phase 4: Configuration (`agentic_kernel.config`)**
+  - [x] Extend config schema for agent team definition (selection, LLM mapping)
+  - [x] Add specific configuration options for `TerminalAgent` security sandbox
 
 ## Pending Tasks
 
@@ -88,12 +94,6 @@
 - [ ] Add support for databases
 
 ### Magentic-One Multi-Agent Workflow Integration (Continued)
-- [ ] **Phase 3: Workflow Execution Logic (`agentic_kernel.orchestration`)**
-  - [ ] Implement Orchestrator's Outer Loop (task lifecycle, planning, re-planning logic in `OrchestratorAgent`)
-  - [ ] Implement Orchestrator's Inner Loop (step execution, reflection, delegation logic in `OrchestratorAgent`)
-- [ ] **Phase 4: Configuration (`agentic_kernel.config`)**
-  - [ ] Extend config schema for agent team definition (selection, LLM mapping)
-  - [ ] Add specific configuration options for `TerminalAgent` security sandbox
 - [ ] **Phase 5: Testing (TDD) (`tests/`)**
   - [ ] Add Unit Tests for Agents (with mocks), Ledgers, Orchestrator components
   - [ ] Add Integration Tests for multi-agent workflows (including `TerminalAgent` sandboxing tests)
@@ -118,8 +118,15 @@
   - [x] Add support for programmatic configuration
   - [x] Create default configuration template
   - [x] Add proper validation and error handling
-- [ ] Move application-specific code to separate directory
-- [ ] Create examples directory with sample applications
+- [x] Move application-specific code to separate directory
+  - [x] Create examples directory structure
+  - [x] Move Chainlit application to examples
+  - [x] Add example-specific documentation
+  - [x] Set up example-specific configuration
+- [x] Create examples directory with sample applications
+  - [x] Create CLI workflow example
+  - [ ] Create FastAPI integration example
+  - [ ] Create Jupyter notebook example
 - [ ] Update documentation to reflect new structure
 
 ### Phase 2: API Refinement

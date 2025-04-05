@@ -1,0 +1,35 @@
+[project]
+name = "agentic-kernel-cli-demo"
+version = "0.1.0"
+description = "A CLI demo application showcasing the agentic-kernel library's workflow orchestration"
+authors = [
+    { name = "AgenticFleet Labs", email = "info@agenticfleet.com" }
+]
+dependencies = [
+    "agentic-kernel",
+    "typer[all]",
+    "rich",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.scripts]
+agentic-workflow = "agentic_kernel_cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+] 

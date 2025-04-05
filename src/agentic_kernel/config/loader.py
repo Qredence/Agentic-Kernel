@@ -2,9 +2,11 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 
 from pydantic import BaseModel, Field
+
+from .agent_team import AgentTeamConfig, AgentConfig, SecurityPolicy
 
 
 class ModelConfig(BaseModel):
@@ -41,6 +43,8 @@ class KernelConfig(BaseModel):
     retry_on_failure: bool = True
     max_retries: int = 3
     cache_seed: Optional[int] = None
+    agent_teams: Dict[str, AgentTeamConfig] = Field(default_factory=dict)
+    default_team: Optional[str] = None
 
 
 class ConfigLoader:
@@ -132,6 +136,9 @@ class ConfigLoader:
             
             if endpoint.default_model and endpoint.default_model not in endpoint.models:
                 raise ValueError(f"Default model '{endpoint.default_model}' not found in endpoint '{name}'")
+        
+        if self._config.default_team and self._config.default_team not in self._config.agent_teams:
+            raise ValueError(f"Default team '{self._config.default_team}' not found in agent_teams")
     
     @property
     def config(self) -> KernelConfig:
@@ -189,4 +196,70 @@ class ConfigLoader:
             "api_key": endpoint_config.api_key
         })
         
-        return config 
+        return config
+    
+    def get_agent_team_config(self, team_name: Optional[str] = None) -> AgentTeamConfig:
+        """Get configuration for a specific agent team.
+        
+        Args:
+            team_name: Optional team name (defaults to default_team)
+            
+        Returns:
+            AgentTeamConfig object
+            
+        Raises:
+            ValueError: If team is not found
+        """
+        # Determine team
+        team_name = team_name or self._config.default_team
+        if not team_name:
+            raise ValueError("No team specified and no default team configured")
+        
+        if team_name not in self._config.agent_teams:
+            raise ValueError(f"Agent team '{team_name}' not found")
+        
+        return self._config.agent_teams[team_name]
+    
+    def get_agent_config(self, agent_name: str, team_name: Optional[str] = None) -> AgentConfig:
+        """Get configuration for a specific agent within a team.
+        
+        Args:
+            agent_name: Name of the agent
+            team_name: Optional team name (defaults to default_team)
+            
+        Returns:
+            AgentConfig object
+            
+        Raises:
+            ValueError: If team or agent is not found
+        """
+        team_config = self.get_agent_team_config(team_name)
+        
+        for agent in team_config.agents:
+            if agent.name == agent_name:
+                return agent
+        
+        raise ValueError(f"Agent '{agent_name}' not found in team '{team_name}'")
+    
+    def get_security_policy(self, team_name: Optional[str] = None) -> SecurityPolicy:
+        """Get security policy for a specific team.
+        
+        Args:
+            team_name: Optional team name (defaults to default_team)
+            
+        Returns:
+            SecurityPolicy object
+            
+        Raises:
+            ValueError: If team is not found
+        """
+        team_config = self.get_agent_team_config(team_name)
+        return team_config.security_policy
+    
+    def add_agent_team(self, team_config: AgentTeamConfig) -> None:
+        """Add or update an agent team configuration.
+        
+        Args:
+            team_config: AgentTeamConfig to add
+        """
+        self._config.agent_teams[team_config.team_name] = team_config 

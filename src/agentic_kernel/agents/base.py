@@ -1,66 +1,85 @@
-"""Base agent implementation for AgenticFleet."""
+"""Base agent class for the Agentic-Kernel system."""
 
-from typing import Optional, Any, Dict
 from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 
-from pydantic import BaseModel
-
-
-class AgentConfig(BaseModel):
-    """Configuration for an agent."""
-    name: str
-    model: str
-    endpoint: str
-    description: Optional[str] = None
-    system_message: Optional[str] = None
+from ..config import AgentConfig
+from ..types import Task
 
 
-class BaseAgent:
-    """Base class for all agents in AgenticFleet."""
-    
-    def __init__(self, config: AgentConfig) -> None:
-        """Initialize the agent with configuration."""
-        self.config = config
-        self.name = config.name
-    
-    async def handle_message(self, message: str) -> str:
-        """Handle an incoming message. Must be implemented by subclasses."""
-        raise NotImplementedError("Subclasses must implement handle_message")
+class BaseAgent(ABC):
+    """Base class for all agents in the system."""
 
-
-class Agent(ABC):
-    """Abstract base class for all agents in the agentic kernel."""
-
-    def __init__(self, name: str, description: Optional[str] = None, config: Optional[Dict[str, Any]] = None):
-        """Initialize the agent.
-
+    def __init__(self, config: AgentConfig):
+        """Initialize the base agent.
+        
         Args:
-            name: The unique name of the agent.
-            description: A brief description of the agent's capabilities.
-            config: Agent-specific configuration options.
+            config: Agent configuration object
         """
-        self.name = name
-        self.description = description or ""
-        self.config = config or {}
+        self.config = config
+        self.type = self.__class__.__name__.lower().replace("agent", "")
 
     @abstractmethod
-    async def execute_task(self, task_description: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Execute a given task.
-
+    async def execute(self, task: Task) -> Dict[str, Any]:
+        """Execute a task.
+        
         Args:
-            task_description: A description of the task to be performed.
-            context: Optional context information relevant to the task (e.g., previous steps, ledger data).
-
+            task: Task object containing the task details
+            
         Returns:
-            A dictionary containing the result of the task execution.
-            The structure should ideally include keys like 'status' ('success', 'failure'),
-            'output', and 'error_message' if applicable.
+            Dictionary containing task execution results
         """
         pass
 
-    def get_info(self) -> Dict[str, str]:
-        """Return basic information about the agent."""
+    async def validate_task(self, task: Task) -> bool:
+        """Validate if the agent can handle the given task.
+        
+        Args:
+            task: Task object to validate
+            
+        Returns:
+            True if the agent can handle the task, False otherwise
+        """
+        return task.agent_type == self.type
+
+    async def preprocess_task(self, task: Task) -> Task:
+        """Preprocess a task before execution.
+        
+        Args:
+            task: Task object to preprocess
+            
+        Returns:
+            Preprocessed task object
+        """
+        return task
+
+    async def postprocess_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Postprocess the task execution result.
+        
+        Args:
+            result: Task execution result
+            
+        Returns:
+            Postprocessed result
+        """
+        return result
+
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get the agent's capabilities.
+        
+        Returns:
+            Dictionary describing the agent's capabilities
+        """
         return {
-            "name": self.name,
-            "description": self.description
+            "type": self.type,
+            "supported_tasks": self._get_supported_tasks(),
+            "config": self.config.dict(),
         }
+
+    def _get_supported_tasks(self) -> Dict[str, Any]:
+        """Get the tasks supported by this agent.
+        
+        Returns:
+            Dictionary describing supported tasks
+        """
+        return {}

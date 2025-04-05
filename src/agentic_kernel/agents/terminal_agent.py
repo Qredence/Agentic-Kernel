@@ -2,8 +2,9 @@
 
 import os
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from .base import Agent
+from .sandbox import Sandbox, DockerSandbox
 
 
 class TerminalAgent(Agent):
@@ -13,7 +14,7 @@ class TerminalAgent(Agent):
         self,
         name: str,
         description: Optional[str] = None,
-        sandbox: Any = None,
+        sandbox: Optional[Sandbox] = None,
         config: Optional[Dict[str, Any]] = None
     ):
         """Initialize the TerminalAgent.
@@ -23,14 +24,29 @@ class TerminalAgent(Agent):
             description: A brief description of the agent's capabilities
             sandbox: The sandbox environment for command execution
             config: Configuration options including allowed_commands, max_output_size,
-                   timeout, and working_directory
+                   timeout, working_directory, and sandbox_options
         """
         super().__init__(name, description, config)
-        self.sandbox = sandbox
-        self.allowed_commands = config.get("allowed_commands", ["ls", "cat", "grep", "find"])
-        self.max_output_size = config.get("max_output_size", 1024 * 1024)  # 1MB default
-        self.timeout = config.get("timeout", 30)  # 30 seconds default
-        self.working_directory = config.get("working_directory", "/workspace")
+        self.config = config or {}
+        
+        # Set up sandbox
+        if sandbox:
+            self.sandbox = sandbox
+        else:
+            # Create sandbox based on configuration
+            sandbox_type = self.config.get("sandbox_type", "docker")
+            sandbox_options = self.config.get("sandbox_options", {})
+            
+            if sandbox_type == "docker":
+                self.sandbox = DockerSandbox(**sandbox_options)
+            else:
+                raise ValueError(f"Unsupported sandbox type: {sandbox_type}")
+        
+        # Set up security parameters
+        self.allowed_commands = self.config.get("allowed_commands", ["ls", "cat", "grep", "find"])
+        self.max_output_size = self.config.get("max_output_size", 1024 * 1024)  # 1MB default
+        self.timeout = self.config.get("timeout", 30)  # 30 seconds default
+        self.working_directory = self.config.get("working_directory", "/workspace")
         self.command_history: List[str] = []
 
     async def execute_task(self, task_description: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
