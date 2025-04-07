@@ -1,44 +1,98 @@
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.1.10"
+version = "0.1.20"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"},
 ]
 dependencies = [
-    "pydantic>=2.6.3",
-    "pytest>=8.3.5",
-    "aiohttp>=3.11.14",
-    "azure-core>=1.30.1",
-    "azure-identity>=1.15.0",
-    "azure-storage-blob>=12.19.0",
-    "azure-ai-projects>=1.0.0b6",
-    "azure-ai-inference>=1.0.0b1",
-    "azure-ai-evaluation>=1.0.0b1",
-    "semantic-kernel==1.27.1",
-    "chainlit==2.4.400",
-    "playwright==1.51.0",
-    "openai>=1.67.0",
-    "python-dotenv==1.0.1",
-    "requests==2.31.0",
-    "beautifulsoup4==4.12.2",
-    "mcp==1.6.0",
-    "pyautogui>=0.9.54",
+    "pydantic>=2.6.3,<3.0.0",
+    "aiohttp>=3.11.14,<4.0.0",
+    "azure-core>=1.30.1,<2.0.0",
+    "azure-identity>=1.15.0,<2.0.0",
+    "azure-storage-blob>=12.19.0,<13.0.0",
+    "azure-ai-projects>=1.0.0b6,<2.0.0",
+    "azure-ai-inference>=1.0.0b1,<2.0.0",
+    "azure-ai-evaluation>=1.0.0b1,<2.0.0",
+    "semantic-kernel>=1.27.1,<2.0.0",
+    "chainlit>=2.4.400,<3.0.0",
+    "playwright>=1.51.0,<2.0.0",
+    "openai>=1.67.0,<2.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "requests>=2.31.0,<3.0.0",
+    "beautifulsoup4>=4.12.2,<5.0.0",
+    "mcp>=1.6.0,<2.0.0",
+    "pyautogui>=0.9.54,<1.0.0",
+    "langchain>=0.0.309,<1.0.0",
+    "typer>=0.15.2,<1.0.0",
+    "ruff>=0.11.4,<1.0.0",
 ]
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<=3.13"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE*", "CHANGELOG.md"]
+keywords = ["ai", "agents", "automation", "semantic-kernel", "langchain", "openai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 [project.optional-dependencies]
 dev = [
-    "black>=24.2.0",
-    "isort>=5.13.2",
-    "mypy>=1.9.0",
-    "pylint>=3.1.0",
+    "black>=24.2.0,<25.0.0",
+    "isort>=5.13.2,<6.0.0",
+    "mypy>=1.9.0,<2.0.0",
+    "pylint>=3.1.0,<4.0.0",
+    "pytest>=8.3.5,<9.0.0",
+    "pytest-asyncio>=0.23.0,<1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/qredence/agentic-kernel"
+Documentation = "https://github.com/qredence/agentic-kernel/docs"
+Repository = "https://github.com/qredence/agentic-kernel.git"
+"Bug Tracker" = "https://github.com/qredence/agentic-kernel/issues"
+Changelog = "https://github.com/qredence/agentic-kernel/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_kernel"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "coverage[toml]>=7.4.0",
+    "pytest",
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "coverage[toml]>=7.4.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+    "coverage combine",
+    "coverage report",
+]
+cov = [
+    "test-cov",
+    "cov-report",
 ]
 
 [tool.pytest.ini_options]
@@ -76,3 +130,29 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "B", "I"]
+ignore = []
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/agentic_kernel"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == '__main__':",
+    "if TYPE_CHECKING:",
+]
+ignore_errors = true
+omit = [
+    "tests/*",
+    "setup.py",
+]

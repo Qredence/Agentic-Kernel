@@ -1,178 +1,107 @@
-# AgenticFleet Labs Tasks
+# Project Tasks
 
-## Completed Tasks
+## Completed
 
-### Core Infrastructure
+- [x] Setup initial project structure
+- [x] Create base agent interface
+- [x] Implement Task and WorkflowStep data structures
+- [x] Create TaskLedger and ProgressLedger
+- [x] Implement basic Orchestrator Agent
+- [x] Setup Chainlit integration
+- [x] Create Agent System to manage agents
+- [x] Implement enhanced Orchestrator Agent with nested loop architecture
+- [x] Add dynamic planning capabilities
+- [x] Implement error recovery and replanning
+- [x] Add progress monitoring and reflection
+- [x] Create documentation (README.md, ARCHITECTURE.md, developer docs)
 
-- [x] Set up project structure
-- [x] Configure development environment
-- [x] Set up testing framework
-- [x] Add linting and formatting tools
-- [x] Clean up codebase structure and remove redundant files
-  - [x] Created maintenance scripts and tools (maintain.sh)
-  - [x] Removed duplicate virtual environments and cache files
-  - [x] Added maintenance rules in .cursor/rules/
-  - [x] Created CLEANUP_SUMMARY.md with detailed findings and next steps
+## In Progress
 
-### Plugins
+- [ ] Add more specialized agent types (beyond chat, web surfer, file surfer)
+- [ ] Implement memory module for agents to store and retrieve context
+- [ ] Create visualization for workflow execution in Chainlit UI
+- [ ] Add metrics collection and dashboard
 
-- [x] Implement WebSurfer plugin
-  - [x] Basic web search functionality using DuckDuckGo
-  - [x] Webpage summarization
-  - [x] Error handling
-  - [x] Unit tests with mocked responses
-  
-- [x] Implement FileSurfer plugin
-  - [x] File listing with pattern matching
-  - [x] File reading with safety checks
-  - [x] File content searching
-  - [x] Error handling
-  - [x] Unit tests with temporary files
+## Planned
 
-### Documentation
+- [ ] Implement persistent storage for ledgers (currently in-memory)
+- [ ] Add user feedback loop in workflow execution
+- [ ] Create configuration system with environment variables
+- [ ] Add support for external tool integrations
+- [ ] Implement agent communication protocol
+- [ ] Add workflow templates for common tasks
+- [ ] Create testing framework for agents and workflows
+- [ ] Implement authentication and authorization
+- [ ] Add support for multi-user environments
+- [ ] Optimize performance for large workflows
+- [ ] Add support for parallel task execution
 
-- [x] Create README.md with usage examples
-- [x] Document plugin APIs
-- [x] Add development setup instructions
+## Code Structure Improvements (Refactoring)
 
-### Magentic-One Multi-Agent Workflow Integration
+- [x] Consolidate helper scripts into a `scripts/` directory
+- [x] Relocate tests from `src/agentic_kernel/tests/` to top-level `tests/`
+- [ ] Refactor large files (`src/agentic_kernel/app.py`, `src/agentic_kernel/orchestrator.py`) into smaller modules
+- [ ] Clarify primary application entry points and document usage
+- [ ] Resolve naming ambiguities (`config.py` vs `config/`, `ledgers.py` vs `ledgers/`)
+- [ ] Review `setup.py` for redundancy with `pyproject.toml` and `uv`
 
-- [x] **Phase 1: Core Abstractions**
-  - [x] Define `Agent` base class/interface (`agentic_kernel.agents.base`)
-  - [x] Define `TaskLedger` and `ProgressLedger` structures (`agentic_kernel.ledgers`)
-  - [x] Define `Orchestrator` interface/base class (`agentic_kernel.orchestration.base`)
-  - [x] Define Agent communication protocol (input/output data structures)
-- [x] **Phase 2: Agent Implementation (`agentic_kernel.agents`)**
-  - [x] Implement `OrchestratorAgent` (integrating LLM for planning/reflection/delegation)
-  - [x] Implement `WebSurferAgent` (wrapping existing plugin functionality)
-  - [x] Implement `FileSurferAgent` (wrapping existing plugin functionality)
-  - [x] Implement `CoderAgent` (integrating LLM for code generation/analysis)
-  - [x] Implement `TerminalAgent` ( **Focus: Secure Execution Sandbox** - e.g., Docker integration)
-- [x] **Phase 3: Workflow Execution Logic (`agentic_kernel.orchestration`)**
-  - [x] Implement Orchestrator's Outer Loop (task lifecycle, planning, re-planning logic in `OrchestratorAgent`)
-  - [x] Implement Orchestrator's Inner Loop (step execution, reflection, delegation logic in `OrchestratorAgent`)
-- [x] **Phase 4: Configuration (`agentic_kernel.config`)**
-  - [x] Extend config schema for agent team definition (selection, LLM mapping)
-  - [x] Add specific configuration options for `TerminalAgent` security sandbox
+## Orchestrator Enhancements
 
-## Pending Tasks
+- [x] Implement nested loop architecture (planning and execution loops)
+- [x] Add dynamic workflow creation from natural language goals
+- [x] Implement workflow state management and progress tracking
+- [x] Add error recovery and replanning capabilities
+- [x] Create agent registration system
+- [x] Implement task delegation strategy
+- [ ] Add intelligent agent selection based on task requirements
+- [ ] Implement workflow versioning and history
+- [ ] Add support for conditional branches in workflows
+- [ ] Create workflow optimization strategies
+- [ ] Implement workflow templates and reusable components
+- [ ] Add support for human-in-the-loop approvals
+- [ ] Create plugin system for extending orchestrator capabilities
 
-### Core Infrastructure
+## Testing
 
-- [ ] Add CI/CD pipeline
-- [ ] Set up code coverage reporting
-- [ ] Add pre-commit hooks
-- [ ] Create CONTRIBUTING.md guidelines
+- [x] Create unit tests for base components
+  - [x] Task and WorkflowStep types
+  - [x] TaskLedger implementation
+  - [x] ProgressLedger implementation
+- [x] Implement initial integration tests for Orchestrator
+  - [x] Basic initialization and registration
+  - [x] Workflow execution (empty, single step, failure cases)
+  - [x] Retry logic
+  - [x] Progress calculation
+- [ ] Add end-to-end tests for complete workflows
+- [ ] Create performance benchmarks
+- [ ] Add test coverage reporting
 
-### Plugins
+## Documentation
 
-- [ ] Enhance WebSurfer plugin
-  - [ ] Add support for multiple search engines
-  - [ ] Implement rate limiting
-  - [ ] Add caching for search results
-  - [ ] Improve webpage summarization with AI
-  - [ ] Add integration tests
+- [x] Create README.md with project overview
+- [x] Create ARCHITECTURE.md with system design details
+- [x] Add developer documentation for Orchestrator
+- [ ] Create API documentation
+- [ ] Add usage examples and tutorials
+- [ ] Create contribution guidelines
+- [ ] Document testing approach and tools
+- [ ] Create deployment guide
 
-- [ ] Enhance FileSurfer plugin
-  - [ ] Add file modification capabilities
-  - [ ] Implement file type detection improvements
-  - [ ] Add file compression/decompression
-  - [ ] Add integration tests
+## Infrastructure
 
-### Documentation
+- [ ] Setup CI/CD pipeline
+- [ ] Create Docker container for easy deployment
+- [ ] Add environment configuration templates
+- [ ] Implement logging and monitoring
+- [ ] Create backup and restore procedures
+- [ ] Add performance profiling tools
 
-- [ ] Add API reference documentation
-- [ ] Create user guide with advanced examples
-- [ ] Add architecture documentation
-- [ ] Create changelog
+## Future Directions
 
-### Testing
-
-- [ ] Add integration tests
-- [ ] Add performance tests
-- [ ] Add security tests
-- [ ] Add load tests
-
-### Security
-
-- [ ] Add input validation
-- [ ] Implement rate limiting
-- [ ] Add authentication support
-- [ ] Add authorization controls
-
-### Features
-
-- [ ] Add support for more search engines
-- [ ] Add support for more file types
-- [ ] Add support for cloud storage
-- [ ] Add support for databases
-
-### Magentic-One Multi-Agent Workflow Integration (Continued)
-
-- [ ] **Phase 5: Testing (TDD) (`tests/`)**
-  - [ ] Add Unit Tests for Agents (with mocks), Ledgers, Orchestrator components
-  - [ ] Add Integration Tests for multi-agent workflows (including `TerminalAgent` sandboxing tests)
-- [ ] **Phase 6: Documentation & Examples (`docs/`, `examples/`)**
-  - [ ] Document the Magentic-One workflow architecture, components, and ledgers
-  - [ ] Document configuration for multi-agent teams and security
-  - [ ] Add examples demonstrating complex task execution with the workflow
-
-## Future Enhancements
-
-- [ ] Add support for more LLM providers
-- [ ] Add support for more languages
-- [ ] Add support for more platforms
-- [ ] Add support for more protocols
-
-## Refactoring for PyPI (agentic-kernel)
-
-### Phase 1: Core Library Isolation
-
-- [x] Rename `src/agenticfleet` directory to `src/agentic_kernel`
-- [x] Update build target in `pyproject.toml`
-- [x] Refactor configuration management to be library-friendly
-  - [x] Remove hardcoded configuration paths
-  - [x] Add support for programmatic configuration
-  - [x] Create default configuration template
-  - [x] Add proper validation and error handling
-- [x] Move application-specific code to separate directory
-  - [x] Create examples directory structure
-  - [x] Move Chainlit application to examples
-  - [x] Add example-specific documentation
-  - [x] Set up example-specific configuration
-- [x] Create examples directory with sample applications
-  - [x] Create CLI workflow example
-  - [ ] Create FastAPI integration example
-  - [ ] Create Jupyter notebook example
-- [x] Clean up redundant files, Python environments, and optimize project structure
-- [ ] Update documentation to reflect new structure
-
-### Phase 2: API Refinement
-
-- [ ] Review and document all public APIs
-- [ ] Implement proper versioning
-- [ ] Add type hints and docstrings
-- [ ] Create API reference documentation
-
-### Phase 3: Testing and Quality
-
-- [ ] Set up test infrastructure
-- [ ] Write unit tests for core functionality
-- [ ] Add integration tests
-- [ ] Set up CI/CD pipeline
-
-### Phase 4: Documentation and Examples
-
-- [ ] Write comprehensive README
-- [ ] Create quickstart guide
-- [ ] Add API documentation
-- [ ] Create example applications
-- [ ] Add contributing guidelines
-
-### Phase 5: Publication
-
-- [ ] Choose license
-- [ ] Set up package metadata
-- [ ] Create PyPI account
-- [ ] Test package installation
-- [ ] Publish to PyPI
+- [ ] Research and implement learning capabilities for agents
+- [ ] Add support for fine-tuning agent models
+- [ ] Investigate multi-modal agent interactions
+- [ ] Research optimization techniques for large-scale workflows
+- [ ] Explore integration with external AI services and APIs
+- [ ] Investigate distributed workflow execution
+- [ ] Research privacy-preserving techniques for sensitive data
