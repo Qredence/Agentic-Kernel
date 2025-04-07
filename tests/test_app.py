@@ -8,12 +8,18 @@ import semantic_kernel as sk
 from semantic_kernel.connectors.ai.open_ai import AzureChatPromptExecutionSettings
 from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
 from agentic_kernel.config.loader import ConfigLoader
-from agentic_kernel.config import AgentConfig, LLMMapping
-from agentic_kernel.app import ChatAgent, on_chat_start, on_message, chat_profile, MCPToolRegistry
+from agentic_kernel.config_types import AgentConfig, LLMMapping
+from agentic_kernel.app import (
+    ChatAgent, on_chat_start, on_message, get_chat_profile,
+    MCPToolRegistry, DEPLOYMENT_NAMES, DEFAULT_DEPLOYMENT
+)
 from agentic_kernel.types import Task
 from typing import Dict, Any as TypingAny, AsyncGenerator, Optional
 from agentic_kernel.agents.base import BaseAgent
 import asyncio
+from agentic_kernel.plugins.dummy import DummyPlugin
+from agentic_kernel.plugins.base import BasePlugin
+from agentic_kernel.orchestrator import Orchestrator
 
 class AsyncIterator:
     """Helper class to create an async iterator."""
@@ -324,20 +330,19 @@ async def test_on_message_no_agent(mock_chainlit, mock_chainlit_context, mock_me
     assert "not initialized" in response_message.content
 
 @pytest.mark.asyncio
-async def test_chat_profile():
+async def test_get_chat_profile():
     """Test chat profile configuration."""
-    profiles = await chat_profile()
-    assert len(profiles) == 2
-    
     # Test Fast profile
-    fast_profile = next((p for p in profiles if p.name == "Fast"), None)
-    assert fast_profile is not None
-    assert "gpt-4o-mini" in fast_profile.markdown_description.lower()
+    fast_config = get_chat_profile("Fast")
+    assert fast_config["model"] == DEPLOYMENT_NAMES["Fast"]
     
     # Test Max profile
-    max_profile = next((p for p in profiles if p.name == "Max"), None)
-    assert max_profile is not None
-    assert "gpt-4o" in max_profile.markdown_description.lower()
+    max_config = get_chat_profile("Max")
+    assert max_config["model"] == DEPLOYMENT_NAMES["Max"]
+    
+    # Test default profile
+    default_config = get_chat_profile()
+    assert default_config["model"] == DEFAULT_DEPLOYMENT
 
 class MockChatAgent(BaseAgent):
     """Mock chat agent for testing."""

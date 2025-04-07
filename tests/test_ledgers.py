@@ -1,182 +1,164 @@
 """Tests for the TaskLedger and ProgressLedger classes."""
 
 import pytest
-from datetime import datetime, timedelta
-from agentic_kernel.ledgers import TaskLedger, ProgressLedger, TaskEntry, ProgressEntry
+from datetime import datetime
+from agentic_kernel.ledgers.task_ledger import TaskLedger
+from agentic_kernel.ledgers.progress_ledger import ProgressLedger
+from agentic_kernel.types import Task, WorkflowStep
 
+# --- TaskLedger Tests ---
 
 @pytest.fixture
 def task_ledger():
+    """Create a TaskLedger instance."""
     return TaskLedger()
 
+@pytest.fixture
+def sample_task():
+    """Create a sample task for testing."""
+    return Task(
+        name="test_task",
+        agent_type="test_agent",
+        max_retries=1,
+        description="Test task",
+        metadata={"priority": "high"}
+    )
+
+@pytest.mark.asyncio
+async def test_task_ledger_add_task(task_ledger, sample_task):
+    """Test adding a task to the ledger."""
+    task_id = await task_ledger.add_task(sample_task)
+    
+    assert task_id is not None
+    assert task_id in task_ledger.tasks
+    assert task_ledger.tasks[task_id]["task"] == sample_task
+    assert task_ledger.tasks[task_id]["status"] == "pending"
+    assert isinstance(task_ledger.tasks[task_id]["created_at"], datetime)
+
+@pytest.mark.asyncio
+async def test_task_ledger_update_task_result(task_ledger, sample_task):
+    """Test updating a task result."""
+    task_id = await task_ledger.add_task(sample_task)
+    result = {"status": "success", "output": "test output"}
+    
+    await task_ledger.update_task_result(task_id, result)
+    
+    assert task_ledger.tasks[task_id]["result"] == result
+    assert task_ledger.tasks[task_id]["status"] == "completed"
+    assert isinstance(task_ledger.tasks[task_id]["completed_at"], datetime)
+
+@pytest.mark.asyncio
+async def test_task_ledger_get_task_status(task_ledger, sample_task):
+    """Test getting task status."""
+    task_id = await task_ledger.add_task(sample_task)
+    status = await task_ledger.get_task_status(task_id)
+    
+    assert status == "pending"
+    
+    # Update task and check new status
+    await task_ledger.update_task_result(task_id, {"status": "success"})
+    status = await task_ledger.get_task_status(task_id)
+    
+    assert status == "completed"
+
+@pytest.mark.asyncio
+async def test_task_ledger_invalid_task_id(task_ledger):
+    """Test handling of invalid task IDs."""
+    with pytest.raises(KeyError):
+        await task_ledger.get_task_status("nonexistent")
+    
+    with pytest.raises(KeyError):
+        await task_ledger.update_task_result("nonexistent", {})
+
+# --- ProgressLedger Tests ---
 
 @pytest.fixture
 def progress_ledger():
+    """Create a ProgressLedger instance."""
     return ProgressLedger()
 
-
-def test_task_ledger_add_task(task_ledger):
-    """Test adding a task to the ledger."""
-    task_id = task_ledger.add_task(
-        description="Test task",
-        assigned_agent="TestAgent",
-        dependencies=["task_1"],
-        metadata={"priority": "high"}
-    )
+@pytest.fixture
+def sample_workflow():
+    """Create a sample workflow for testing."""
+    task1 = Task(name="task1", agent_type="test_agent", max_retries=1)
+    task2 = Task(name="task2", agent_type="test_agent", max_retries=1)
+    task3 = Task(name="task3", agent_type="test_agent", max_retries=1)
     
-    assert task_id == "task_1"
-    task = task_ledger.get_task(task_id)
-    assert task.description == "Test task"
-    assert task.assigned_agent == "TestAgent"
-    assert task.dependencies == ["task_1"]
-    assert task.metadata == {"priority": "high"}
-    assert isinstance(task.created_at, datetime)
-
-
-def test_task_ledger_update_task(task_ledger):
-    """Test updating a task in the ledger."""
-    task_id = task_ledger.add_task(
-        description="Original task",
-        assigned_agent="TestAgent"
-    )
+    step1 = WorkflowStep(task=task1, dependencies=[])
+    step2 = WorkflowStep(task=task2, dependencies=["task1"])
+    step3 = WorkflowStep(task=task3, dependencies=["task1", "task2"])
     
-    success = task_ledger.update_task(
-        task_id,
-        description="Updated task",
-        metadata={"status": "in_progress"}
-    )
+    return [step1, step2, step3]
+
+@pytest.mark.asyncio
+async def test_progress_ledger_register_workflow(progress_ledger, sample_workflow):
+    """Test registering a workflow."""
+    workflow_id = await progress_ledger.register_workflow("test_workflow", sample_workflow)
     
-    assert success is True
-    task = task_ledger.get_task(task_id)
-    assert task.description == "Updated task"
-    assert task.metadata == {"status": "in_progress"}
+    assert workflow_id in progress_ledger.workflows
+    assert len(progress_ledger.workflows[workflow_id]["steps"]) == 3
+    assert progress_ledger.workflows[workflow_id]["status"] == "pending"
+    assert isinstance(progress_ledger.workflows[workflow_id]["created_at"], datetime)
 
-
-def test_task_ledger_get_dependent_tasks(task_ledger):
-    """Test retrieving dependent tasks."""
-    task1_id = task_ledger.add_task(
-        description="Task 1",
-        assigned_agent="TestAgent"
-    )
-    task2_id = task_ledger.add_task(
-        description="Task 2",
-        assigned_agent="TestAgent",
-        dependencies=[task1_id]
-    )
+@pytest.mark.asyncio
+async def test_progress_ledger_get_ready_steps(progress_ledger, sample_workflow):
+    """Test getting ready steps from workflow."""
+    workflow_id = await progress_ledger.register_workflow("test_workflow", sample_workflow)
     
-    dependents = task_ledger.get_dependent_tasks(task1_id)
-    assert len(dependents) == 1
-    assert dependents[0].id == task2_id
-
-
-def test_progress_ledger_record_progress(progress_ledger):
-    """Test recording progress for a task."""
-    progress_ledger.record_progress(
-        task_id="task_1",
-        result={"output": "test"},
-        status="in_progress",
-        metrics={"duration": 1.5}
-    )
+    # Initially only task1 should be ready (no dependencies)
+    ready_steps = progress_ledger.get_ready_steps(workflow_id)
+    assert ready_steps == ["task1"]
     
-    entry = progress_ledger.get_progress("task_1")
-    assert entry.status == "in_progress"
-    assert entry.result == {"output": "test"}
-    assert entry.metrics == {"duration": 1.5}
-    assert entry.started_at is not None
-    assert entry.completed_at is None
-
-
-def test_progress_ledger_update_progress(progress_ledger):
-    """Test updating progress for a task."""
-    # Initial progress
-    progress_ledger.record_progress(
-        task_id="task_1",
-        status="in_progress"
-    )
+    # Complete task1
+    await progress_ledger.update_step_status(workflow_id, "task1", "completed")
     
-    # Update progress
-    progress_ledger.record_progress(
-        task_id="task_1",
-        status="completed",
-        result={"output": "success"},
-        metrics={"duration": 2.0}
-    )
+    # Now task2 should be ready
+    ready_steps = progress_ledger.get_ready_steps(workflow_id)
+    assert ready_steps == ["task2"]
     
-    entry = progress_ledger.get_progress("task_1")
-    assert entry.status == "completed"
-    assert entry.result == {"output": "success"}
-    assert entry.metrics == {"duration": 2.0}
-    assert entry.completed_at is not None
-
-
-def test_progress_ledger_success_rate(progress_ledger):
-    """Test calculating success rate."""
-    # Add some tasks with different statuses
-    progress_ledger.record_progress("task_1", status="completed")
-    progress_ledger.record_progress("task_2", status="failed")
-    progress_ledger.record_progress("task_3", status="completed")
+    # Complete task2
+    await progress_ledger.update_step_status(workflow_id, "task2", "completed")
     
-    assert progress_ledger.get_success_rate() == 2/3
+    # Finally task3 should be ready
+    ready_steps = progress_ledger.get_ready_steps(workflow_id)
+    assert ready_steps == ["task3"]
 
-
-def test_progress_ledger_get_failed_tasks(progress_ledger):
-    """Test retrieving failed tasks."""
-    progress_ledger.record_progress("task_1", status="completed")
-    progress_ledger.record_progress("task_2", status="failed", error="Error message")
-    progress_ledger.record_progress("task_3", status="failed", error="Another error")
+@pytest.mark.asyncio
+async def test_progress_ledger_update_step_status(progress_ledger, sample_workflow):
+    """Test updating step status."""
+    workflow_id = await progress_ledger.register_workflow("test_workflow", sample_workflow)
     
-    failed_tasks = progress_ledger.get_failed_tasks()
-    assert len(failed_tasks) == 2
-    assert all(task.status == "failed" for task in failed_tasks)
-    assert all(task.error is not None for task in failed_tasks)
-
-
-def test_progress_ledger_metrics_summary(progress_ledger):
-    """Test generating metrics summary."""
-    progress_ledger.record_progress(
-        "task_1",
-        metrics={"duration": 1.0, "memory": 100}
-    )
-    progress_ledger.record_progress(
-        "task_2",
-        metrics={"duration": 2.0, "memory": 200}
-    )
+    await progress_ledger.update_step_status(workflow_id, "task1", "completed")
+    assert progress_ledger.workflows[workflow_id]["steps"]["task1"]["status"] == "completed"
     
-    summary = progress_ledger.get_metrics_summary()
-    
-    assert "duration" in summary
-    assert summary["duration"]["average"] == 1.5
-    assert summary["duration"]["min"] == 1.0
-    assert summary["duration"]["max"] == 2.0
-    
-    assert "memory" in summary
-    assert summary["memory"]["average"] == 150
-    assert summary["memory"]["min"] == 100
-    assert summary["memory"]["max"] == 200
+    await progress_ledger.update_step_status(workflow_id, "task2", "failed")
+    assert progress_ledger.workflows[workflow_id]["steps"]["task2"]["status"] == "failed"
 
-
-def test_task_entry_defaults():
-    """Test TaskEntry default values."""
-    task = TaskEntry(
-        id="task_1",
-        description="Test task",
-        assigned_agent="TestAgent"
-    )
+@pytest.mark.asyncio
+async def test_progress_ledger_invalid_workflow(progress_ledger, sample_workflow):
+    """Test handling of invalid workflow operations."""
+    # Try to get ready steps for nonexistent workflow
+    with pytest.raises(KeyError):
+        progress_ledger.get_ready_steps("nonexistent")
     
-    assert isinstance(task.created_at, datetime)
-    assert task.dependencies == []
-    assert task.metadata == {}
-
-
-def test_progress_entry_defaults():
-    """Test ProgressEntry default values."""
-    entry = ProgressEntry(
-        task_id="task_1",
-        status="pending"
-    )
+    # Try to update step in nonexistent workflow
+    with pytest.raises(KeyError):
+        await progress_ledger.update_step_status("nonexistent", "task1", "completed")
     
-    assert entry.result is None
-    assert entry.started_at is None
-    assert entry.completed_at is None
-    assert entry.error is None
-    assert entry.metrics == {} 
+    # Register workflow and try to update nonexistent step
+    workflow_id = await progress_ledger.register_workflow("test_workflow", sample_workflow)
+    with pytest.raises(KeyError):
+        await progress_ledger.update_step_status(workflow_id, "nonexistent", "completed")
+
+@pytest.mark.asyncio
+async def test_progress_ledger_workflow_completion(progress_ledger, sample_workflow):
+    """Test workflow completion detection."""
+    workflow_id = await progress_ledger.register_workflow("test_workflow", sample_workflow)
+    
+    # Complete all steps
+    for step in sample_workflow:
+        await progress_ledger.update_step_status(workflow_id, step.task.name, "completed")
+    
+    # Verify workflow is marked as completed
+    assert progress_ledger.workflows[workflow_id]["status"] == "completed"
+    assert isinstance(progress_ledger.workflows[workflow_id]["completed_at"], datetime) 

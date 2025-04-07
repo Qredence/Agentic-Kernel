@@ -1,12 +1,15 @@
-"""Tests for the Orchestrator's workflow execution logic."""
+"""Tests for workflow execution in the Orchestrator."""
 
 import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from typing import Dict, Any
-from datetime import datetime
 
-from agentic_kernel.agents.orchestrator_agent import OrchestratorAgent
-from agentic_kernel.ledgers import TaskLedger, ProgressLedger, PlanStep
+from agentic_kernel.agents.base import BaseAgent
+from agentic_kernel.ledgers.task_ledger import TaskLedger
+from agentic_kernel.ledgers.progress_ledger import ProgressLedger
+from agentic_kernel.ledgers.base import PlanStep
+from agentic_kernel.types import Task, WorkflowStep
+from agentic_kernel.config.agent_team import AgentConfig, LLMMapping
 
 
 @pytest.fixture

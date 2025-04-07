@@ -5,9 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import semantic_kernel as sk
 from semantic_kernel.contents import ChatHistory
 
-from agentic_kernel.config import AgentConfig
+from agentic_kernel.agents.base import BaseAgent
+from agentic_kernel.agents.chat_agent import ChatAgent
+from agentic_kernel.plugins.base import BasePlugin
+from agentic_kernel.config_types import AgentConfig
 from agentic_kernel.config.loader import ConfigLoader
-from app import ChatAgent
+from agentic_kernel.ledgers import TaskLedger
+from agentic_kernel.types import Task
 
 @pytest.fixture
 def mock_config_loader():

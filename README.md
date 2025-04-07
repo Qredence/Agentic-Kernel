@@ -140,68 +140,182 @@ if __name__ == "__main__":
 
 ```
 
+## System Architecture
+
+Agentic Kernel implements a sophisticated multi-agent architecture designed for autonomous task execution and orchestration. This modular system enables flexible agent interactions, secure execution environments, and robust workflow management.
+
+### Core Components
+
+#### 1. Agent System
+
+The agent system provides:
+- Modular agent architecture with specialized capabilities
+- Dynamic agent registration and discovery
+- Configurable agent behaviors
+- Secure inter-agent communication
+- Resource management and optimization
+
+#### 2. Workflow Engine
+
+The workflow engine handles:
+- Intelligent task decomposition and allocation
+- Real-time progress tracking
+- Sophisticated error handling and recovery
+- Concurrent execution support
+- Performance metrics collection
+
+#### 3. Communication Protocol
+
+Agents exchange standardized messages in this format:
+
+```json
+{
+    "message_id": "uuid",
+    "sender": "agent_id",
+    "receiver": "agent_id",
+    "message_type": "task|status|control",
+    "content": {},
+    "metadata": {
+        "timestamp": "iso8601",
+        "priority": "number",
+        "tags": ["array"]
+    }
+}
+```
+
+#### 4. Orchestrator Agent
+
+The Orchestrator Agent is the central component of the system that manages workflow execution:
+
+- **Dynamic Planning**: Creates, manages, and revises plans for complex tasks
+  - Implements nested loop architecture (outer loop for planning, inner loop for execution)
+  - Automatically decomposes high-level goals into manageable subtasks
+  - Creates natural language plans for task execution
+  - Dynamically adapts plans based on execution progress
+
+- **Error Recovery**: Sophisticated mechanisms to handle failures
+  - Detects and recovers from execution errors
+  - Implements replanning when progress is insufficient
+  - Uses reflection to identify blocking issues
+  - Applies alternative approaches to failed steps
+
+- **Progress Monitoring**: Continuous evaluation of workflow execution
+  - Tracks completion status of individual steps
+  - Calculates weighted progress metrics
+  - Detects loops and deadlocks
+  - Provides detailed execution metrics
+
+- **Task Delegation**: Intelligent assignment of tasks to specialized agents
+  - Matches tasks to agent capabilities
+  - Manages dependencies between tasks
+  - Coordinates parallel or sequential execution
+  - Resets agent states during replanning
+
+The Orchestrator's nested loop architecture allows for:
+1. **Outer Loop**: Task ledger management and planning/replanning
+2. **Inner Loop**: Progress ledger management and step execution
+3. **Reflection**: Evaluation when progress falls below thresholds
+
+### Chainlit Integration
+
+Agentic Kernel includes a Chainlit-based user interface that provides:
+
+- Real-time interaction with the agent system
+- Task tracking and visualization
+- Support for multiple AI models through profiles
+- Integration with external tool providers (MCP)
+- Streaming responses for immediate feedback
+- Automatic detection of complex tasks for orchestration
+
+**Quick Start with Chainlit:**
+
+```bash
+# Install the package
+uv pip install agentic-kernel
+
+# Run the Chainlit app
+chainlit run src/agentic_kernel/app.py
+```
+
+This will start a web interface where you can interact with the agent system, monitor workflows, and visualize the execution of complex tasks.
+
 ## Installation
 
 Get started with AgenticFleet Labs plugins in your project quickly.
 
 **Prerequisites:**
 
-* Python 3.10+
-* An existing Python project with Semantic Kernel installed.
-* `pip` or `uv` (recommended) package manager.
+*   Python 3.10+
+*   An existing Python project with Semantic Kernel installed.
+*   `uv` (recommended) or `pip` package manager.
+*   Environment variables set for necessary services (e.g., `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`). See `.env.example`.
 
-**Steps:**
+**Using `uv` (Recommended):**
 
-1. **Install the package:**
-    * Using `pip`:
+1.  **Install `uv`:**
+    ```bash
+    pip install uv
+    # Or follow instructions at https://github.com/astral-sh/uv
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+3.  **Install dependencies from `pyproject.toml`:**
+    ```bash
+    uv pip install -r requirements.txt # Or sync directly with pyproject.toml if using uv's management features
+    # Alternatively, if installing this package itself:
+    # uv pip install .
+    ```
 
+**Using `pip`:**
+
+1.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate # On Windows use `.venv\Scripts\activate`
+    ```
+2.  **Install:**
+    ```bash
+    pip install -r requirements.txt # Or pip install agentic-kernel (if published)
+    ```
+
+## Running the Application
+
+The primary way to run the application is using the Chainlit web interface.
+
+1.  **Ensure dependencies are installed** (see Installation).
+2.  **Make sure your virtual environment is active** (`source .venv/bin/activate`).
+3.  **Set required environment variables** (copy `.env.example` to `.env` and fill in your credentials).
+4.  **Run the Chainlit app:**
+
+    *   **Using the provided script:**
         ```bash
-        pip install agentic-kernel 
+        ./scripts/run_chainlit.sh
         ```
+        This script handles activating the environment (if needed) and setting the `PYTHONPATH`.
 
-        *(Note: Replace `agentic-kernel` with the actual package name on PyPI once published)*
-    * Using `uv`:
-
+    *   **Manually with Chainlit:**
         ```bash
-        uv pip install agentic-kernel 
+        chainlit run src/agentic_kernel/app.py -w
         ```
+        (The `-w` flag enables auto-reloading on code changes.)
 
-        *(Note: Replace `agentic-kernel` with the actual package name on PyPI once published)*
+5.  **Access the application** in your web browser (usually at `http://localhost:8000`).
 
-    * **For development/local use:** If you've cloned the repository (`git clone ...`), you can install it in editable mode from the project directory:
+### Debugging Scripts
 
-        ```bash
-        # Activate your project's virtual environment first!
-        # Using pip:
-        pip install -e . 
-        # Using uv:
-        uv pip install -e . 
-        ```
+*   `src/simple_debug.py`: A minimal Chainlit app useful for testing specific components in isolation. Run with `chainlit run src/simple_debug.py -w`.
+*   `src/debug_app.py`: A command-line script to quickly validate imports and basic component initialization. Run with `python src/debug_app.py`.
 
-2. **Import and use** the plugins in your Semantic Kernel application as shown in the examples above.
+## Contributing
 
-## Contributing & Development
-
-Interested in contributing to AgenticFleet Labs or developing the plugins further? We welcome your help!
-
-**Quick Setup for Development:**
-
-1. **Clone:** `git clone https://github.com/AgenticFleet/AgenticFleet-Labs.git && cd AgenticFleet-Labs`
-2. **Environment:** `uv venv && source .venv/bin/activate` (or use standard `python -m venv .venv`)
-3. **Install Dev Dependencies:** `uv pip install -e ".[test,dev]"` (or `pip install -e ".[test,dev]"`)
-4. **Install Hooks:** `pre-commit install`
-
-**Key Development Tasks:**
-
-* **Run Tests:** `uv run pytest` (or `pytest`)
-* **Format & Lint:** `uv run ruff format . && uv run ruff check --fix .` (or use `ruff` directly)
-* **Type Check:** `uv run mypy .` (or `mypy .`)
-
-Please refer to our [Contribution Guidelines](CONTRIBUTING.md) (link to be created) for more details on the development process, coding standards, and submitting pull requests. We also use `tasks.md` to track ongoing work.
+Contributions are welcome! Please see `CONTRIBUTING.md` for guidelines.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
 ## Need Help?
 

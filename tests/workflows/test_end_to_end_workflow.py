@@ -2,7 +2,7 @@
 
 import pytest
 import asyncio
-from typing import Dict, List
+from typing import Dict, List, Any
 from unittest.mock import AsyncMock, MagicMock
 
 from agentic_kernel.agents import (
@@ -12,7 +12,8 @@ from agentic_kernel.agents import (
     WebSurferAgent,
 )
 from agentic_kernel.orchestrator import OrchestratorAgent
-from agentic_kernel.config import AgentConfig, LLMMapping  # Simple AgentConfig for single agents
+from agentic_kernel.config_types import AgentConfig, LLMMapping  # Simple AgentConfig for single agents
+from agentic_kernel.config.agent_team import AgentTeamConfig  # For teams
 from agentic_kernel.ledgers import TaskLedger, ProgressLedger
 from agentic_kernel.types import Task, WorkflowStep
 
