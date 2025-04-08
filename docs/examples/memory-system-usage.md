@@ -137,7 +137,7 @@ async def run_memory_workflow_part2():
     # MemoryAgent interacts with MemoryManager
     print(f"-> MemoryAgent: Searching memory for '{query}'.")
     # Simulate finding the previously stored memory
-    step1_output = {"retrieved_content": [{"content": ["Scalability", "Indep. Deployment", "Tech Diversity"], "metadata": {"topic": "microservices benefits", ...}}]}
+    step1_output = {"retrieved_content": [{"content": ["Scalability", "Indep. Deployment", "Tech Diversity"], "metadata": {"topic": "microservices benefits", "additional_metadata": "..."}}]}
     print(f"-> Result: {step1_output}")
     print("--- End Orchestrator Internals ---")
 
