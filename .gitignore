@@ -71,3 +71,6 @@ node_modules/
 # Local scripts for maintenance (not required for the codebase itself)
 cleanup.py
 check_duplicates.py
+
+# Sphinx build output
+docs/build/

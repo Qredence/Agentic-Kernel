@@ -8,8 +8,8 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import chainlit as cl
 import semantic_kernel as sk
 from agentic_kernel.agents.base import BaseAgent
-from agentic_kernel.config_types import AgentConfig
 from agentic_kernel.config.loader import ConfigLoader
+from agentic_kernel.config_types import AgentConfig
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin
 from dotenv import load_dotenv
@@ -20,14 +20,8 @@ from semantic_kernel.connectors.ai.function_choice_behavior import (
 from semantic_kernel.connectors.ai.open_ai import (
     AzureChatCompletion,
     AzureChatPromptExecutionSettings,
-    OpenAIChatCompletion,
 )
 from semantic_kernel.contents import ChatHistory
-from semantic_kernel.core_plugins import TimePlugin
-from semantic_kernel.functions import kernel_function
-import asyncio
-from agentic_kernel.orchestrator import Orchestrator
-from agentic_kernel.types import Task, WorkflowStep
 
 # Load environment variables from .env file
 load_dotenv()
