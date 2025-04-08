@@ -132,8 +132,11 @@ def test_security_policy_validation(valid_team_config):
     policy = SecurityPolicy(**valid_team_config["security_policy"])
     
     # Test domain validation
-    assert "github.com" in policy.allowed_domains
-    assert "example.com" in policy.blocked_domains
+    from urllib.parse import urlparse
+    allowed_url = "http://github.com"
+    blocked_url = "http://example.com"
+    assert urlparse(allowed_url).hostname in policy.allowed_domains
+    assert urlparse(blocked_url).hostname in policy.blocked_domains
     
     # Test file extension validation
     assert ".py" in policy.allowed_file_extensions
