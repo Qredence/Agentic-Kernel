@@ -133,7 +133,7 @@ class ChatAgent(BaseAgent):
             async for chunk in self.handle_message(task.description):
                 response.append(chunk)
 
-            return {"status": "completed", "output": "".join(response)}
+            return {"status": Status.completed, "output": "".join(response)}
         except Exception as e:
             logger.error(f"Chat task execution failed: {str(e)}", exc_info=True)
             return {"status": "failed", "error": str(e), "output": None}
