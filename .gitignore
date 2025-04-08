@@ -56,6 +56,7 @@ htmlcov/
 # Logs
 *.log
 logs/
+debug_log.txt
 
 # Temporary files
 *.tmp

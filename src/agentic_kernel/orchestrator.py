@@ -1,188 +1,412 @@
-"""Orchestrator implementation for managing workflow execution."""
+"""Orchestrator agent for coordinating workflows in the Agentic-Kernel system.
 
+This module implements the orchestrator agent responsible for:
+1. Managing workflow execution
+2. Task delegation to appropriate agents
+3. Progress monitoring and status updates
+4. Error handling and recovery
+5. Inter-agent communication coordination
+"""
+
+from typing import Dict, Any, List, Optional, Set
 import asyncio
-from typing import Dict, List, Any, Optional
-from datetime import datetime
 import logging
+from uuid import uuid4
 
-from .agents import BaseAgent
+from .agents.base import BaseAgent
+from .types import Task, TaskStatus, Workflow
+from .exceptions import TaskExecutionError, WorkflowError
+from .communication.protocol import MessageBus, CommunicationProtocol
+from .communication.message import MessageType, Message, MessagePriority
 from .config import AgentConfig
-from .ledgers import TaskLedger, ProgressLedger
-from .types import Task, WorkflowStep
 
 logger = logging.getLogger(__name__)
 
 
-class OrchestratorAgent:
+class OrchestratorAgent(BaseAgent):
     """Agent responsible for orchestrating workflow execution.
-    
+
+    The orchestrator manages the execution of workflows by:
+    1. Breaking down workflows into tasks
+    2. Assigning tasks to appropriate agents
+    3. Monitoring task execution progress
+    4. Handling failures and retries
+    5. Coordinating communication between agents
+
     Attributes:
-        config: Configuration for the orchestrator
-        task_ledger: Ledger for tracking tasks
-        progress_ledger: Ledger for tracking workflow progress
-        agents: Dictionary of registered agents
+        registered_agents (Dict[str, BaseAgent]): Mapping of agent IDs to instances
+        active_workflows (Dict[str, Workflow]): Currently executing workflows
+        task_assignments (Dict[str, str]): Mapping of task IDs to agent IDs
+        message_bus (MessageBus): Central message bus for agent communication
     """
 
-    def __init__(
-        self,
-        config: AgentConfig,
-        task_ledger: TaskLedger,
-        progress_ledger: ProgressLedger
-    ):
-        """Initialize the orchestrator.
-        
-        Args:
-            config: Configuration for the orchestrator
-            task_ledger: Task tracking ledger
-            progress_ledger: Progress tracking ledger
-        """
-        self.config = config
-        self.task_ledger = task_ledger
-        self.progress_ledger = progress_ledger
-        self.agents: Dict[str, BaseAgent] = {}
+    def __init__(self, config: AgentConfig, message_bus: MessageBus):
+        """Initialize the orchestrator agent.
 
-    def register_agent(self, agent: BaseAgent):
+        Args:
+            config: Configuration parameters
+            message_bus: Message bus for agent communication
+        """
+        super().__init__(config, message_bus)
+
+        self.registered_agents: Dict[str, BaseAgent] = {}
+        self.active_workflows: Dict[str, Workflow] = {}
+        self.task_assignments: Dict[str, str] = {}
+        self.agent_capabilities: Dict[str, Dict[str, Any]] = {}
+
+        # Additional message handlers for orchestrator-specific messages
+        if self.protocol:
+            self.protocol.register_handler(
+                MessageType.STATUS_UPDATE, self._handle_status_update
+            )
+
+    def register_agent(self, agent: BaseAgent) -> None:
         """Register an agent with the orchestrator.
-        
-        Args:
-            agent: Agent instance to register
-        """
-        self.agents[agent.type] = agent
 
-    async def execute_workflow(self, workflow: List[WorkflowStep]) -> Dict[str, Any]:
-        """Execute a workflow.
-        
         Args:
-            workflow: List of workflow steps to execute
-            
-        Returns:
-            Dictionary containing workflow execution results
+            agent: The agent instance to register
         """
-        workflow_id = f"workflow_{datetime.now().timestamp()}"
-        await self.progress_ledger.register_workflow(workflow_id, workflow)
-        
-        completed_steps = []
-        failed_steps = []
-        retried_steps = []
-        metrics = {
-            "execution_time": 0.0,
-            "resource_usage": {},
-            "success_rate": 0.0
-        }
-        
-        start_time = datetime.now()
-        
+        self.registered_agents[agent.agent_id] = agent
+
+        # Request agent capabilities
+        if self.protocol:
+            asyncio.create_task(self._request_agent_capabilities(agent.agent_id))
+
+    async def _request_agent_capabilities(self, agent_id: str):
+        """Request capabilities from a registered agent.
+
+        Args:
+            agent_id: ID of the agent to request capabilities from
+        """
+        if not self.protocol:
+            return
+
         try:
-            while len(completed_steps) + len(failed_steps) < len(workflow):
-                ready_steps = self.progress_ledger.get_ready_steps(workflow_id)
-                if not ready_steps:
-                    # Check for deadlock
-                    remaining = set(step.task.name for step in workflow) - set(completed_steps) - set(failed_steps)
-                    if remaining and not ready_steps:
-                        raise RuntimeError(f"Deadlock detected. Remaining steps: {remaining}")
-                    await asyncio.sleep(0.1)
-                    continue
+            message_id = await self.protocol.send_message(
+                recipient=agent_id,
+                message_type=MessageType.CAPABILITY_REQUEST,
+                content={},
+                priority=MessagePriority.NORMAL,
+            )
 
-                # Execute ready steps in parallel
-                tasks = []
-                for step_name in ready_steps:
-                    step = next(s for s in workflow if s.task.name == step_name)
-                    tasks.append(self._execute_step(workflow_id, step))
-                
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                
-                # Process results
-                for step_name, result in zip(ready_steps, results):
-                    if isinstance(result, Exception):
-                        logger.error(f"Step {step_name} failed: {str(result)}")
-                        failed_steps.append(step_name)
-                        await self.progress_ledger.update_step_status(workflow_id, step_name, "failed")
-                    else:
-                        if result.get("retried", False):
-                            retried_steps.append(step_name)
-                        completed_steps.append(step_name)
-                        await self.progress_ledger.update_step_status(workflow_id, step_name, "completed")
-                        
-                        # Update metrics
-                        step_metrics = result.get("metrics", {})
-                        for key, value in step_metrics.items():
-                            if key not in metrics["resource_usage"]:
-                                metrics["resource_usage"][key] = 0
-                            metrics["resource_usage"][key] += value
+            # Store message ID for correlation
+            self.pending_capability_requests[agent_id] = message_id
 
         except Exception as e:
-            logger.error(f"Workflow execution failed: {str(e)}")
-            return {
-                "status": "failed",
-                "error": str(e),
-                "completed_steps": completed_steps,
-                "failed_steps": failed_steps,
-                "metrics": metrics
-            }
+            logger.error(
+                f"Error requesting capabilities from agent {agent_id}: {str(e)}"
+            )
 
-        # Calculate final metrics
-        end_time = datetime.now()
-        metrics["execution_time"] = (end_time - start_time).total_seconds()
-        metrics["success_rate"] = len(completed_steps) / len(workflow)
+    async def _handle_status_update(self, message: Message):
+        """Handle status updates from agents.
 
-        return {
-            "status": "success" if not failed_steps else "partial_success",
-            "completed_steps": completed_steps,
-            "failed_steps": failed_steps,
-            "retried_steps": retried_steps,
-            "metrics": metrics
+        Args:
+            message: The status update message
+        """
+        try:
+            task_id = message.content.get("task_id")
+            status = message.content["status"]
+            details = message.content.get("details", {})
+
+            if task_id and task_id in self.task_assignments:
+                await self._update_task_status(task_id, status, details)
+
+        except Exception as e:
+            logger.error(f"Error handling status update: {str(e)}")
+
+    async def _update_task_status(
+        self, task_id: str, status: str, details: Dict[str, Any]
+    ):
+        """Update the status of a task and handle workflow progression.
+
+        Args:
+            task_id: ID of the task to update
+            status: New status
+            details: Additional status details
+        """
+        # Find workflow containing this task
+        workflow_id = None
+        for wf_id, workflow in self.active_workflows.items():
+            if task_id in workflow.tasks:
+                workflow_id = wf_id
+                break
+
+        if not workflow_id:
+            logger.warning(f"Received status update for unknown task: {task_id}")
+            return
+
+        workflow = self.active_workflows[workflow_id]
+
+        # Update task status
+        workflow.tasks[task_id].status = status
+        workflow.tasks[task_id].details.update(details)
+
+        # Check if workflow is complete
+        if self._check_workflow_complete(workflow):
+            await self._handle_workflow_completion(workflow_id)
+        elif status == TaskStatus.FAILED:
+            await self._handle_task_failure(workflow_id, task_id)
+        else:
+            # Schedule next tasks if current task is complete
+            if status == TaskStatus.COMPLETED:
+                await self._schedule_next_tasks(workflow_id, task_id)
+
+    def _check_workflow_complete(self, workflow: Workflow) -> bool:
+        """Check if all tasks in a workflow are complete.
+
+        Args:
+            workflow: The workflow to check
+
+        Returns:
+            True if all tasks are complete, False otherwise
+        """
+        return all(
+            task.status == TaskStatus.COMPLETED for task in workflow.tasks.values()
+        )
+
+    async def _handle_workflow_completion(self, workflow_id: str):
+        """Handle completion of a workflow.
+
+        Args:
+            workflow_id: ID of the completed workflow
+        """
+        workflow = self.active_workflows[workflow_id]
+
+        # Notify relevant agents of completion
+        if self.protocol:
+            for agent_id in set(self.task_assignments.values()):
+                await self.protocol.send_status_update(
+                    recipient=agent_id,
+                    status="workflow_complete",
+                    details={"workflow_id": workflow_id, "metrics": workflow.metrics},
+                )
+
+        # Clean up workflow data
+        del self.active_workflows[workflow_id]
+
+        # Remove task assignments for this workflow
+        self.task_assignments = {
+            task_id: agent_id
+            for task_id, agent_id in self.task_assignments.items()
+            if task_id not in workflow.tasks
         }
 
-    async def _execute_step(self, workflow_id: str, step: WorkflowStep) -> Dict[str, Any]:
-        """Execute a single workflow step.
-        
+    async def _handle_task_failure(self, workflow_id: str, task_id: str):
+        """Handle failure of a task within a workflow.
+
+        Args:
+            workflow_id: ID of the workflow containing the failed task
+            task_id: ID of the failed task
+        """
+        workflow = self.active_workflows[workflow_id]
+        task = workflow.tasks[task_id]
+
+        if task.retries < workflow.max_retries:
+            # Retry the task
+            task.retries += 1
+            task.status = TaskStatus.PENDING
+            await self._assign_task(workflow_id, task_id)
+        else:
+            # Mark workflow as failed
+            workflow.status = "failed"
+
+            # Notify agents
+            if self.protocol:
+                for agent_id in set(self.task_assignments.values()):
+                    await self.protocol.send_status_update(
+                        recipient=agent_id,
+                        status="workflow_failed",
+                        details={
+                            "workflow_id": workflow_id,
+                            "failed_task": task_id,
+                            "error": task.details.get("error"),
+                        },
+                    )
+
+    async def _schedule_next_tasks(self, workflow_id: str, completed_task_id: str):
+        """Schedule tasks that depend on a completed task.
+
         Args:
             workflow_id: ID of the workflow
-            step: Step to execute
-            
-        Returns:
-            Dictionary containing step execution results
+            completed_task_id: ID of the completed task
         """
-        task = step.task
-        agent = self.agents.get(task.agent_type)
-        
-        if not agent:
-            raise ValueError(f"No agent found for type: {task.agent_type}")
-        
-        if not await agent.validate_task(task):
-            raise ValueError(f"Task {task.name} is not valid for agent {task.agent_type}")
-        
-        # Add task to ledger
-        task_id = await self.task_ledger.add_task(task)
-        
-        # Execute with retry logic
-        retries = 0
-        while retries <= task.max_retries:
+        workflow = self.active_workflows[workflow_id]
+
+        # Find tasks that depend on the completed task
+        for task_id, task in workflow.tasks.items():
+            if (
+                task.status == TaskStatus.PENDING
+                and completed_task_id in task.dependencies
+            ):
+                # Check if all dependencies are complete
+                if all(
+                    workflow.tasks[dep_id].status == TaskStatus.COMPLETED
+                    for dep_id in task.dependencies
+                ):
+                    await self._assign_task(workflow_id, task_id)
+
+    async def _assign_task(self, workflow_id: str, task_id: str):
+        """Assign a task to an appropriate agent.
+
+        Args:
+            workflow_id: ID of the workflow
+            task_id: ID of the task to assign
+        """
+        workflow = self.active_workflows[workflow_id]
+        task = workflow.tasks[task_id]
+
+        # Find suitable agent based on capabilities
+        agent_id = self._find_suitable_agent(task)
+        if not agent_id:
+            logger.error(f"No suitable agent found for task {task_id}")
+            task.status = TaskStatus.FAILED
+            task.details["error"] = "No suitable agent available"
+            return
+
+        # Assign task
+        self.task_assignments[task_id] = agent_id
+
+        # Request task execution
+        if self.protocol:
             try:
-                # Preprocess task
-                processed_task = await agent.preprocess_task(task)
-                
-                # Execute task
-                result = await agent.execute(processed_task)
-                
-                # Postprocess result
-                final_result = await agent.postprocess_result(result)
-                
-                # Update task result
-                await self.task_ledger.update_task_result(task_id, final_result)
-                
-                return {
-                    "status": "success",
-                    "result": final_result,
-                    "retried": retries > 0,
-                    "metrics": result.get("metrics", {})
-                }
-                
+                await self.protocol.request_task(
+                    recipient=agent_id,
+                    task_description=task.description,
+                    parameters=task.parameters,
+                    priority=MessagePriority.NORMAL,
+                    metadata={"workflow_id": workflow_id, "task_id": task_id},
+                )
+
+                task.status = TaskStatus.RUNNING
+
             except Exception as e:
-                retries += 1
-                if retries > task.max_retries:
-                    raise
-                logger.warning(f"Retrying task {task.name} after error: {str(e)}")
-                await asyncio.sleep(1 * retries)  # Exponential backoff
-        
-        raise RuntimeError(f"Task {task.name} failed after {task.max_retries} retries") 
+                logger.error(
+                    f"Error assigning task {task_id} to agent {agent_id}: {str(e)}"
+                )
+                task.status = TaskStatus.FAILED
+                task.details["error"] = str(e)
+
+    def _find_suitable_agent(self, task: Task) -> Optional[str]:
+        """Find an agent capable of handling a task.
+
+        Args:
+            task: The task to find an agent for
+
+        Returns:
+            ID of suitable agent, or None if none found
+        """
+        for agent_id, capabilities in self.agent_capabilities.items():
+            if task.type in capabilities["supported_tasks"]:
+                return agent_id
+        return None
+
+    async def execute(self, task: Task) -> Dict[str, Any]:
+        """Execute an orchestrator task.
+
+        The orchestrator primarily handles workflow management tasks.
+
+        Args:
+            task: The task to execute
+
+        Returns:
+            Task execution results
+
+        Raises:
+            TaskExecutionError: If task execution fails
+        """
+        try:
+            if task.type == "start_workflow":
+                workflow_id = await self._start_workflow(task.parameters["workflow"])
+                return {"status": "completed", "output": {"workflow_id": workflow_id}}
+
+            elif task.type == "stop_workflow":
+                await self._stop_workflow(task.parameters["workflow_id"])
+                return {"status": "completed"}
+
+            else:
+                raise TaskExecutionError(f"Unknown task type: {task.type}")
+
+        except Exception as e:
+            raise TaskExecutionError(str(e))
+
+    async def _start_workflow(self, workflow: Workflow) -> str:
+        """Start execution of a new workflow.
+
+        Args:
+            workflow: The workflow to execute
+
+        Returns:
+            The workflow ID
+
+        Raises:
+            WorkflowError: If workflow initialization fails
+        """
+        workflow_id = str(uuid4())
+        self.active_workflows[workflow_id] = workflow
+
+        # Initialize workflow status
+        workflow.status = "running"
+        workflow.metrics = {"start_time": asyncio.get_event_loop().time()}
+
+        # Schedule initial tasks (those with no dependencies)
+        initial_tasks = [
+            task_id for task_id, task in workflow.tasks.items() if not task.dependencies
+        ]
+
+        for task_id in initial_tasks:
+            await self._assign_task(workflow_id, task_id)
+
+        return workflow_id
+
+    async def _stop_workflow(self, workflow_id: str):
+        """Stop execution of a workflow.
+
+        Args:
+            workflow_id: ID of the workflow to stop
+
+        Raises:
+            WorkflowError: If workflow not found or stop fails
+        """
+        if workflow_id not in self.active_workflows:
+            raise WorkflowError(f"Workflow not found: {workflow_id}")
+
+        workflow = self.active_workflows[workflow_id]
+
+        # Notify agents to stop tasks
+        if self.protocol:
+            for task_id, agent_id in self.task_assignments.items():
+                if task_id in workflow.tasks:
+                    await self.protocol.send_message(
+                        recipient=agent_id,
+                        message_type=MessageType.TASK_CANCEL,
+                        content={"task_id": task_id},
+                        priority=MessagePriority.HIGH,
+                    )
+
+        # Update workflow status
+        workflow.status = "stopped"
+        workflow.metrics["stop_time"] = asyncio.get_event_loop().time()
+        workflow.metrics["duration"] = (
+            workflow.metrics["stop_time"] - workflow.metrics["start_time"]
+        )
+
+        # Clean up
+        await self._handle_workflow_completion(workflow_id)
+
+    def _get_supported_tasks(self) -> Dict[str, Any]:
+        """Get tasks supported by the orchestrator.
+
+        Returns:
+            Dictionary of supported task types and their capabilities
+        """
+        return {
+            "start_workflow": {
+                "description": "Start execution of a workflow",
+                "parameters": ["workflow"],
+                "examples": [{"workflow": {"tasks": {}, "max_retries": 3}}],
+            },
+            "stop_workflow": {
+                "description": "Stop execution of a workflow",
+                "parameters": ["workflow_id"],
+            },
+        }

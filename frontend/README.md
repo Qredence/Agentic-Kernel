@@ -52,3 +52,55 @@ export default tseslint.config({
   },
 })
 ```
+
+# Frontend Architecture
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── assets/           # Static assets
+│   │   ├── avatars/     # User and system avatars
+│   │   ├── icons/       # UI icons and symbols
+│   │   ├── logos/       # Application logos
+│   │   └── styles/      # Global CSS and style assets
+│   ├── components/      # Reusable React components
+│   ├── config/         # Configuration files
+│   │   ├── theme.json  # UI theme configuration
+│   │   └── ...         # Other config files
+│   ├── App.tsx         # Main application component
+│   └── main.tsx        # Application entry point
+├── package.json        # Dependencies and scripts
+└── index.html         # HTML entry point
+```
+
+## Asset Organization
+
+- All static assets are organized in the `src/assets` directory
+- Assets are categorized by type (avatars, icons, logos, styles)
+- Use relative imports from the assets directory (e.g., `import logo from '@/assets/logos/logo.png'`)
+
+## Configuration
+
+- Configuration files are centralized in `src/config`
+- `theme.json`: Contains UI theme settings
+- TypeScript and build configurations are in their respective files
+
+## Development Guidelines
+
+1. Keep components modular and reusable
+2. Follow the established directory structure
+3. Use TypeScript for type safety
+4. Maintain consistent styling using the theme configuration
+
+## Building and Running
+
+1. Install dependencies: `npm install`
+2. Development mode: `npm run dev`
+3. Build for production: `npm run build`
+4. Preview production build: `npm run preview`
+
+## Integration with Chainlit
+
+This frontend integrates with Chainlit for workflow visualization and user interaction. See the Chainlit integration documentation in `docs/integrations/chainlit.md` for more details.

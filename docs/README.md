@@ -6,24 +6,34 @@ Welcome to the Agentic Kernel documentation. This repository contains comprehens
 
 ```
 docs/
-├── architecture/       # System architecture and design decisions
-├── agents/            # Documentation for each agent type
-├── workflows/         # Workflow system documentation
-├── api/              # API reference documentation
+├── architecture/       # Detailed system architecture documentation
+├── developer/         # Developer guides and implementation details
+├── integrations/      # Integration guides and documentation
+├── maintenance/       # Maintenance and operations guides
 ├── guides/           # User and developer guides
 └── examples/         # Example use cases and implementations
 ```
 
-## Quick Start
+## Core Components
 
-[Coming soon - Will be updated with installation and basic usage instructions]
+The Agentic Kernel is built around several key components:
 
-## Core Concepts
+- **Orchestrator**: Advanced task planning and execution system with nested loop architecture
+- **Agents**: Specialized agents for different tasks (Web, File, Chat, etc.)
+- **Task Management**: Robust task tracking and execution system
+- **Memory Systems**: Long-term and working memory management
+- **Plugin System**: Extensible plugin architecture
+- **Communication**: Standardized agent communication protocols
+- **Tools**: Reusable tool implementations
+- **UI Integration**: Chainlit-based user interface
 
-- **Agent System**: Multi-agent architecture for complex task execution
-- **Workflow Engine**: Task orchestration and management
-- **Communication Protocol**: Standardized agent communication
-- **Security Model**: Sandboxed execution and access control
+## Quick Links
+
+- [Architecture Overview](ARCHITECTURE.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Developer Guide](developer/README.md)
+- [Integration Guide](integrations/README.md)
 
 ## Documentation Guidelines
 
@@ -31,17 +41,11 @@ docs/
 2. Include code examples where appropriate
 3. Document both public APIs and internal implementations
 4. Maintain a clear separation between user and developer documentation
-
-## Contributing
-
-When adding new documentation:
-
-1. Follow the established directory structure
-2. Use Markdown for consistency
-3. Include diagrams where helpful (using Mermaid or PlantUML)
-4. Cross-reference related documentation
-5. Update this README when adding new sections
+5. Follow the established directory structure
+6. Use Markdown for consistency
+7. Include diagrams where helpful (using Mermaid or PlantUML)
+8. Cross-reference related documentation
 
 ## License
 
-[License information will be added] 
+See the [LICENSE](../LICENSE) file in the root directory. 

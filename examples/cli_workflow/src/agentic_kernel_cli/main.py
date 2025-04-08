@@ -2,21 +2,21 @@
 
 import asyncio
 import logging
-import typer
 from pathlib import Path
-from rich.console import Console
-from rich.logging import RichHandler
-from typing import Optional, List
+from typing import List, Optional
 
+import typer
 from agentic_kernel.agents import (
-    OrchestratorAgent,
-    WebSurferAgent,
-    FileSurferAgent,
     CoderAgent,
+    FileSurferAgent,
+    OrchestratorAgent,
     TerminalAgent,
+    WebSurferAgent,
 )
 from agentic_kernel.config import ConfigLoader
-from agentic_kernel.ledgers import TaskLedger, ProgressLedger
+from agentic_kernel.ledgers import ProgressLedger, TaskLedger
+from rich.console import Console
+from rich.logging import RichHandler
 
 # Set up logging
 logging.basicConfig(
