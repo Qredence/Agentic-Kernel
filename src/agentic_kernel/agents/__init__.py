@@ -5,6 +5,7 @@ from .coder import CoderAgent
 from .terminal import TerminalAgent
 from .file_surfer import FileSurferAgent
 from .web_surfer import WebSurferAgent
+from .chat_agent import ChatAgent
 
 __all__ = [
     "BaseAgent",
@@ -12,4 +13,5 @@ __all__ = [
     "TerminalAgent",
     "FileSurferAgent",
     "WebSurferAgent",
+    "ChatAgent",
 ]

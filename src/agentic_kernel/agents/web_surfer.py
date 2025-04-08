@@ -15,10 +15,10 @@ class WebSurferAgent(BaseAgent):
 
     async def execute(self, task: Task) -> Dict[str, Any]:
         """Execute a web task.
-        
+
         Args:
             task: Task object containing the web operation details
-            
+
         Returns:
             Dictionary containing task execution results
         """
@@ -27,10 +27,7 @@ class WebSurferAgent(BaseAgent):
             return {
                 "status": "success",
                 "result": "Web content fetched",
-                "metrics": {
-                    "bytes_downloaded": 2048,
-                    "request_time": 0.3
-                }
+                "metrics": {"bytes_downloaded": 2048, "request_time": 0.3},
             }
         except Exception as e:
             logger.error(f"Error executing web operation: {str(e)}")
@@ -38,25 +35,25 @@ class WebSurferAgent(BaseAgent):
 
     def _get_supported_tasks(self) -> Dict[str, Any]:
         """Get the tasks supported by this agent.
-        
+
         Returns:
             Dictionary describing supported tasks
         """
         return {
             "web_fetch": {
                 "description": "Fetch content from a URL",
-                "parameters": ["url", "method"]
+                "parameters": ["url", "method"],
             },
             "web_search": {
                 "description": "Search web content",
-                "parameters": ["query", "engine"]
+                "parameters": ["query", "engine"],
             },
             "web_scrape": {
                 "description": "Extract data from web pages",
-                "parameters": ["url", "selectors"]
+                "parameters": ["url", "selectors"],
             },
             "web_monitor": {
                 "description": "Monitor web pages for changes",
-                "parameters": ["url", "interval"]
-            }
-        } 
+                "parameters": ["url", "interval"],
+            },
+        }

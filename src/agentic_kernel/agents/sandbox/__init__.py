@@ -3,7 +3,4 @@
 from .base import Sandbox
 from .docker_sandbox import DockerSandbox
 
-__all__ = [
-    "Sandbox",
-    "DockerSandbox"
-] 
+__all__ = ["Sandbox", "DockerSandbox"]

@@ -15,10 +15,10 @@ class TerminalAgent(BaseAgent):
 
     async def execute(self, task: Task) -> Dict[str, Any]:
         """Execute a shell command.
-        
+
         Args:
             task: Task object containing the command details
-            
+
         Returns:
             Dictionary containing task execution results
         """
@@ -27,10 +27,7 @@ class TerminalAgent(BaseAgent):
             return {
                 "status": "success",
                 "result": "Command executed",
-                "metrics": {
-                    "execution_time": 0.2,
-                    "memory_usage": 50
-                }
+                "metrics": {"execution_time": 0.2, "memory_usage": 50},
             }
         except Exception as e:
             logger.error(f"Error executing command: {str(e)}")
@@ -38,21 +35,21 @@ class TerminalAgent(BaseAgent):
 
     def _get_supported_tasks(self) -> Dict[str, Any]:
         """Get the tasks supported by this agent.
-        
+
         Returns:
             Dictionary describing supported tasks
         """
         return {
             "command_execution": {
                 "description": "Execute a shell command",
-                "parameters": ["command", "working_directory"]
+                "parameters": ["command", "working_directory"],
             },
             "file_operations": {
                 "description": "Perform file system operations",
-                "parameters": ["operation", "path"]
+                "parameters": ["operation", "path"],
             },
             "process_management": {
                 "description": "Manage system processes",
-                "parameters": ["action", "process_id"]
-            }
-        } 
+                "parameters": ["action", "process_id"],
+            },
+        }
