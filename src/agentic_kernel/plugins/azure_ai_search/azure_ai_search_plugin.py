@@ -1,5 +1,4 @@
 import semantic_kernel as sk
-from semantic_kernel.plugin_definition import kernel_function
 from pydantic import Field
 import os
 import json
@@ -35,7 +34,6 @@ class AzureAISearchPlugin:
             logger.exception(f"Failed to initialize Azure AI Search client: {e}")
             raise
 
-    @kernel_function(description="Performs a vector similarity search in Azure AI Search.")
     async def vector_search(
         self,
         query_vector: list[float] = Field(..., description="The vector representation of the query."),

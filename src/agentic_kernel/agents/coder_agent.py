@@ -5,29 +5,29 @@ models. It supports code generation, review, refactoring, and explanation across
 multiple programming languages.
 
 Key features:
-1. Code generation from natural language descriptions
-2. Code review with quality assessment
-3. Automated refactoring with customizable goals
-4. Code explanation and complexity analysis
-5. Multi-language support with dynamic language management
+    1. Code generation from natural language descriptions
+    2. Code review with quality assessment
+    3. Automated refactoring with customizable goals
+    4. Code explanation and complexity analysis
+    5. Multi-language support with dynamic language management
 
 Example:
-    ```python
-    # Initialize the coder agent
-    config = AgentConfig(
-        llm_mapping=LLMConfig(max_tokens=1000, temperature=0.7),
-        config={"supported_languages": ["python", "typescript"]}
-    )
-    agent = CoderAgent(config, llm=code_llm)
-    
-    # Generate code
-    task = Task(
-        description="Create a function to calculate Fibonacci numbers",
-        parameters={"action": "generate", "language": "python"}
-    )
-    result = await agent.execute(task)
-    print(result['output']['code'])
-    ```
+    .. code-block:: python
+
+        # Initialize the coder agent
+        config = AgentConfig(
+            llm_mapping=LLMConfig(max_tokens=1000, temperature=0.7),
+            config={"supported_languages": ["python", "typescript"]}
+        )
+        agent = CoderAgent(config, llm=code_llm)
+        
+        # Generate code
+        task = Task(
+            description="Create a function to calculate Fibonacci numbers",
+            parameters={"action": "generate", "language": "python"}
+        )
+        result = await agent.execute(task)
+        print(result['output']['code'])
 """
 
 import logging
@@ -65,11 +65,11 @@ class CodeResult:
     including the code itself, any explanations or metrics, and metadata.
 
     Attributes:
-        code (Optional[str]): The generated or modified code
-        language (str): The programming language used
-        explanation (Optional[str]): Human-readable explanation of the code
-        metrics (Optional[Dict[str, Any]]): Code quality metrics
-        suggestions (Optional[List[str]]): Improvement suggestions
+        code (Optional[str]): The generated or modified code.
+        language (str): The programming language used.
+        explanation (Optional[str]): Human-readable explanation of the code.
+        metrics (Optional[Dict[str, Any]]): Code quality metrics.
+        suggestions (Optional[List[str]]): Improvement suggestions.
     """
 
     code: Optional[str]
@@ -87,10 +87,10 @@ class CodeLLM(Protocol):
     support all necessary code operations.
 
     Methods:
-        generate_code: Create code from a description
-        review_code: Analyze code quality and provide feedback
-        refactor_code: Modify code to meet specific goals
-        explain_code: Provide detailed code explanation
+        generate_code: Create code from a description.
+        review_code: Analyze code quality and provide feedback.
+        refactor_code: Modify code to meet specific goals.
+        explain_code: Provide detailed code explanation.
     """
 
     async def generate_code(
@@ -122,36 +122,51 @@ class CoderAgent(BaseAgent):
     operations are performed only on supported languages.
 
     Attributes:
-        llm (CodeLLM): Language model for code operations
-        max_tokens (int): Maximum tokens for generation tasks
-        temperature (float): Temperature for generation tasks
-        supported_languages (List[str]): Languages this agent can work with
+        llm (CodeLLM): Language model for code operations.
+        max_tokens (int): Maximum tokens for generation tasks.
+        temperature (float): Temperature for generation tasks.
+        supported_languages (List[str]): Languages this agent can work with.
 
     Example:
-        ```python
-        agent = CoderAgent(
-            config=AgentConfig(...),
-            llm=GPTCodeModel()
-        )
+        .. code-block:: python
 
-        # Generate Python code
-        result = await agent.generate_code(
-            "Sort a list in descending order",
-            "python"
-        )
-        print(result.code)
-        ```
+            agent = CoderAgent(
+                config=AgentConfig(...),
+                llm=GPTCodeModel()
+            )
+
+            # Generate Python code
+            result = await agent.generate_code(
+                "Sort a list in descending order",
+                "python"
+            )
+            print(result.code)
     """
 
     def __init__(self, config: AgentConfig, llm: Optional[CodeLLM] = None) -> None:
         """Initialize the CoderAgent.
 
         Args:
-            config: Configuration parameters for the agent
-            llm: Language model instance for code operations
+            config: Configuration parameters for the agent.
+            llm: Language model instance for code operations.
 
         Raises:
-            ValueError: If llm is None or doesn't implement CodeLLM protocol
+            ValueError: If llm is None or doesn't implement CodeLLM protocol.
+
+        Example:
+            .. code-block:: python
+
+                config = AgentConfig(
+                    extra_config={
+                        'plugin_config': {
+                            'search_api_key': 'your-api-key',
+                            'max_results': 5,
+                            'timeout': 30,
+                            'retry_attempts': 3
+                        }
+                    }
+                )
+                agent = WebSurferAgent(config)
         """
         super().__init__(config=config)
 
@@ -172,30 +187,30 @@ class CoderAgent(BaseAgent):
         action specified in the task parameters.
 
         Args:
-            task: Task containing the code operation details
+            task: Task containing the code operation details.
 
         Returns:
             Dictionary containing:
-            - status: TaskStatus indicating success or failure
-            - output: CodeResult containing operation results
-            - error: Error message if the operation failed
+                - status: TaskStatus indicating success or failure.
+                - output: CodeResult containing operation results.
+                - error: Error message if the operation failed.
 
         Raises:
-            ValueError: If required parameters are missing or invalid
+            ValueError: If required parameters are missing or invalid.
 
         Example:
-            ```python
-            task = Task(
-                description="Create a binary search function",
-                parameters={
-                    "action": "generate",
-                    "language": "python"
-                }
-            )
-            result = await agent.execute(task)
-            if result["status"] == TaskStatus.completed:
-                print(result["output"].code)
-            ```
+            .. code-block:: python
+
+                task = Task(
+                    description="Create a binary search function",
+                    parameters={
+                        "action": "generate",
+                        "language": "python"
+                    }
+                )
+                result = await agent.execute(task)
+                if result["status"] == TaskStatus.completed:
+                    print(result["output"].code)
         """
         try:
             # Extract task parameters
@@ -240,28 +255,28 @@ class CoderAgent(BaseAgent):
         the functionality described in natural language.
 
         Args:
-            description: Natural language description of desired functionality
-            language: Programming language to generate code in
+            description: Natural language description of desired functionality.
+            language: Programming language to generate code in.
 
         Returns:
             CodeResult containing:
-            - code: The generated code
-            - language: The programming language used
-            - explanation: Description of how the code works
+                - code: The generated code.
+                - language: The programming language used.
+                - explanation: Description of how the code works.
 
         Raises:
-            ValueError: If language is not supported
-            TaskExecutionError: If code generation fails
+            ValueError: If language is not supported.
+            TaskExecutionError: If code generation fails.
 
         Example:
-            ```python
-            result = await agent.generate_code(
-                "Create a function that reverses a string",
-                "python"
-            )
-            print(result.code)
-            print(result.explanation)
-            ```
+            .. code-block:: python
+
+                result = await agent.generate_code(
+                    "Create a function that reverses a string",
+                    "python"
+                )
+                print(result.code)
+                print(result.explanation)
         """
         if language not in self.supported_languages:
             raise ValueError(f"Unsupported language: {language}")
@@ -283,28 +298,28 @@ class CoderAgent(BaseAgent):
         and provides improvement suggestions.
 
         Args:
-            code: Source code to review
-            language: Programming language of the code
+            code: Source code to review.
+            language: Programming language of the code.
 
         Returns:
             CodeResult containing:
-            - metrics: Code quality metrics
-            - suggestions: List of improvement suggestions
-            - explanation: Detailed review feedback
+                - metrics: Code quality metrics.
+                - suggestions: List of improvement suggestions.
+                - explanation: Detailed review feedback.
 
         Raises:
-            ValueError: If code is empty or language not supported
-            TaskExecutionError: If code review fails
+            ValueError: If code is empty or language not supported.
+            TaskExecutionError: If code review fails.
 
         Example:
-            ```python
-            result = await agent.review_code(
-                "def add(a,b): return a+b",
-                "python"
-            )
-            for suggestion in result.suggestions:
-                print(f"- {suggestion}")
-            ```
+            .. code-block:: python
+
+                result = await agent.review_code(
+                    "def add(a,b): return a+b",
+                    "python"
+                )
+                for suggestion in result.suggestions:
+                    print(f"- {suggestion}")
         """
         if not code.strip():
             raise ValueError("Code cannot be empty")
@@ -326,31 +341,31 @@ class CoderAgent(BaseAgent):
         specified refactoring goals while maintaining its functionality.
 
         Args:
-            code: Source code to refactor
-            language: Programming language of the code
-            goals: Refactoring objectives (e.g., "improve_readability")
+            code: Source code to refactor.
+            language: Programming language of the code.
+            goals: Refactoring objectives (e.g., "improve_readability").
 
         Returns:
             CodeResult containing:
-            - code: The refactored code
-            - explanation: Description of changes made
-            - metrics: Improvement metrics
+                - code: The refactored code.
+                - explanation: Description of changes made.
+                - metrics: Improvement metrics.
 
         Raises:
-            ValueError: If code is empty or language not supported
-            TaskExecutionError: If refactoring fails
+            ValueError: If code is empty or language not supported.
+            TaskExecutionError: If refactoring fails.
 
         Example:
-            ```python
-            result = await agent.refactor_code(
-                "def f(x): return x*2",
-                "python",
-                goals=["improve_readability", "add_docstring"]
-            )
-            print("Before:", code)
-            print("After:", result.code)
-            print("Changes:", result.explanation)
-            ```
+            .. code-block:: python
+
+                result = await agent.refactor_code(
+                    "def f(x): return x*2",
+                    "python",
+                    goals=["improve_readability", "add_docstring"]
+                )
+                print("Before:", code)
+                print("After:", result.code)
+                print("Changes:", result.explanation)
         """
         if not code.strip():
             raise ValueError("Code cannot be empty")
@@ -379,27 +394,27 @@ class CoderAgent(BaseAgent):
         of its functionality, including complexity analysis and key concepts.
 
         Args:
-            code: Source code to explain
-            language: Programming language of the code
+            code: Source code to explain.
+            language: Programming language of the code.
 
         Returns:
             CodeResult containing:
-            - explanation: Detailed code explanation
-            - metrics: Complexity metrics
+                - explanation: Detailed code explanation.
+                - metrics: Complexity metrics.
 
         Raises:
-            ValueError: If code is empty or language not supported
-            TaskExecutionError: If explanation fails
+            ValueError: If code is empty or language not supported.
+            TaskExecutionError: If explanation fails.
 
         Example:
-            ```python
-            result = await agent.explain_code(
-                "def quicksort(arr): ...",
-                "python"
-            )
-            print(result.explanation)
-            print("Time complexity:", result.metrics["complexity"])
-            ```
+            .. code-block:: python
+
+                result = await agent.explain_code(
+                    "def quicksort(arr): ...",
+                    "python"
+                )
+                print(result.explanation)
+                print("Time complexity:", result.metrics["complexity"])
         """
         if not code.strip():
             raise ValueError("Code cannot be empty")
@@ -416,18 +431,18 @@ class CoderAgent(BaseAgent):
         """Check if a programming language is supported.
 
         Args:
-            language: Programming language to check
+            language: Programming language to check.
 
         Returns:
-            True if the language is supported, False otherwise
+            True if the language is supported, False otherwise.
 
         Example:
-            ```python
-            if agent.supports_language("rust"):
-                result = await agent.generate_code(description, "rust")
-            else:
-                print("Rust is not supported")
-            ```
+            .. code-block:: python
+
+                if agent.supports_language("rust"):
+                    result = await agent.generate_code(description, "rust")
+                else:
+                    print("Rust is not supported")
         """
         return language in self.supported_languages
 
@@ -438,13 +453,13 @@ class CoderAgent(BaseAgent):
         for a new programming language.
 
         Args:
-            language: Programming language to add
+            language: Programming language to add.
 
         Example:
-            ```python
-            agent.add_supported_language("go")
-            assert agent.supports_language("go")
-            ```
+            .. code-block:: python
+
+                agent.add_supported_language("go")
+                assert agent.supports_language("go")
         """
         if language not in self.supported_languages:
             self.supported_languages.append(language)
@@ -457,13 +472,13 @@ class CoderAgent(BaseAgent):
         for a programming language.
 
         Args:
-            language: Programming language to remove
+            language: Programming language to remove.
 
         Example:
-            ```python
-            agent.remove_supported_language("javascript")
-            assert not agent.supports_language("javascript")
-            ```
+            .. code-block:: python
+
+                agent.remove_supported_language("javascript")
+                assert not agent.supports_language("javascript")
         """
         if language in self.supported_languages:
             self.supported_languages.remove(language)
@@ -473,16 +488,16 @@ class CoderAgent(BaseAgent):
         """Get the tasks supported by this agent.
 
         Returns:
-            Dictionary mapping task types to their capabilities
+            Dictionary mapping task types to their capabilities.
 
         Example:
-            ```python
-            capabilities = agent._get_supported_tasks()
-            for task_type, details in capabilities.items():
-                print(f"{task_type}:")
-                print(f"  Description: {details['description']}")
-                print(f"  Parameters: {details['parameters']}")
-            ```
+            .. code-block:: python
+
+                capabilities = agent._get_supported_tasks()
+                for task_type, details in capabilities.items():
+                    print(f"{task_type}:")
+                    print(f"  Description: {details['description']}")
+                    print(f"  Parameters: {details['parameters']}")
         """
         return {
             "generate_code": {

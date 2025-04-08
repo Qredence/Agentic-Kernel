@@ -41,21 +41,21 @@ Example:
     ```
 """
 
-import re
 import asyncio
-from enum import Enum, auto
-from typing import Dict, Any, Optional, List, Union
+import logging
+import re
 from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import HttpUrl, ValidationError
 
 from agentic_kernel.config_types import AgentConfig
-from .base import BaseAgent, TaskCapability
-from ..plugins.base import BasePlugin
-from agentic_kernel.plugins.web_surfer import WebSurferPlugin, WebSearchResult
+from agentic_kernel.plugins.web_surfer import WebSearchResult, WebSurferPlugin
 from agentic_kernel.types import Task, TaskStatus
 
-import logging
+from ..plugins.base import BasePlugin
+from .base import BaseAgent, TaskCapability
 
 logger = logging.getLogger(__name__)
 

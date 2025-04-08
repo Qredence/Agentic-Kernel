@@ -1,13 +1,47 @@
-"""Task management utilities."""
+"""Task management utilities.
 
-import uuid
+This module provides utilities for managing tasks, including creation,
+tracking, and synchronization with the Chainlit UI. It supports task
+lifecycle management and progress tracking through ledgers.
+
+Key features:
+    1. Task creation and tracking
+    2. Status management and updates
+    3. Progress monitoring
+    4. Chainlit UI integration
+    5. Metrics collection
+
+Example:
+    .. code-block:: python
+
+        # Initialize managers
+        task_ledger = TaskLedger()
+        progress_ledger = ProgressLedger()
+        manager = TaskManager(task_ledger, progress_ledger)
+
+        # Create and track a task
+        task = await manager.create_task(
+            name="process_data",
+            agent_type="data_processor",
+            description="Process input files"
+        )
+
+        # Update task status
+        await manager.update_task_status(
+            task.id,
+            "completed",
+            {"processed_files": 10}
+        )
+"""
+
 import logging
+import uuid
 from datetime import datetime
-from typing import Dict, Optional, Any, List
+from typing import Any, Dict, List, Optional
 
-from ..types import Task
-from ..ledgers.task_ledger import TaskLedger
 from ..ledgers.progress_ledger import ProgressLedger
+from ..ledgers.task_ledger import TaskLedger
+from ..types import Task
 
 # Try importing Chainlit, but allow tests to run without it
 try:
@@ -22,7 +56,45 @@ logger = logging.getLogger(__name__)
 
 
 class TaskManager:
-    """Manages task creation, assignment, and tracking, including Chainlit UI sync."""
+    """Manages task creation, assignment, and tracking, including Chainlit UI sync.
+
+    This class provides a comprehensive interface for managing tasks throughout
+    their lifecycle. It handles task creation, status updates, progress tracking,
+    and synchronization with the Chainlit UI for visualization.
+
+    Attributes:
+        task_ledger (TaskLedger): The task ledger for task tracking.
+        progress_ledger (ProgressLedger): The progress ledger for progress tracking.
+        tasks (Dict[str, Task]): Dictionary mapping task IDs to task objects.
+        message_task_map (Dict[str, str]): Dictionary mapping Chainlit message IDs to task IDs.
+
+    Example:
+        .. code-block:: python
+
+            # Initialize the manager
+            manager = TaskManager(task_ledger, progress_ledger)
+
+            # Create a task
+            task = await manager.create_task(
+                name="analyze_data",
+                agent_type="data_analyzer",
+                parameters={"file": "data.csv"}
+            )
+
+            # Update progress
+            await manager.update_task_status(
+                task.id,
+                "running",
+                progress={"percent_complete": 50}
+            )
+
+            # Complete the task
+            await manager.complete_task(
+                task.id,
+                result={"analysis": "completed"},
+                metrics={"execution_time": 1.5}
+            )
+    """
 
     def __init__(
         self, task_ledger: TaskLedger, progress_ledger: ProgressLedger
@@ -32,13 +104,18 @@ class TaskManager:
         Args:
             task_ledger: The task ledger to use for task tracking.
             progress_ledger: The progress ledger to use for progress tracking.
+
+        Example:
+            .. code-block:: python
+
+                task_ledger = TaskLedger()
+                progress_ledger = ProgressLedger()
+                manager = TaskManager(task_ledger, progress_ledger)
         """
         self.task_ledger = task_ledger
         self.progress_ledger = progress_ledger
         self.tasks: Dict[str, Task] = {}
-        self.message_task_map: Dict[str, str] = (
-            {}
-        )  # Maps Chainlit message IDs to task IDs
+        self.message_task_map: Dict[str, str] = {}
         logger.info("TaskManager initialized with task and progress ledgers.")
 
     async def create_task(
@@ -53,15 +130,27 @@ class TaskManager:
         """Create a new task.
 
         Args:
-            name: Name of the task
-            agent_type: Type of agent to execute the task
-            description: Optional description of the task
-            parameters: Optional parameters for task execution
-            max_retries: Maximum number of retry attempts
-            timeout: Maximum time in seconds for execution
+            name: Name of the task.
+            agent_type: Type of agent to execute the task.
+            description: Optional description of the task.
+            parameters: Optional parameters for task execution.
+            max_retries: Maximum number of retry attempts.
+            timeout: Maximum time in seconds for execution.
 
         Returns:
-            The created task
+            Task: The created task object.
+
+        Example:
+            .. code-block:: python
+
+                task = await manager.create_task(
+                    name="process_data",
+                    agent_type="data_processor",
+                    description="Process input files",
+                    parameters={"input_dir": "data/"},
+                    max_retries=3,
+                    timeout=300
+                )
         """
         task = Task(
             name=name,
@@ -80,10 +169,17 @@ class TaskManager:
         """Get a task by ID.
 
         Args:
-            task_id: ID of the task
+            task_id: ID of the task.
 
         Returns:
-            The task if found, None otherwise
+            Optional[Task]: The task if found, None otherwise.
+
+        Example:
+            .. code-block:: python
+
+                task = await manager.get_task("task_123")
+                if task:
+                    print(f"Task status: {task.status}")
         """
         return await self.task_ledger.get_task(task_id)
 
@@ -91,10 +187,19 @@ class TaskManager:
         """List tasks, optionally filtered by status.
 
         Args:
-            status: Optional status to filter by
+            status: Optional status to filter by.
 
         Returns:
-            List of matching tasks
+            List[Task]: List of matching tasks.
+
+        Example:
+            .. code-block:: python
+
+                # Get all running tasks
+                running_tasks = await manager.list_tasks("running")
+
+                # Get all tasks
+                all_tasks = await manager.list_tasks()
         """
         return await self.task_ledger.get_tasks_by_status(status)
 
@@ -108,10 +213,19 @@ class TaskManager:
         """Update the status of a task.
 
         Args:
-            task_id: ID of the task
-            status: New status value
-            result: Optional result data
-            progress: Optional progress data
+            task_id: ID of the task.
+            status: New status value.
+            result: Optional result data.
+            progress: Optional progress data.
+
+        Example:
+            .. code-block:: python
+
+                await manager.update_task_status(
+                    "task_123",
+                    "running",
+                    progress={"percent_complete": 75}
+                )
         """
         await self.task_ledger.update_task_status(task_id, status, result)
         if progress:
@@ -127,9 +241,18 @@ class TaskManager:
         """Mark a task as completed.
 
         Args:
-            task_id: ID of the task
-            result: Optional result data
-            metrics: Optional metrics data
+            task_id: ID of the task.
+            result: Optional result data.
+            metrics: Optional metrics data.
+
+        Example:
+            .. code-block:: python
+
+                await manager.complete_task(
+                    "task_123",
+                    result={"output": "Task completed successfully"},
+                    metrics={"execution_time": 2.5}
+                )
         """
         await self.update_task_status(task_id, "completed", result)
         if metrics:
@@ -149,9 +272,18 @@ class TaskManager:
         """Mark a task as failed.
 
         Args:
-            task_id: ID of the task
-            error: Error message
-            metrics: Optional metrics data
+            task_id: ID of the task.
+            error: Error message.
+            metrics: Optional metrics data.
+
+        Example:
+            .. code-block:: python
+
+                await manager.fail_task(
+                    "task_123",
+                    "Input file not found",
+                    metrics={"attempt": 3}
+                )
         """
         await self.update_task_status(task_id, "failed", {"error": error})
         if metrics:
@@ -170,7 +302,12 @@ class TaskManager:
         """Cancel a task.
 
         Args:
-            task_id: ID of the task
+            task_id: ID of the task.
+
+        Example:
+            .. code-block:: python
+
+                await manager.cancel_task("task_123")
         """
         await self.update_task_status(task_id, "cancelled")
         await self.progress_ledger.record_progress(
@@ -183,10 +320,17 @@ class TaskManager:
         """Get progress data for a task.
 
         Args:
-            task_id: ID of the task
+            task_id: ID of the task.
 
         Returns:
-            Progress data if found, None otherwise
+            Optional[Dict[str, Any]]: Progress data if found, None otherwise.
+
+        Example:
+            .. code-block:: python
+
+                progress = await manager.get_task_progress("task_123")
+                if progress:
+                    print(f"Progress: {progress['status']}")
         """
         return await self.progress_ledger.get_progress(task_id)
 
@@ -196,6 +340,14 @@ class TaskManager:
         Args:
             message_id: The ID of the Chainlit message.
             task_id: The ID of the task associated with the message.
+
+        Example:
+            .. code-block:: python
+
+                await manager.link_message_to_task(
+                    "msg_123",
+                    "task_456"
+                )
         """
         if not CHAINLIT_AVAILABLE:
             return
@@ -216,6 +368,12 @@ class TaskManager:
 
         Args:
             task_list: The Chainlit TaskList object to sync with.
+
+        Example:
+            .. code-block:: python
+
+                task_list = cl.TaskList()
+                await manager.sync_with_chainlit_tasklist(task_list)
         """
         if not CHAINLIT_AVAILABLE or not task_list:
             return
@@ -235,9 +393,7 @@ class TaskManager:
             elif task.status == "failed":
                 cl_status = cl.TaskStatus.FAILED
             else:  # includes 'running' or any other custom status
-                cl_status = (
-                    cl.TaskStatus.RUNNING
-                )  # Default to running if not explicitly ended
+                cl_status = cl.TaskStatus.RUNNING
 
             cl_task = cl.Task(
                 title=f"{task.name}: {task.description[:50]}...", status=cl_status

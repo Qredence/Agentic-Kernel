@@ -1,9 +1,40 @@
-"""Ledger for tracking workflow progress."""
+"""Ledger for tracking workflow progress.
 
-from typing import Dict, Any, List, Optional
+This module provides a ledger implementation for tracking workflow execution
+progress, step dependencies, and status updates. It supports concurrent access
+through asyncio locks and provides comprehensive workflow monitoring capabilities.
+
+Key features:
+    1. Workflow registration and tracking
+    2. Step dependency management
+    3. Progress monitoring and metrics
+    4. Concurrent access support
+    5. Progress data export capabilities
+
+Example:
+    .. code-block:: python
+
+        # Create a progress ledger
+        ledger = ProgressLedger()
+
+        # Register a workflow
+        steps = [
+            WorkflowStep(task=Task(name="step1"), dependencies=[]),
+            WorkflowStep(task=Task(name="step2"), dependencies=["step1"])
+        ]
+        await ledger.register_workflow("workflow_123", steps)
+
+        # Update step status
+        await ledger.update_step_status("workflow_123", "step1", "completed")
+
+        # Get ready steps
+        ready_steps = ledger.get_ready_steps("workflow_123")
+"""
+
 import asyncio
 import json
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from ..types import WorkflowStep
 
@@ -11,15 +42,51 @@ from ..types import WorkflowStep
 class ProgressLedger:
     """Ledger for tracking workflow progress.
 
+    This class provides a thread-safe implementation for tracking workflow
+    execution progress, managing step dependencies, and collecting progress
+    metrics. It supports concurrent access through asyncio locks and provides
+    comprehensive workflow monitoring capabilities.
+
     Attributes:
-        workflows: Dictionary mapping workflow IDs to workflow details
-        step_status: Dictionary mapping step IDs to execution status
-        dependencies: Dictionary mapping step IDs to dependency information
-        progress_data: Dictionary mapping task IDs to progress data
+        workflows (Dict[str, List[WorkflowStep]]): Dictionary mapping workflow IDs to workflow steps.
+        step_status (Dict[str, str]): Dictionary mapping step IDs to execution status.
+        dependencies (Dict[str, List[str]]): Dictionary mapping step IDs to dependency information.
+        progress_data (Dict[str, Dict[str, Any]]): Dictionary mapping task IDs to progress data.
+
+    Example:
+        .. code-block:: python
+
+            # Initialize ledger
+            ledger = ProgressLedger()
+
+            # Create workflow steps
+            steps = [
+                WorkflowStep(
+                    task=Task(name="fetch_data"),
+                    dependencies=[]
+                ),
+                WorkflowStep(
+                    task=Task(name="process_data"),
+                    dependencies=["fetch_data"]
+                )
+            ]
+
+            # Register workflow and track progress
+            await ledger.register_workflow("workflow_123", steps)
+            await ledger.update_step_status(
+                "workflow_123",
+                "fetch_data",
+                "completed"
+            )
     """
 
     def __init__(self):
-        """Initialize the progress ledger."""
+        """Initialize the progress ledger.
+
+        Creates empty dictionaries for workflows, step status, dependencies,
+        and progress data, and initializes the asyncio lock for thread-safe
+        operations.
+        """
         self.workflows: Dict[str, List[WorkflowStep]] = {}
         self.step_status: Dict[str, str] = {}
         self.dependencies: Dict[str, List[str]] = {}
@@ -30,8 +97,17 @@ class ProgressLedger:
         """Register a new workflow.
 
         Args:
-            workflow_id: ID for the workflow
-            steps: List of workflow steps
+            workflow_id: ID for the workflow.
+            steps: List of workflow steps.
+
+        Example:
+            .. code-block:: python
+
+                steps = [
+                    WorkflowStep(task=Task(name="step1"), dependencies=[]),
+                    WorkflowStep(task=Task(name="step2"), dependencies=["step1"])
+                ]
+                await ledger.register_workflow("workflow_123", steps)
         """
         async with self._lock:
             self.workflows[workflow_id] = steps
@@ -44,9 +120,18 @@ class ProgressLedger:
         """Update the status of a workflow step.
 
         Args:
-            workflow_id: ID of the workflow
-            step_name: Name of the step
-            status: New status value
+            workflow_id: ID of the workflow.
+            step_name: Name of the step.
+            status: New status value.
+
+        Example:
+            .. code-block:: python
+
+                await ledger.update_step_status(
+                    "workflow_123",
+                    "process_data",
+                    "completed"
+                )
         """
         async with self._lock:
             step_id = f"{workflow_id}_{step_name}"
@@ -56,10 +141,19 @@ class ProgressLedger:
         """Get the progress of a workflow.
 
         Args:
-            workflow_id: ID of the workflow
+            workflow_id: ID of the workflow.
 
         Returns:
-            Dictionary containing workflow progress information
+            Dict[str, Any]: Dictionary containing workflow progress information.
+
+        Example:
+            .. code-block:: python
+
+                progress = ledger.get_workflow_progress("workflow_123")
+                for step_name, details in progress.items():
+                    print(f"Step: {step_name}")
+                    print(f"Status: {details['status']}")
+                    print(f"Dependencies: {details['dependencies']}")
         """
         steps = self.workflows.get(workflow_id, [])
         progress = {}
@@ -75,10 +169,17 @@ class ProgressLedger:
         """Get steps that are ready to execute.
 
         Args:
-            workflow_id: ID of the workflow
+            workflow_id: ID of the workflow.
 
         Returns:
-            List of step names that are ready to execute
+            List[str]: List of step names that are ready to execute.
+
+        Example:
+            .. code-block:: python
+
+                ready_steps = ledger.get_ready_steps("workflow_123")
+                for step in ready_steps:
+                    print(f"Ready to execute: {step}")
         """
         ready_steps = []
         for step in self.workflows.get(workflow_id, []):
@@ -96,8 +197,20 @@ class ProgressLedger:
         """Record progress data for a task.
 
         Args:
-            task_id: ID of the task
-            progress_data: Progress data to record
+            task_id: ID of the task.
+            progress_data: Progress data to record.
+
+        Example:
+            .. code-block:: python
+
+                await ledger.record_progress(
+                    "task_123",
+                    {
+                        "percent_complete": 75,
+                        "current_stage": "processing",
+                        "items_processed": 150
+                    }
+                )
         """
         async with self._lock:
             self.progress_data[task_id] = {
@@ -109,10 +222,18 @@ class ProgressLedger:
         """Get progress data for a task.
 
         Args:
-            task_id: ID of the task
+            task_id: ID of the task.
 
         Returns:
-            Progress data if found, None otherwise
+            Optional[Dict[str, Any]]: Progress data if found, None otherwise.
+
+        Example:
+            .. code-block:: python
+
+                progress = await ledger.get_progress("task_123")
+                if progress:
+                    print(f"Progress: {progress['data']}")
+                    print(f"Last updated: {progress['timestamp']}")
         """
         return self.progress_data.get(task_id)
 
@@ -120,7 +241,12 @@ class ProgressLedger:
         """Clear progress data for a task.
 
         Args:
-            task_id: ID of the task
+            task_id: ID of the task.
+
+        Example:
+            .. code-block:: python
+
+                await ledger.clear_progress("task_123")
         """
         async with self._lock:
             self.progress_data.pop(task_id, None)
@@ -129,7 +255,14 @@ class ProgressLedger:
         """Export the progress data as JSON.
 
         Returns:
-            JSON string containing progress data
+            str: JSON string containing progress data.
+
+        Example:
+            .. code-block:: python
+
+                json_data = ledger.export_progress()
+                with open("progress_backup.json", "w") as f:
+                    f.write(json_data)
         """
         data = {
             "workflows": {
@@ -145,10 +278,18 @@ class ProgressLedger:
         """Get metrics for a workflow.
 
         Args:
-            workflow_id: ID of the workflow
+            workflow_id: ID of the workflow.
 
         Returns:
-            Dictionary containing workflow metrics
+            Dict[str, Any]: Dictionary containing workflow metrics.
+
+        Example:
+            .. code-block:: python
+
+                metrics = await ledger.get_workflow_metrics("workflow_123")
+                print(f"Total steps: {metrics['total_steps']}")
+                print(f"Completed: {metrics['completed_steps']}")
+                print(f"Progress: {metrics['progress_percentage']}%")
         """
         steps = self.workflows.get(workflow_id, [])
         if not steps:

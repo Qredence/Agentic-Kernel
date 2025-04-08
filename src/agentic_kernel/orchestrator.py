@@ -8,17 +8,17 @@ This module implements the orchestrator agent responsible for:
 5. Inter-agent communication coordination
 """
 
-from typing import Dict, Any, List, Optional, Set
 import asyncio
 import logging
+from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
 from .agents.base import BaseAgent
-from .types import Task, TaskStatus, Workflow
-from .exceptions import TaskExecutionError, WorkflowError
-from .communication.protocol import MessageBus, CommunicationProtocol
-from .communication.message import MessageType, Message, MessagePriority
+from .communication.message import Message, MessagePriority, MessageType
+from .communication.protocol import CommunicationProtocol, MessageBus
 from .config import AgentConfig
+from .exceptions import TaskExecutionError, WorkflowError
+from .types import Task, TaskStatus, Workflow
 
 logger = logging.getLogger(__name__)
 

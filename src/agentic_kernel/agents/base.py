@@ -12,33 +12,33 @@ Key features:
 6. Inter-agent communication
 
 Example:
-    ```python
-    class MyAgent(BaseAgent):
-        async def execute(self, task: Task) -> Dict[str, Any]:
-            # Custom task execution logic
-            result = await process_task(task)
-            return {"status": "success", "data": result}
-            
-        def _get_supported_tasks(self) -> Dict[str, Any]:
-            return {
-                "my_task_type": {
-                    "description": "Handles specific task type",
-                    "parameters": ["param1", "param2"]
+
+    .. code-block:: python
+
+        class MyAgent(BaseAgent):
+            async def execute(self, task: Task) -> Dict[str, Any]:
+                # Custom task execution logic
+                result = await process_task(task)
+                return {"status": "success", "data": result}
+                
+            def _get_supported_tasks(self) -> Dict[str, Any]:
+                return {
+                    "my_task_type": {
+                        "description": "Handles specific task type",
+                        "parameters": ["param1", "param2"]
+                    }
                 }
-            }
-    ```
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, TypedDict, List, Callable, Awaitable
-import uuid
 import logging
+import uuid
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, TypedDict
 
-from ..config import AgentConfig
-from ..types import Task, TaskStatus
-from ..exceptions import TaskExecutionError
+from ..communication.message import Message, MessageType
 from ..communication.protocol import CommunicationProtocol, MessageBus
-from ..communication.message import MessageType, Message, MessagePriority
+from ..config import AgentConfig
+from ..types import Task
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,10 @@ class TaskCapability(TypedDict):
     task type that an agent can handle.
 
     Attributes:
-        description: Human-readable description of the task type
-        parameters: List of required parameters for the task
-        optional_parameters: List of optional parameters
-        examples: List of example task configurations
+        description (str): Human-readable description of the task type.
+        parameters (List[str]): List of required parameters for the task.
+        optional_parameters (Optional[List[str]]): List of optional parameters.
+        examples (Optional[List[Dict[str, Any]]]): List of example task configurations.
     """
 
     description: str
@@ -68,9 +68,9 @@ class AgentCapabilities(TypedDict):
     This type defines the structure of an agent's complete capability report.
 
     Attributes:
-        type: The type identifier for this agent
-        supported_tasks: Dictionary mapping task types to their capabilities
-        config: The agent's current configuration
+        type (str): The type identifier for this agent.
+        supported_tasks (Dict[str, TaskCapability]): Dictionary mapping task types to their capabilities.
+        config (Dict[str, Any]): The agent's current configuration.
     """
 
     type: str
@@ -92,30 +92,30 @@ class BaseAgent(ABC):
     4. Result postprocessing
 
     Attributes:
-        config (AgentConfig): Configuration parameters for the agent
-        type (str): The agent's type identifier, derived from class name
-        agent_id (str): Unique identifier for this agent instance
-        protocol (CommunicationProtocol): Protocol for inter-agent communication
+        config (AgentConfig): Configuration parameters for the agent.
+        type (str): The agent's type identifier, derived from class name.
+        agent_id (str): Unique identifier for this agent instance.
+        protocol (CommunicationProtocol): Protocol for inter-agent communication.
 
     Example:
-        ```python
-        class DataProcessor(BaseAgent):
-            async def execute(self, task: Task) -> Dict[str, Any]:
-                data = await process_data(task.parameters["input"])
-                return {"processed_data": data}
+        .. code-block:: python 
 
-            def _get_supported_tasks(self) -> Dict[str, TaskCapability]:
-                return {
-                    "process_data": {
-                        "description": "Process input data",
-                        "parameters": ["input"],
-                        "optional_parameters": ["format"],
-                        "examples": [
-                            {"input": "data.csv", "format": "csv"}
-                        ]
+            class DataProcessor(BaseAgent):
+                async def execute(self, task: Task) -> Dict[str, Any]:
+                    data = await process_data(task.parameters["input"])
+                    return {"processed_data": data}
+    
+                def _get_supported_tasks(self) -> Dict[str, TaskCapability]:
+                    return {
+                        "process_data": {
+                            "description": "Process input data",
+                            "parameters": ["input"],
+                            "optional_parameters": ["format"],
+                            "examples": [
+                                {"input": "data.csv", "format": "csv"}
+                            ]
+                        }
                     }
-                }
-        ```
     """
 
     def __init__(
@@ -124,8 +124,8 @@ class BaseAgent(ABC):
         """Initialize the base agent.
 
         Args:
-            config: Configuration parameters for the agent
-            message_bus: Optional message bus for communication
+            config (AgentConfig): Configuration parameters for the agent.
+            message_bus (Optional[MessageBus]): Optional message bus for communication.
         """
         self.config = config
         self.type = self.__class__.__name__.lower().replace("agent", "")
@@ -159,7 +159,7 @@ class BaseAgent(ABC):
         """Handle incoming task requests.
 
         Args:
-            message: The task request message
+            message (Message): The task request message.
         """
         try:
             # Extract task details
@@ -196,7 +196,7 @@ class BaseAgent(ABC):
         """Handle incoming queries.
 
         Args:
-            message: The query message
+            message (Message): The query message.
         """
         try:
             # Process query
@@ -226,7 +226,7 @@ class BaseAgent(ABC):
         """Handle capability requests.
 
         Args:
-            message: The capability request message
+            message (Message): The capability request message.
         """
         try:
             capabilities = self._get_supported_tasks()
@@ -254,14 +254,14 @@ class BaseAgent(ABC):
         This method should be overridden by agents that support querying.
 
         Args:
-            query: The query string
-            context: Additional context for the query
+            query (str): The query string.
+            context (Dict[str, Any]): Additional context for the query.
 
         Returns:
-            Query result
+            Any: Query result.
 
         Raises:
-            NotImplementedError: If agent doesn't support queries
+            NotImplementedError: If agent doesn't support queries.
         """
         raise NotImplementedError("This agent does not support queries")
 
@@ -273,32 +273,32 @@ class BaseAgent(ABC):
         It should contain the core logic for handling tasks of the agent's type.
 
         Args:
-            task: The task to execute, containing all necessary information
+            task (Task): The task to execute, containing all necessary information.
 
         Returns:
-            Dictionary containing the task execution results. The structure
-            depends on the specific agent implementation, but should typically
-            include:
+            Dict[str, Any]: Dictionary containing the task execution results. The structure
+            depends on the specific agent implementation, but should typically include:
+
             - status: The final task status
             - output: The task's output data
             - metrics: Any relevant execution metrics
 
         Raises:
-            TaskExecutionError: If task execution fails
+            TaskExecutionError: If task execution fails.
 
         Example:
-            ```python
-            async def execute(self, task: Task) -> Dict[str, Any]:
-                try:
-                    result = await self._process_task(task)
-                    return {
-                        "status": "completed",
-                        "output": result,
-                        "metrics": {"duration": 1.5}
-                    }
-                except Exception as e:
-                    raise TaskExecutionError(str(e))
-            ```
+            .. code-block:: python
+
+                async def execute(self, task: Task) -> Dict[str, Any]:
+                    try:
+                        result = await self._process_task(task)
+                        return {
+                            "status": "completed",
+                            "output": result,
+                            "metrics": {"duration": 1.5}
+                        }
+                    except Exception as e:
+                        raise TaskExecutionError(str(e))
         """
         pass
 
@@ -307,13 +307,13 @@ class BaseAgent(ABC):
         """Get the tasks supported by this agent.
 
         Returns:
-            Dictionary mapping task types to their capabilities
+            Dict[str, TaskCapability]: Dictionary mapping task types to their capabilities.
 
         Example:
-            ```python
-            capabilities = agent._get_supported_tasks()
-            print(capabilities['chat']['description'])
-            ```
+            .. code-block:: python
+
+                capabilities = agent._get_supported_tasks()
+                print(capabilities['chat']['description'])
         """
         pass
 
@@ -323,15 +323,15 @@ class BaseAgent(ABC):
         """Request another agent to perform a task.
 
         Args:
-            recipient_id: ID of the agent to perform the task
-            task_description: Description of the task
-            parameters: Task parameters
+            recipient_id (str): ID of the agent to perform the task.
+            task_description (str): Description of the task.
+            parameters (Dict[str, Any]): Task parameters.
 
         Returns:
-            The message ID of the task request
+            str: The message ID of the task request.
 
         Raises:
-            RuntimeError: If communication protocol not initialized
+            RuntimeError: If communication protocol not initialized.
         """
         if not self.protocol:
             raise RuntimeError("Communication protocol not initialized")
@@ -348,15 +348,15 @@ class BaseAgent(ABC):
         """Query another agent for information.
 
         Args:
-            recipient_id: ID of the agent to query
-            query: The query string
-            context: Optional context information
+            recipient_id (str): ID of the agent to query.
+            query (str): The query string.
+            context (Optional[Dict[str, Any]]): Optional context information.
 
         Returns:
-            The message ID of the query
+            str: The message ID of the query.
 
         Raises:
-            RuntimeError: If communication protocol not initialized
+            RuntimeError: If communication protocol not initialized.
         """
         if not self.protocol:
             raise RuntimeError("Communication protocol not initialized")
@@ -371,12 +371,12 @@ class BaseAgent(ABC):
         """Send a status update to another agent.
 
         Args:
-            recipient_id: ID of the receiving agent
-            status: Current status
-            details: Optional status details
+            recipient_id (str): ID of the receiving agent.
+            status (str): Current status.
+            details (Optional[Dict[str, Any]]): Optional status details.
 
         Raises:
-            RuntimeError: If communication protocol not initialized
+            RuntimeError: If communication protocol not initialized.
         """
         if not self.protocol:
             raise RuntimeError("Communication protocol not initialized")
@@ -392,22 +392,22 @@ class BaseAgent(ABC):
         verifying the task type and any required parameters.
 
         Args:
-            task: The task to validate
+            task (Task): The task to validate.
 
         Returns:
-            True if the agent can handle the task, False otherwise
+            bool: True if the agent can handle the task, False otherwise.
 
         Example:
-            ```python
-            # Override in subclass for custom validation
-            async def validate_task(self, task: Task) -> bool:
-                if not await super().validate_task(task):
-                    return False
+            .. code-block:: python
 
-                # Additional validation logic
-                required_params = ["input_file"]
-                return all(p in task.parameters for p in required_params)
-            ```
+                # Override in subclass for custom validation
+                async def validate_task(self, task: Task) -> bool:
+                    if not await super().validate_task(task):
+                        return False
+
+                    # Additional validation logic
+                    required_params = ["input_file"]
+                    return all(p in task.parameters for p in required_params)
         """
         return task.agent_type == self.type
 
@@ -419,25 +419,25 @@ class BaseAgent(ABC):
         adding default values.
 
         Args:
-            task: The task to preprocess
+            task (Task): The task to preprocess.
 
         Returns:
-            The preprocessed task
+            Task: The preprocessed task.
 
         Example:
-            ```python
-            async def preprocess_task(self, task: Task) -> Task:
-                # Add default parameters
-                task.parameters.setdefault("format", "json")
+            .. code-block:: python
 
-                # Normalize paths
-                if "input_path" in task.parameters:
-                    task.parameters["input_path"] = os.path.abspath(
-                        task.parameters["input_path"]
-                    )
+                async def preprocess_task(self, task: Task) -> Task:
+                    # Add default parameters
+                    task.parameters.setdefault("format", "json")
 
-                return task
-            ```
+                    # Normalize paths
+                    if "input_path" in task.parameters:
+                        task.parameters["input_path"] = os.path.abspath(
+                            task.parameters["input_path"]
+                        )
+
+                    return task
         """
         return task
 
@@ -449,26 +449,26 @@ class BaseAgent(ABC):
         formatting, adding metadata, and cleanup.
 
         Args:
-            result: The raw execution result
+            result (Dict[str, Any]): The raw execution result.
 
         Returns:
-            The postprocessed result
+            Dict[str, Any]: The postprocessed result.
 
         Example:
-            ```python
-            async def postprocess_result(
-                self,
-                result: Dict[str, Any]
-            ) -> Dict[str, Any]:
-                # Add execution timestamp
-                result["timestamp"] = datetime.now().isoformat()
+            .. code-block:: python
 
-                # Format output data
-                if "data" in result:
-                    result["data"] = self._format_data(result["data"])
+                async def postprocess_result(
+                    self,
+                    result: Dict[str, Any]
+                ) -> Dict[str, Any]:
+                    # Add execution timestamp
+                    result["timestamp"] = datetime.now().isoformat()
 
-                return result
-            ```
+                    # Format output data
+                    if "data" in result:
+                        result["data"] = self._format_data(result["data"])
+
+                    return result
         """
         return result
 
@@ -479,15 +479,15 @@ class BaseAgent(ABC):
         including its type, supported tasks, and current configuration.
 
         Returns:
-            A dictionary describing the agent's complete capabilities
+            AgentCapabilities: A dictionary describing the agent's complete capabilities.
 
         Example:
-            ```python
-            capabilities = agent.get_capabilities()
-            print(f"Agent type: {capabilities['type']}")
-            for task_type, details in capabilities['supported_tasks'].items():
-                print(f"- {task_type}: {details['description']}")
-            ```
+            .. code-block:: python
+
+                capabilities = agent.get_capabilities()
+                print(f"Agent type: {capabilities['type']}")
+                for task_type, details in capabilities['supported_tasks'].items():
+                    print(f"- {task_type}: {details['description']}")
         """
         return {
             "type": self.type,
