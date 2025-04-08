@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Any, Set
 import logging
 from pydantic import BaseModel
 import asyncpg
-from .types import MemoryEntry, MemoryType, MemoryStats
+from .types import MemoryEntry, MemoryType, MemoryStats, MemorySearchResult
 from .embeddings import EmbeddingService
 
 logger = logging.getLogger(__name__)

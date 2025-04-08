@@ -8,7 +8,7 @@ from agentic_kernel.ledgers import TaskLedger, ProgressLedger
 from agentic_kernel.types import Task, WorkflowStep
 
 
-class Orchestrator(Agent):
+class Orchestrator(BaseAgent):
     """Abstract base class for orchestrator agents.
 
     Orchestrators are responsible for managing the overall task execution,
@@ -27,9 +27,9 @@ class Orchestrator(Agent):
             description or "Manages complex tasks by orchestrating other agents.",
             config,
         )
-        self.agents: Dict[str, Agent] = {}  # Dictionary to hold available agents
+        self.agents: Dict[str, BaseAgent] = {}  # Dictionary to hold available agents
 
-    def register_agent(self, agent: Agent):
+    def register_agent(self, agent: BaseAgent):
         """Register an agent that the orchestrator can delegate tasks to."""
         if agent.name in self.agents:
             # Handle potential name collision - maybe log a warning or raise error?
@@ -39,7 +39,7 @@ class Orchestrator(Agent):
         self.agents[agent.name] = agent
         print(f"Agent '{agent.name}' registered with orchestrator '{self.name}'.")
 
-    def register_agents(self, agents: List[Agent]):
+    def register_agents(self, agents: List[BaseAgent]):
         """Register multiple agents."""
         for agent in agents:
             self.register_agent(agent)

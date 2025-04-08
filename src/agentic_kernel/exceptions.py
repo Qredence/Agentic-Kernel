@@ -91,3 +91,15 @@ class TaskExecutionError(AgenticKernelError):
             code: Error code, defaults to "TASK_EXECUTION_ERROR"
         """
         super().__init__(message, code)
+
+
+class AgentError(AgenticKernelError):
+    """Raised for errors related to agent operations (e.g., registration, configuration)."""
+    def __init__(self, message: str, code: str = "AGENT_ERROR") -> None:
+        super().__init__(message, code)
+
+
+class SystemError(AgenticKernelError):
+    """Raised for general system-level errors (e.g., configuration, initialization)."""
+    def __init__(self, message: str, code: str = "SYSTEM_ERROR") -> None:
+        super().__init__(message, code)

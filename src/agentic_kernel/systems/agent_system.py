@@ -8,19 +8,19 @@ This module implements the core agent system that manages:
 5. Error handling and recovery
 """
 
-from typing import Dict, Any, Optional, List, Type
 import asyncio
 import logging
+from typing import Any, Dict, List, Optional, Type
 from uuid import uuid4
 
 from ..agents.base import BaseAgent
 from ..agents.chat_agent import ChatAgent
 from ..agents.terminal_agent import TerminalAgent
-from ..orchestrator import OrchestratorAgent
-from ..config import AgentConfig, SystemConfig
+from ..communication.message import Message, MessagePriority, MessageType
 from ..communication.protocol import MessageBus
-from ..communication.message import MessageType, Message, MessagePriority
+from ..config import AgentConfig, SystemConfig
 from ..exceptions import AgentError, SystemError
+from ..orchestrator import OrchestratorAgent
 
 logger = logging.getLogger(__name__)
 
