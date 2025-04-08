@@ -8,6 +8,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import chainlit as cl
 import semantic_kernel as sk
 from agentic_kernel.agents.base import BaseAgent
+from agentic_kernel.config_types import AgentConfig
 from agentic_kernel.config.loader import ConfigLoader
 from agentic_kernel.plugins.file_surfer import FileSurferPlugin
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin
@@ -24,7 +25,9 @@ from semantic_kernel.connectors.ai.open_ai import (
 from semantic_kernel.contents import ChatHistory
 from semantic_kernel.core_plugins import TimePlugin
 from semantic_kernel.functions import kernel_function
-from agentic_kernel.config import AgentConfig
+import asyncio
+from agentic_kernel.orchestrator import Orchestrator
+from agentic_kernel.types import Task, WorkflowStep
 
 # Load environment variables from .env file
 load_dotenv()
@@ -133,7 +136,7 @@ class DynamicChatAgent(BaseAgent):
     async def handle_message(self, message: str) -> AsyncGenerator[str, None]:
         """Handle incoming chat message with dynamic tool support."""
         try:
-            async with cl.Step(name="Process Message", type="agent") as step:
+            async with cl.Step(name="Process Message", type="tool") as step:
                 step.input = message
                 self.chat_history.add_user_message(message)
 
