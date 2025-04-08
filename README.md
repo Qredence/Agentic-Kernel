@@ -227,6 +227,24 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## Directory Structure
+
+```
+src/agentic_kernel/
+├── agents/         # Specialized agent implementations
+├── communication/  # Agent communication protocols
+├── config/        # Configuration management
+├── ledgers/       # State and progress tracking
+├── memory/        # Memory management systems
+├── orchestrator/  # Core orchestration logic
+├── plugins/       # Plugin system implementation
+├── systems/       # Core system implementations
+├── tools/         # Reusable tool implementations
+├── ui/           # User interface components
+├── utils/        # Utility functions and helpers
+└── workflows/     # Workflow definitions and handlers
+```
+
 ## System Architecture
 
 Agentic Kernel implements a sophisticated multi-agent architecture designed for autonomous task execution and orchestration. This modular system enables flexible agent interactions, secure execution environments, and robust workflow management.

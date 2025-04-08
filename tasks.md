@@ -49,6 +49,22 @@
   - Configurable search parameters
   - Performance optimizations
   - Comprehensive test coverage
+- [x] Add intelligent agent selection based on task requirements
+- [x] Implement workflow versioning and history
+- [x] Add support for conditional branches in workflows
+- [x] Create workflow optimization strategies
+- [x] Docs Refactor: Move CONTRIBUTING.md to root
+- [x] Docs Refactor: Move CHANGELOG.md to root
+- [x] Docs Refactor: Move workflow_optimizer.md to docs/developer/
+- [x] Docs Refactor: Delete docs/README.md
+- [x] Docs Refactor: Move directory structure from docs/ARCHITECTURE.md to root README.md
+- [x] Docs Refactor: Delete docs/ARCHITECTURE.md
+- [x] Docs: Create initial Orchestrator feature examples
+- [x] Docs: Create agent communication example
+- [x] Docs: Create advanced plugin usage example
+- [x] Docs: Create memory system usage example
+- [x] Docs: Create workflow optimization usage example
+- [x] Docs: Create Chainlit UI guide
 
 ## In Progress
 
@@ -86,9 +102,18 @@
     - [ ] Implement document storage
     - [ ] Add change feed support
     - [ ] Create integration tests
+- [ ] API Documentation Generation (Sphinx)
+  - [x] Add Sphinx dependencies to pyproject.toml
+  - [x] Create Sphinx source directory and conf.py/index.rst
+  - [x] Generate module .rst files using sphinx-apidoc
+  - [x] Perform initial Sphinx build
+  - [x] Fix critical import errors for build
+  - [x] Add docs/build/ to .gitignore
+  - [ ] Address remaining Sphinx warnings (formatting, duplicates, cross-references)
 
 ## Planned
 
+- [ ] Docs Refactor: Merge relevant content from old ARCHITECTURE.md into docs/architecture/system-overview.md (if needed)
 - [ ] Implement persistent storage for ledgers (currently in-memory)
 - [ ] Add user feedback loop in workflow execution
 - [ ] Create configuration system with environment variables
@@ -99,109 +124,6 @@
 - [ ] Add support for multi-user environments
 - [ ] Optimize performance for large workflows
 - [ ] Add support for parallel task execution
-
-## Code Structure Improvements (Refactoring)
-
-- [x] Consolidate helper scripts into a `scripts/` directory
-- [x] Relocate tests from `src/agentic_kernel/tests/` to top-level `tests/`
-- [x] Refactor large files (`src/agentic_kernel/app.py`, `src/agentic_kernel/orchestrator.py`) into smaller modules
-- [ ] Clarify primary application entry points and document usage
-- [ ] Resolve naming ambiguities (`config.py` vs `config/`, `ledgers.py` vs `ledgers/`)
-- [ ] Review `setup.py` for redundancy with `pyproject.toml` and `uv`
-
-### Source Directory Cleanup
-- [x] Organize debug tools
-  - [x] Create `src/agentic_kernel/debug/` directory
-  - [x] Move debug files to debug directory
-  - [x] Add `__init__.py` to debug directory
-  - [x] Add debug tools documentation
-- [x] Clean up src root
-  - [x] Move `chainlit.md` to `docs/integrations/`
-  - [x] Review and clean up `.files/` directory (appears to be temp/cache files)
-  - [x] Add `.files/` to `.gitignore` if not already included
-- [ ] Improve package structure
-  - [x] Review and organize imports
-  - [x] Add proper `__init__.py` files
-  - [x] Add type hints and docstrings
-  - [ ] Create package-level documentation
-
-### Codebase Cleanup Tasks
-- [x] Move documentation files to appropriate locations
-  - [x] Move `CONTRIBUTING.md`, `CHANGELOG.md`, `ARCHITECTURE.md` to `docs/`
-  - [x] Move `chainlit.md` to appropriate location (docs/integrations/)
-  - [x] Move `CLEANUP_SUMMARY.md` to `docs/maintenance/`
-- [x] Consolidate test files
-  - [x] Move `test_core_components.py` to `tests/` directory
-  - [x] Review and relocate `run_test.py` appropriately (moved to scripts/)
-- [ ] Clean up root directory
-  - [x] Review and remove or relocate `get-pip.py` (removed as using uv)
-  - [x] Add explicit entry for `debug_log.txt` in `.gitignore`
-  - [x] Move `.windsurfrules` to `.cursor/` directory
-  - [ ] Review `.files/` directory for cleanup
-- [ ] Frontend organization
-  - [x] Review and clarify separation between `frontend/` and `public/` directories
-  - [x] Create organized asset structure in frontend/src/assets
-  - [x] Move static assets to appropriate directories
-  - [ ] Update asset imports in frontend code
-  - [ ] Organize frontend configuration files
-    - [x] Create src/config directory
-    - [x] Move configuration files to appropriate locations
-    - [x] Update Vite and TypeScript configurations
-    - [ ] Update import paths in code
-  - [x] Document frontend architecture and conventions
-    - [x] Create frontend/README.md with architecture overview
-    - [x] Document asset organization
-    - [x] Document configuration structure
-  - [ ] Additional frontend tasks
-    - [x] Setup path aliases for cleaner imports
-    - [x] Review and update build configuration
-    - [ ] Add frontend testing setup
-    - [ ] Update package.json scripts and dependencies
-- [ ] Configuration cleanup
-  - [ ] Review and organize configuration files
-  - [ ] Consider creating `config/` directory for non-root config files
-
-## Orchestrator Enhancements
-
-- [x] Implement nested loop architecture (planning and execution loops)
-- [x] Add dynamic workflow creation from natural language goals
-- [x] Implement workflow state management and progress tracking
-- [x] Add error recovery and replanning capabilities
-- [x] Create agent registration system
-- [x] Implement task delegation strategy
-- [ ] Add intelligent agent selection based on task requirements
-- [ ] Implement workflow versioning and history
-- [ ] Add support for conditional branches in workflows
-- [ ] Create workflow optimization strategies
-- [ ] Implement workflow templates and reusable components
-- [ ] Add support for human-in-the-loop approvals
-- [ ] Create plugin system for extending orchestrator capabilities
-
-## Testing
-
-- [x] Create unit tests for base components
-  - [x] Task and WorkflowStep types
-  - [x] TaskLedger implementation
-  - [x] ProgressLedger implementation
-- [x] Implement initial integration tests for Orchestrator
-  - [x] Basic initialization and registration
-  - [x] Workflow execution (empty, single step, failure cases)
-  - [x] Retry logic
-  - [x] Progress calculation
-- [x] Add communication protocol tests
-  - [x] Message routing and filtering
-  - [x] Priority-based message handling
-  - [x] Agent discovery and registration
-  - [x] Error handling and recovery
-- [ ] Add end-to-end tests for complete workflows
-- [ ] Create performance benchmarks
-- [ ] Add test coverage reporting
-
-## Documentation
-
-- [x] Create README.md with project overview
-- [x] Create ARCHITECTURE.md with system design details
-- [x] Add developer documentation for Orchestrator
 - [ ] Create API documentation
 - [ ] Add usage examples and tutorials
 - [ ] Create contribution guidelines
@@ -391,3 +313,5 @@
 - Memory synchronization with Mem0 will enable distributed agent networks
 
 - [ ] Update README.md to match current codebase (plugins, scripts)
+- [ ] Refactor src/agentic_kernel/app.py for Chainlit/Agentic Kernel alignment.
+- [ ] Fix runtime errors in src/agentic_kernel/app.py (AttributeError, TypeError)
