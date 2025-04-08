@@ -1,197 +1,159 @@
 # Agentic Kernel Architecture
 
-This document provides an in-depth explanation of the Agentic Kernel architecture, focusing on the components, interaction patterns, and workflow execution mechanisms.
+This document provides an in-depth explanation of the Agentic Kernel architecture, focusing on the core components, interaction patterns, and system organization.
 
 ## System Overview
 
-Agentic Kernel is a multi-agent framework designed to enable complex task execution through specialized agents that work together in an orchestrated workflow. The architecture follows a modular design that separates concerns between agent capabilities, task management, and workflow orchestration.
+Agentic Kernel is a sophisticated multi-agent framework designed for complex task execution through specialized agents working together in an orchestrated workflow. The architecture follows a modular design with clear separation of concerns.
+
+## Directory Structure
+
+```
+src/agentic_kernel/
+├── agents/         # Specialized agent implementations
+├── communication/  # Agent communication protocols
+├── config/        # Configuration management
+├── ledgers/       # State and progress tracking
+├── memory/        # Memory management systems
+├── orchestrator/  # Core orchestration logic
+├── plugins/       # Plugin system implementation
+├── systems/       # Core system implementations
+├── tools/         # Reusable tool implementations
+├── ui/           # User interface components
+├── utils/        # Utility functions and helpers
+└── workflows/     # Workflow definitions and handlers
+```
 
 ## Core Components
 
-### 1. Agent System
+### 1. Orchestrator System
 
-The Agent System is the central registry for all available agents in the system:
+The Orchestrator is the central component responsible for task planning and execution:
 
-- **BaseAgent**: Abstract base class that all agents implement
-- **AgentConfig**: Configuration structure for agent initialization
-- **AgentSystem**: Central registry class for managing agent instances
-- **Agent Registration**: Dynamic registration mechanism to make agents available to the orchestrator
+- **Nested Loop Architecture**: Implements planning and execution loops
+- **Dynamic Planning**: Adapts plans based on execution results
+- **Progress Monitoring**: Tracks task completion and triggers replanning
+- **Error Recovery**: Handles failures and implements recovery strategies
 
-### 2. Task Management
+### 2. Agent System
 
-The task management system tracks the state of tasks and provides a persistent ledger:
+The agent system provides specialized capabilities:
 
-- **Task**: Data structure representing a unit of work
-- **TaskLedger**: Persistent store for task information and results
-- **TaskManager**: Interface for creating, updating, and tracking tasks
-- **Task Dependencies**: Mechanism for expressing relationships between tasks
+- **Base Agent Interface**: Common interface for all agents
+- **Specialized Agents**: Web, File, Chat, and other task-specific agents
+- **Agent Registry**: Dynamic agent registration and management
+- **Capability Management**: Tracking and matching agent capabilities
 
-### 3. Ledgers
+### 3. Memory System
 
-Ledgers provide persistent storage and tracking for various system aspects:
+The memory system manages information persistence:
 
-- **TaskLedger**: Records tasks, their status, and results
-- **ProgressLedger**: Tracks workflow execution progress
-- **Message History**: Maintains agent communication records
+- **Working Memory**: Short-term task context
+- **Long-term Memory**: Persistent knowledge storage
+- **Memory Indexing**: Efficient information retrieval
+- **Context Management**: Task-specific memory contexts
 
-## Orchestrator Agent
+### 4. Plugin System
 
-The Orchestrator Agent is the core component responsible for workflow planning, execution, and monitoring. It implements a sophisticated nested loop architecture for adaptive task execution.
+The plugin system enables extensibility:
 
-### Dynamic Planning Process
+- **Plugin Interface**: Standard plugin integration points
+- **Plugin Registry**: Dynamic plugin loading
+- **Configuration Management**: Plugin-specific settings
+- **Lifecycle Management**: Plugin initialization and cleanup
 
-The Orchestrator uses a multi-stage planning process:
+### 5. Communication System
 
-1. **Goal Analysis**: Analyzing the high-level goal to identify required subtasks
-2. **Task Decomposition**: Breaking down complex goals into manageable steps
-3. **Plan Creation**: Organizing steps into a coherent execution plan
-4. **Agent Assignment**: Matching tasks to agents based on capabilities
-5. **Plan Revision**: Dynamically updating the plan based on execution results
+The communication system handles agent interactions:
 
-### Nested Loop Architecture
+- **Message Protocol**: Standardized message format
+- **Routing**: Message delivery between agents
+- **Event System**: Asynchronous event handling
+- **State Synchronization**: Maintaining consistent state
 
-The Orchestrator implements two nested control loops:
+### 6. Tool System
 
-#### Outer Loop (Planning Loop)
+The tool system provides reusable capabilities:
 
-The Outer Loop is responsible for:
-- Managing the TaskLedger
-- Creating and revising workflow plans
-- Initiating planning attempts (up to a configurable maximum)
-- Resetting agent states during replanning
-- Evaluating overall workflow success
+- **Tool Interface**: Standard tool definition
+- **Tool Registry**: Available tool management
+- **Parameter Validation**: Input validation
+- **Result Handling**: Standardized output processing
 
-Implementation logic:
-```python
-# Pseudo-code for the outer loop
-planning_attempts = 0
-while planning_attempts < max_planning_attempts:
-    planning_attempts += 1
-    
-    if planning_attempts > 1:
-        # Re-plan the workflow
-        workflow = replan_workflow(...)
-        # Reset all agent states
-        for agent in agents:
-            agent.reset()
-    
-    # Run the inner loop for execution
-    inner_loop_result = run_inner_loop(workflow)
-    
-    # Evaluate if we need another planning attempt
-    if not should_replan(workflow, ...):
-        break
-```
+### 7. UI Integration
 
-#### Inner Loop (Execution Loop)
+The UI system provides user interaction:
 
-The Inner Loop handles:
-- Managing the ProgressLedger
-- Executing workflow steps in the proper sequence
-- Tracking step completion status
-- Monitoring for loops or lack of progress
-- Evaluating step-level execution results
+- **Chainlit Integration**: Interactive chat interface
+- **Progress Visualization**: Task and workflow status
+- **Error Reporting**: User-friendly error display
+- **Input Handling**: User input processing
 
-Implementation logic:
-```python
-# Pseudo-code for the inner loop
-inner_loop_iterations = 0
-while inner_loop_iterations < max_inner_loop_iterations:
-    inner_loop_iterations += 1
-    
-    # Check if workflow is complete
-    if workflow_is_complete():
-        break
-    
-    # Check for looping behavior
-    if inner_loop_iterations > len(workflow) * 2:
-        break
-    
-    # Get steps ready for execution
-    ready_steps = get_ready_steps()
-    
-    # Execute ready steps
-    for step in ready_steps:
-        result = execute_step(step)
-        process_result(result)
-    
-    # Check for progress
-    progress = calculate_progress()
-    if progress < reflection_threshold:
-        break  # Break to outer loop for replanning
-```
+## Data Flow
 
-### Error Recovery Mechanisms
+1. User Input → UI System
+2. UI System → Orchestrator
+3. Orchestrator → Planning Loop
+4. Planning Loop → Task Generation
+5. Task Generation → Agent Assignment
+6. Agent Execution → Result Collection
+7. Result Collection → Progress Update
+8. Progress Update → UI Update
 
-The Orchestrator implements several error recovery mechanisms:
+## Configuration Management
 
-1. **Step-Level Retry**: Individual steps can be retried up to a configurable maximum
-2. **Plan Revision**: The entire plan can be revised if too many steps fail
-3. **Alternative Approaches**: Failed steps can be replaced with alternative implementations
-4. **Progress Evaluation**: Detecting insufficient progress triggers replanning
-5. **Critical Path Analysis**: Identifying and prioritizing critical steps
+The configuration system manages:
 
-The criteria for replanning include:
-- Critical step failures
-- Excessive failure rate (>25% of steps)
-- Insufficient progress (below reflection threshold)
-- Deadlock detection (no steps ready, but workflow incomplete)
+- **Environment Variables**: Runtime settings
+- **Plugin Configuration**: Plugin-specific settings
+- **Agent Configuration**: Agent-specific parameters
+- **System Configuration**: Global system settings
 
-### Progress Monitoring
+## Security Model
 
-The Orchestrator continuously monitors execution progress:
+The security system implements:
 
-```python
-def _calculate_progress(workflow, completed_steps, failed_steps):
-    # Weight completed steps fully, failed steps partially
-    weighted_completed = len(completed_steps) + (len(failed_steps) * 0.25)
-    return weighted_completed / len(workflow)
-```
+- **Sandboxed Execution**: Isolated agent environments
+- **Access Control**: Resource access management
+- **Input Validation**: Request validation
+- **Audit Logging**: Action tracking
 
-### Task Delegation
+## Error Handling
 
-The Orchestrator delegates tasks to specialized agents based on their capabilities:
+The error handling system provides:
 
-1. **Agent Type Matching**: Tasks specify the required agent type
-2. **Parameter Passing**: Task parameters are passed to the appropriate agent
-3. **Result Collection**: Results from agent execution are collected and stored
-4. **Dynamic Agent Selection**: The most appropriate agent is selected at runtime
-
-## Workflow Example
-
-A typical workflow execution follows these steps:
-
-1. User submits a complex task to the system
-2. AgentSystem recognizes it as a complex task needing orchestration
-3. Orchestrator creates a dynamic workflow plan
-4. Outer loop initiates plan execution
-5. Inner loop executes individual steps
-6. Steps are assigned to specialized agents (WebSurfer, FileSurfer, etc.)
-7. Results are collected and progress is monitored
-8. If issues occur, the plan is revised
-9. Final results are returned to the user
-
-## Integration with Chainlit
-
-The Chainlit integration provides:
-
-- **Message Handling**: Processing user messages through the agent system
-- **Task Visualization**: Displaying tasks and their status
-- **Step Visualization**: Showing the steps of complex workflows
-- **Stream Processing**: Streaming responses for immediate feedback
-- **Automatic Orchestration Detection**: Identifying complex tasks that benefit from orchestration
+- **Error Classification**: Categorizing errors
+- **Recovery Strategies**: Error-specific handling
+- **Fallback Mechanisms**: Alternative approaches
+- **Error Reporting**: User notification
 
 ## Performance Considerations
 
-- **Caching**: Results are cached to avoid redundant computation
-- **Async Execution**: Non-dependent tasks can execute concurrently
-- **Resource Management**: Metrics track resource usage during execution
-- **Reflection Thresholds**: Configurable thresholds for replanning
-- **Maximum Iterations**: Limits on planning attempts and execution iterations
+- **Async Operations**: Non-blocking execution
+- **Resource Management**: Controlled resource usage
+- **Caching**: Result caching
+- **Optimization**: Performance monitoring and tuning
 
-## Security Considerations
+## Testing Strategy
 
-- **Agent Isolation**: Agents operate with limited permissions
-- **Input Validation**: All user inputs are validated
-- **Controlled Execution**: Agents can only execute predefined actions
-- **Audit Trail**: All actions are logged in the ledgers 
+- **Unit Tests**: Component-level testing
+- **Integration Tests**: System interaction testing
+- **End-to-End Tests**: Full workflow testing
+- **Performance Tests**: Load and stress testing
+
+## Development Guidelines
+
+1. Follow modular design principles
+2. Implement clear interfaces
+3. Document public APIs
+4. Write comprehensive tests
+5. Handle errors gracefully
+6. Monitor performance
+7. Maintain backward compatibility
+
+## Future Considerations
+
+- **Scaling**: Horizontal scaling capabilities
+- **Distribution**: Distributed execution
+- **Monitoring**: Enhanced monitoring
+- **Analytics**: Usage analytics 

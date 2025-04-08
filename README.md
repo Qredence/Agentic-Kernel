@@ -3,13 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- Add other badges: PyPI version, build status, etc. -->
 
-**Supercharge your Microsoft Semantic Kernel applications with AgenticFleet Labs!**
+**Agentic Kernel: An Autonomous Agent Framework**
 
-This repository provides a collection of robust, pre-built plugins designed to give your AI agents powerful capabilities with minimal setup. Integrate these plugins easily to enable tasks like web browsing, file system interaction, and more.
+This repository provides the Agentic Kernel, a framework inspired by Microsoft Semantic Kernel and Autogen, designed for building and orchestrating autonomous AI agents. It includes a collection of core components and plugins to give your agents powerful capabilities out-of-the-box.
 
 ## Available Plugins
 
-Easily add sophisticated features to your Semantic Kernel agents:
+Easily add sophisticated features to your agents:
 
 ### 🌐 WebSurfer Plugin (`agentic_kernel.plugins.web_surfer`)
 
@@ -138,6 +138,93 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 
+```
+
+### 💻 Terminal Plugin (`agentic_kernel.plugins.terminal`)
+
+**Enable your agent to execute shell commands within its operating environment.**
+
+* **Execute Command:** Run shell commands synchronously or asynchronously.
+  * `execute_command(command: str, background: bool = False)` -> Returns command output, status code, and PID if run in the background.
+* **Change Directory:** Modify the agent's current working directory.
+  * `change_directory(path: str)` -> Returns success status and the new directory path.
+* **Get Current Directory:** Retrieve the agent's current working directory.
+  * `get_current_directory()` -> Returns the current directory path as a string.
+
+**Security Note:** Executing arbitrary shell commands can be dangerous. Ensure proper sandboxing or restrictions are in place for the environment where the agent operates.
+
+**Quick Start:** (Illustrative - Requires Kernel Setup)
+
+```python
+import asyncio
+import semantic_kernel as sk
+from agentic_kernel.plugins.terminal import TerminalPlugin # Assuming direct import path
+
+async def main():
+    kernel = sk.Kernel()
+    terminal_plugin = kernel.add_plugin(TerminalPlugin(), "Terminal")
+
+    # --- Example: List files in current directory ---
+    print("\nListing files:")
+    list_cmd_func = terminal_plugin["execute_command"]
+    # Using KernelArguments for clarity with Semantic Kernel v1+
+    args = sk.KernelArguments(command="ls -l") 
+    result = await kernel.invoke(list_cmd_func, args)
+    if result.value.get("success"):
+        print(f"Output:\n{result.value.get('stdout')}")
+    else:
+        print(f"Error: {result.value.get('error')}")
+
+    # --- Example: Change directory ---
+    print("\nChanging directory to '/tmp':")
+    cd_func = terminal_plugin["change_directory"]
+    cd_args = sk.KernelArguments(path="/tmp")
+    cd_result = await kernel.invoke(cd_func, cd_args)
+    if cd_result.value.get("success"):
+        print(f"Changed to: {cd_result.value.get('new_dir')}")
+    else:
+        print(f"Error: {cd_result.value.get('error')}")
+
+    # --- Example: Get current directory ---
+    print("\nGetting current directory:")
+    pwd_func = terminal_plugin["get_current_directory"]
+    pwd_result = await kernel.invoke(pwd_func)
+    print(f"Current dir: {pwd_result}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### 🌦️ Weather Plugin (`agentic_kernel.plugins.weather_plugin`)
+
+**(Placeholder)** **Provides basic weather information for specified cities.**
+
+* **Get Weather:** Retrieves a static weather description for a city.
+  * `get_weather(city: str)` -> Returns a string describing the weather (currently static).
+
+**Note:** This is a basic placeholder plugin. In a real-world scenario, it would integrate with a live weather API.
+
+**Quick Start:** (Illustrative - Requires Kernel Setup)
+
+```python
+import asyncio
+import semantic_kernel as sk
+from agentic_kernel.plugins.weather_plugin import WeatherPlugin # Assuming direct import path
+
+async def main():
+    kernel = sk.Kernel()
+    weather_plugin = kernel.add_plugin(WeatherPlugin(), "Weather")
+
+    # --- Example: Get weather for London ---
+    print("\nGetting weather for London:")
+    weather_func = weather_plugin["get_weather"]
+    args = sk.KernelArguments(city="London")
+    result = await kernel.invoke(weather_func, args)
+    print(f"Weather: {result}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## System Architecture
@@ -306,8 +393,7 @@ The primary way to run the application is using the Chainlit web interface.
 
 ### Debugging Scripts
 
-*   `src/simple_debug.py`: A minimal Chainlit app useful for testing specific components in isolation. Run with `chainlit run src/simple_debug.py -w`.
-*   `src/debug_app.py`: A command-line script to quickly validate imports and basic component initialization. Run with `python src/debug_app.py`.
+*   `src/debug/`: Contains various scripts useful for debugging specific components in isolation. Explore this directory for relevant helpers. (Note: Specific scripts like `simple_debug.py` and `debug_app.py` mentioned previously may no longer exist or have been moved here).
 
 ## Contributing
 
@@ -315,8 +401,4 @@ Contributions are welcome! Please see `CONTRIBUTING.md` for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details.
-
-## Need Help?
-
-If you encounter issues or have questions, please file an issue on the [GitHub repository](https://github.com/AgenticFleet/AgenticFleet-Labs/issues).
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
