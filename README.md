@@ -1,4 +1,7 @@
 # Agentic Kernel, inspired by Semantic Kernel and Autogen
+<!-- GitAds-Verify: TKYMBH2ORRFZ8TBQZ3MULLAW37BSXJ1P -->
+
+
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- Add other badges: PyPI version, build status, etc. -->
