@@ -122,7 +122,12 @@ def test_config_loader_with_team(sample_config_json):
     
     # Check security policy retrieval
     security_policy = config_loader.get_security_policy()
-    assert "github.com" in security_policy.allowed_domains
+    from urllib.parse import urlparse
+    allowed_domains = security_policy.allowed_domains
+    def is_allowed_domain(url):
+        hostname = urlparse(url).hostname
+        return hostname in allowed_domains
+    assert is_allowed_domain("https://github.com")
     assert security_policy.terminal_sandbox.image == "python:3.9-alpine"
 
 
