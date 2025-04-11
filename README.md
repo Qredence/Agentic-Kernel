@@ -1,7 +1,6 @@
 # Agentic Kernel, inspired by Semantic Kernel and Autogen
 <!-- GitAds-Verify: TKYMBH2ORRFZ8TBQZ3MULLAW37BSXJ1P -->
-## GitAds Sponsored
-[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=qredence/agentic-kernel@github)](https://gitads.dev/v1/ad-track?source=qredence/agentic-kernel@github)
+
 
 
 
@@ -69,6 +68,11 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=qredence/agentic-kernel@github)](https://gitads.dev/v1/ad-track?source=qredence/agentic-kernel@github)
+
+
 
 ### 📁 FileSurfer Plugin (`agentic_kernel.plugins.file_surfer`)
 
