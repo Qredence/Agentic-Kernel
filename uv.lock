@@ -27,6 +27,7 @@ dependencies = [
     { name = "beautifulsoup4" },
     { name = "black" },
     { name = "chainlit" },
+    { name = "httpx" },
     { name = "isort" },
     { name = "langchain" },
     { name = "matplotlib" },
@@ -63,8 +64,8 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.14,<4.0.0" },
     { name = "asyncpg", specifier = ">=0.29.0,<1.0.0" },
-    { name = "azure-ai-documentintelligence", specifier = "==1.0.1" },
-    { name = "azure-ai-evaluation", specifier = ">=1.0.0b1,<2.0.0" },
+    { name = "azure-ai-documentintelligence", specifier = "==1.0.2" },
+    { name = "azure-ai-evaluation", specifier = "==1.5.0" },
     { name = "azure-ai-inference", specifier = ">=1.0.0b1,<2.0.0" },
     { name = "azure-ai-projects", specifier = ">=1.0.0b6,<2.0.0" },
     { name = "azure-core", specifier = ">=1.30.1,<2.0.0" },
@@ -75,14 +76,15 @@ requires-dist = [
     { name = "black", specifier = ">=24.10.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.2.0,<25.0.0" },
     { name = "chainlit", specifier = ">=2.4.400,<3.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "isort", specifier = ">=5.13.2" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.13.2,<6.0.0" },
     { name = "langchain", specifier = ">=0.0.309,<1.0.0" },
     { name = "matplotlib", specifier = ">=3.10.1" },
-    { name = "mem0ai", specifier = ">=0.1.86" },
+    { name = "mem0ai", specifier = "==0.1.90" },
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9.0,<2.0.0" },
-    { name = "openai", specifier = ">=1.67.0,<2.0.0" },
+    { name = "openai", specifier = "==1.72.0" },
     { name = "playwright", specifier = ">=1.51.0,<2.0.0" },
     { name = "pyautogui", specifier = ">=0.9.54,<1.0.0" },
     { name = "pydantic", specifier = ">=2.6.3,<3.0.0" },
@@ -91,11 +93,11 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5,<9.0.0" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0,<1.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1,<2.0.0" },
+    { name = "python-dotenv", specifier = "==1.1.0" },
     { name = "requests", specifier = ">=2.31.0,<3.0.0" },
     { name = "responses", specifier = ">=0.25.0,<1.0.0" },
     { name = "ruff", specifier = ">=0.11.4,<1.0.0" },
-    { name = "semantic-kernel", specifier = ">=1.27.1,<2.0.0" },
+    { name = "semantic-kernel", specifier = "==1.28.0" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "sphinx-rtd-theme", marker = "extra == 'dev'", specifier = ">=1.3.0" },
     { name = "typer", specifier = ">=0.15.2,<1.0.0" },
@@ -446,34 +448,39 @@ wheels = [
 
 [[package]]
 name = "azure-ai-documentintelligence"
-version = "1.0.1"
+version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-core" },
     { name = "isodate" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/1b/5fccfb5598b179279c71468ccb49b5f9f28b23c0f2a8ea786cdcc5f7f1e7/azure_ai_documentintelligence-1.0.1.tar.gz", hash = "sha256:246ec4d95316585175b38f687ffde17b394620221af966f635cec15a81c5b7cc", size = 171002 }
+sdist = { url = "https://files.pythonhosted.org/packages/44/7b/8115cd713e2caa5e44def85f2b7ebd02a74ae74d7113ba20bdd41fd6dd80/azure_ai_documentintelligence-1.0.2.tar.gz", hash = "sha256:4d75a2513f2839365ebabc0e0e1772f5601b3a8c9a71e75da12440da13b63484", size = 170940 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/51/a5f26a38c3ebe95a6e549f18756bb090754e31ca8f09d963ca271d771688/azure_ai_documentintelligence-1.0.1-py3-none-any.whl", hash = "sha256:0b6fcc99ff343dd8359accd63576f35047dd18cc89b5fd74414fe0bd87d8e566", size = 106040 },
+    { url = "https://files.pythonhosted.org/packages/d9/75/c9ec040f23082f54ffb1977ff8f364c2d21c79a640a13d1c1809e7fd6b1a/azure_ai_documentintelligence-1.0.2-py3-none-any.whl", hash = "sha256:e1fb446abbdeccc9759d897898a0fe13141ed29f9ad11fc705f951925822ed59", size = 106005 },
 ]
 
 [[package]]
 name = "azure-ai-evaluation"
-version = "1.4.0"
+version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-core" },
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
+    { name = "httpx" },
+    { name = "msrest" },
     { name = "nltk" },
+    { name = "openai" },
+    { name = "pandas" },
     { name = "promptflow-core" },
     { name = "promptflow-devkit" },
     { name = "pyjwt" },
+    { name = "ruamel-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/62/80/9793f2b82fee9acc6e4a9f4066d23de72368b61b0d3ffecc43220d6197dd/azure_ai_evaluation-1.4.0.tar.gz", hash = "sha256:210af2a25f263020c3c3a67a3db3a867bc219385894ecd84df733b28857c8dc8", size = 816270 }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/72/1a494053b221d0b607bfc84d540d9d1b6e002b17757f9372a61d054b18b5/azure_ai_evaluation-1.5.0.tar.gz", hash = "sha256:694e3bd635979348790c96eb43b390b89eb91ebd17e822229a32c9d2fdb77e6f", size = 817891 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/e1/efc7b125db816d065cdc97884b390994a054181f766151477c99256ef3ab/azure_ai_evaluation-1.4.0-py3-none-any.whl", hash = "sha256:345fa99127db9a526a10277d7f9e69e27ad84472e4bbc13d3a0da83f33cbea0e", size = 767645 },
+    { url = "https://files.pythonhosted.org/packages/ad/cf/59e8591f29fcf702e8340816fc16db1764fc420553f60e552ec590aa189e/azure_ai_evaluation-1.5.0-py3-none-any.whl", hash = "sha256:2845898ef83f7097f201d8def4d8158221529f88102348a72b7962fc9605007a", size = 773724 },
 ]
 
 [[package]]
@@ -2283,7 +2290,7 @@ wheels = [
 
 [[package]]
 name = "mem0ai"
-version = "0.1.86"
+version = "0.1.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openai" },
@@ -2294,9 +2301,9 @@ dependencies = [
     { name = "qdrant-client" },
     { name = "sqlalchemy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/f6/5535c5f986eb5dd6da05641ebf025ec0c843677da594e5bd4794c8c14fb6/mem0ai-0.1.86.tar.gz", hash = "sha256:a4f5ff02db6ee5c9df1fdbcc4e007d982ba9269ea1a08a49ca6bd3b45af0c5c2", size = 82828 }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/47/4f49523dc5ae22c159a8931d6aad78df9e43119eb2f707adf1368e08ae30/mem0ai-0.1.90.tar.gz", hash = "sha256:b3c76213f03badc2d567ab44c6b1d498fa88c81b8bf1e747f73e1430fbc199fe", size = 87656 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/da/0d4550771b39142e4421d1531aff85285d77b950182312a2896ea55ab109/mem0ai-0.1.86-py3-none-any.whl", hash = "sha256:815452021f02d1a6dc399d0297974595ed04b7704c22836de87fbc5085e90144", size = 127861 },
+    { url = "https://files.pythonhosted.org/packages/0a/f1/5d4462784be0cad0f9bce727cac8a907a9c008a399567b19bb77b1ff99c7/mem0ai-0.1.90-py3-none-any.whl", hash = "sha256:dae0acb32fa1f860a0e7990028c8ca759c440cfa739476cae302878143b13301", size = 135956 },
 ]
 
 [[package]]
@@ -2601,7 +2608,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.70.0"
+version = "1.72.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2613,9 +2620,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/f5/ae0f3cd226c2993b4ac1cc4b5f6ca099764689f403c14922c9356accec66/openai-1.70.0.tar.gz", hash = "sha256:e52a8d54c3efeb08cf58539b5b21a5abef25368b5432965e4de88cdf4e091b2b", size = 409640 }
+sdist = { url = "https://files.pythonhosted.org/packages/41/56/41de36c0e9f787c406211552ecf2ca4fba3db900207c5c158c4dc67263fc/openai-1.72.0.tar.gz", hash = "sha256:f51de971448905cc90ed5175a5b19e92fd94e31f68cde4025762f9f5257150db", size = 426061 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/39/c4b38317d2c702c4bc763957735aaeaf30dfc43b5b824121c49a4ba7ba0f/openai-1.70.0-py3-none-any.whl", hash = "sha256:f6438d053fd8b2e05fd6bef70871e832d9bbdf55e119d0ac5b92726f1ae6f614", size = 599070 },
+    { url = "https://files.pythonhosted.org/packages/03/1c/a0870f31bd71244c8c3a82e171677d9a148a8ea1cb157308cb9e06a41a37/openai-1.72.0-py3-none-any.whl", hash = "sha256:34f5496ba5c8cb06c592831d69e847e2d164526a2fb92afdc3b5cf2891c328c3", size = 643863 },
 ]
 
 [[package]]
@@ -4198,11 +4205,11 @@ wheels = [
 
 [[package]]
 name = "python-dotenv"
-version = "1.0.1"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bc/57/e84d88dfe0aec03b7a2d4327012c1627ab5f03652216c63d49846d7a6c58/python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca", size = 39115 }
+sdist = { url = "https://files.pythonhosted.org/packages/88/2c/7bb1416c5620485aa793f2de31d3df393d3686aa8a8506d11e10e13c5baf/python_dotenv-1.1.0.tar.gz", hash = "sha256:41f90bc6f5f177fb41f53e87666db362025010eb28f60a01c9143bfa33a2b2d5", size = 39920 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/3e/b68c118422ec867fa7ab88444e1274aa40681c606d59ac27de5a5588f082/python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a", size = 19863 },
+    { url = "https://files.pythonhosted.org/packages/1e/18/98a99ad95133c6a6e2005fe89faedf294a748bd5dc803008059409ac9b1e/python_dotenv-1.1.0-py3-none-any.whl", hash = "sha256:d7c01d9e2293916c18baf562d95698754b0dbbb5e74d457c45d4f6561fb9d55d", size = 20256 },
 ]
 
 [[package]]
@@ -4779,7 +4786,7 @@ wheels = [
 
 [[package]]
 name = "semantic-kernel"
-version = "1.27.1"
+version = "1.28.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -4801,9 +4808,9 @@ dependencies = [
     { name = "scipy" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/93/43/54b9d79732d5b9c43c62b355f9f0ae41f1896fa687c526bf95c257322596/semantic_kernel-1.27.1.tar.gz", hash = "sha256:5327df2a4fd6deff22f5ee78021750fed7e7bed3467508d0a0248aac54c52847", size = 485673 }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/44/7e56342fe56632a5835adabfd35b1e89bff54b18fab208ceab715c220a8f/semantic_kernel-1.28.0.tar.gz", hash = "sha256:05567190e118b1121efb46d1b8e242f6fc593d7d60e406bc8fa719d80a30b218", size = 490829 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/39/9fa941138bba706a35827c3ae0b3fe3d398ea7f178ed032b18186d52a895/semantic_kernel-1.27.1-py3-none-any.whl", hash = "sha256:9613c7e55dd8eef08cc5116f7a9b696b977cc28b555ce80a4374f254758746b9", size = 801725 },
+    { url = "https://files.pythonhosted.org/packages/77/d5/ef11ad435f3ad0c4ec344709b3e779166e973eadb67586c58bc6ab52cc71/semantic_kernel-1.28.0-py3-none-any.whl", hash = "sha256:84c899ad60fd3de1ad345f5f5cf3b6b18a94da1b397e01c96bc48a2fec7b8cee", size = 807149 },
 ]
 
 [[package]]

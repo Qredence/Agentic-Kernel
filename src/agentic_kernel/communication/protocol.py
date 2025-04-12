@@ -13,21 +13,33 @@ Key features:
 """
 
 import asyncio
-import uuid
-from typing import Dict, Any, Optional, List, Callable, Awaitable
-from datetime import datetime
 import logging
+import uuid
+from datetime import datetime
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from .message import (
+    AgentDiscoveryMessage,
+    CapabilityRequestMessage,
+    CapabilityResponseMessage,
+    ConflictNotificationMessage,
+    ConflictResolutionMessage,
+    ConsensusRequestMessage,
+    ConsensusResultMessage,
+    ConsensusVoteMessage,
+    CoordinationRequestMessage,
+    CoordinationResponseMessage,
+    ErrorMessage,
+    FeedbackMessage,
     Message,
-    MessageType,
     MessagePriority,
-    TaskRequest,
-    TaskResponse,
+    MessageType,
     Query,
     QueryResponse,
     StatusUpdate,
-    ErrorMessage,
+    TaskDecompositionMessage,
+    TaskRequest,
+    TaskResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -403,4 +415,464 @@ class CommunicationProtocol:
             message_type=MessageType.ERROR,
             content=content,
             priority=MessagePriority.HIGH,
+        )
+
+    # A2A-specific methods
+
+    async def request_capabilities(
+        self,
+        recipient: str,
+        capability_types: Optional[List[str]] = None,
+        detail_level: str = "basic",
+    ) -> str:
+        """Request capabilities from another agent.
+
+        Args:
+            recipient: ID of the agent to query for capabilities
+            capability_types: Optional list of capability types to filter by
+            detail_level: Level of detail requested (basic, detailed, full)
+
+        Returns:
+            The message ID of the capability request
+        """
+        content = {
+            "capability_types": capability_types,
+            "detail_level": detail_level,
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.CAPABILITY_REQUEST,
+            content=content,
+        )
+
+    async def send_capability_response(
+        self,
+        request_id: str,
+        recipient: str,
+        capabilities: List[Dict[str, Any]],
+        performance_metrics: Optional[Dict[str, Any]] = None,
+        limitations: Optional[Dict[str, Any]] = None,
+    ):
+        """Send a response to a capability request.
+
+        Args:
+            request_id: ID of the original capability request
+            recipient: ID of the requesting agent
+            capabilities: List of capability descriptions
+            performance_metrics: Optional metrics for each capability
+            limitations: Any limitations or constraints on capabilities
+        """
+        content = {
+            "capabilities": capabilities,
+            "performance_metrics": performance_metrics or {},
+            "limitations": limitations or {},
+        }
+
+        await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.CAPABILITY_RESPONSE,
+            content=content,
+            correlation_id=request_id,
+        )
+
+    async def announce_discovery(
+        self,
+        recipient: str,
+        agent_id: str,
+        agent_type: str,
+        capabilities: List[str],
+        status: str = "active",
+        resources: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Announce agent discovery and capabilities.
+
+        Args:
+            recipient: ID of the receiving agent (often a registry or all agents)
+            agent_id: Unique identifier for the agent
+            agent_type: Type/role of the agent
+            capabilities: List of agent capabilities
+            status: Current operational status
+            resources: Available resources and constraints
+            metadata: Additional agent-specific information
+
+        Returns:
+            The message ID of the discovery announcement
+        """
+        content = {
+            "agent_id": agent_id,
+            "agent_type": agent_type,
+            "capabilities": capabilities,
+            "status": status,
+            "resources": resources or {},
+            "metadata": metadata or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.AGENT_DISCOVERY,
+            content=content,
+            priority=MessagePriority.NORMAL,
+        )
+
+    async def request_consensus(
+        self,
+        recipients: List[str],
+        topic: str,
+        options: List[Any],
+        context: Dict[str, Any],
+        voting_deadline: Optional[datetime] = None,
+        voting_mechanism: str = "majority",
+        min_participants: int = 1,
+    ) -> Dict[str, str]:
+        """Request consensus on a decision from multiple agents.
+
+        Args:
+            recipients: IDs of the agents to participate in consensus
+            topic: The topic requiring consensus
+            options: Available options to choose from
+            context: Context information for the decision
+            voting_deadline: Optional deadline for voting
+            voting_mechanism: How votes will be tallied (majority, weighted, unanimous)
+            min_participants: Minimum number of participants required
+
+        Returns:
+            Dictionary mapping recipient IDs to message IDs
+        """
+        content = {
+            "topic": topic,
+            "options": options,
+            "context": context,
+            "voting_deadline": voting_deadline.isoformat() if voting_deadline else None,
+            "voting_mechanism": voting_mechanism,
+            "min_participants": min_participants,
+        }
+
+        # Generate a conversation ID for this consensus process
+        conversation_id = str(uuid.uuid4())
+
+        # Send to all recipients
+        message_ids = {}
+        for recipient in recipients:
+            message_id = await self.send_message(
+                recipient=recipient,
+                message_type=MessageType.CONSENSUS_REQUEST,
+                content=content,
+                priority=MessagePriority.NORMAL,
+                # Use the same conversation_id for all messages in this consensus
+                # This will be passed in the metadata
+            )
+            message_ids[recipient] = message_id
+
+        return message_ids
+
+    async def send_consensus_vote(
+        self,
+        request_id: str,
+        recipient: str,
+        consensus_id: str,
+        vote: Any,
+        confidence: float = 1.0,
+        rationale: Optional[str] = None,
+    ):
+        """Send a vote in a consensus process.
+
+        Args:
+            request_id: ID of the original consensus request
+            recipient: ID of the agent that requested consensus
+            consensus_id: ID of the consensus request
+            vote: The agent's vote
+            confidence: Confidence level in the vote (0.0-1.0)
+            rationale: Explanation for the vote
+        """
+        content = {
+            "consensus_id": consensus_id,
+            "vote": vote,
+            "confidence": confidence,
+            "rationale": rationale,
+        }
+
+        await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.CONSENSUS_VOTE,
+            content=content,
+            correlation_id=request_id,
+        )
+
+    async def send_consensus_result(
+        self,
+        recipients: List[str],
+        consensus_id: str,
+        result: Any,
+        vote_distribution: Dict[str, Any],
+        confidence: float = 1.0,
+        next_steps: Optional[List[str]] = None,
+    ) -> Dict[str, str]:
+        """Send the result of a consensus process to multiple agents.
+
+        Args:
+            recipients: IDs of the agents that participated in consensus
+            consensus_id: ID of the consensus request
+            result: The consensus result
+            vote_distribution: Distribution of votes
+            confidence: Overall confidence in the result
+            next_steps: Any actions to be taken based on the result
+
+        Returns:
+            Dictionary mapping recipient IDs to message IDs
+        """
+        content = {
+            "consensus_id": consensus_id,
+            "result": result,
+            "vote_distribution": vote_distribution,
+            "confidence": confidence,
+            "next_steps": next_steps or [],
+        }
+
+        # Send to all recipients
+        message_ids = {}
+        for recipient in recipients:
+            message_id = await self.send_message(
+                recipient=recipient,
+                message_type=MessageType.CONSENSUS_RESULT,
+                content=content,
+                priority=MessagePriority.NORMAL,
+            )
+            message_ids[recipient] = message_id
+
+        return message_ids
+
+    async def notify_conflict(
+        self,
+        recipients: List[str],
+        conflict_type: str,
+        description: str,
+        parties: List[str],
+        impact: Dict[str, Any],
+        resolution_deadline: Optional[datetime] = None,
+    ) -> Dict[str, str]:
+        """Notify agents about a conflict.
+
+        Args:
+            recipients: IDs of the agents to notify about the conflict
+            conflict_type: Type of conflict
+            description: Description of the conflict
+            parties: Agents involved in the conflict
+            impact: Impact assessment of the conflict
+            resolution_deadline: Deadline for resolution
+
+        Returns:
+            Dictionary mapping recipient IDs to message IDs
+        """
+        content = {
+            "conflict_type": conflict_type,
+            "description": description,
+            "parties": parties,
+            "impact": impact,
+            "resolution_deadline": (
+                resolution_deadline.isoformat() if resolution_deadline else None
+            ),
+        }
+
+        # Send to all recipients
+        message_ids = {}
+        for recipient in recipients:
+            message_id = await self.send_message(
+                recipient=recipient,
+                message_type=MessageType.CONFLICT_NOTIFICATION,
+                content=content,
+                priority=MessagePriority.HIGH,
+            )
+            message_ids[recipient] = message_id
+
+        return message_ids
+
+    async def send_conflict_resolution(
+        self,
+        recipients: List[str],
+        conflict_id: str,
+        resolution: str,
+        rationale: str,
+        required_actions: Dict[str, List[str]],
+        verification_method: str,
+    ) -> Dict[str, str]:
+        """Send a conflict resolution to multiple agents.
+
+        Args:
+            recipients: IDs of the agents to receive the resolution
+            conflict_id: ID of the conflict being resolved
+            resolution: The proposed resolution
+            rationale: Explanation for the resolution
+            required_actions: Actions required from involved parties
+            verification_method: How to verify the conflict is resolved
+
+        Returns:
+            Dictionary mapping recipient IDs to message IDs
+        """
+        content = {
+            "conflict_id": conflict_id,
+            "resolution": resolution,
+            "rationale": rationale,
+            "required_actions": required_actions,
+            "verification_method": verification_method,
+        }
+
+        # Send to all recipients
+        message_ids = {}
+        for recipient in recipients:
+            message_id = await self.send_message(
+                recipient=recipient,
+                message_type=MessageType.CONFLICT_RESOLUTION,
+                content=content,
+                priority=MessagePriority.HIGH,
+            )
+            message_ids[recipient] = message_id
+
+        return message_ids
+
+    async def send_feedback(
+        self,
+        recipient: str,
+        feedback_type: str,
+        rating: Optional[float] = None,
+        description: str = "",
+        improvement_suggestions: Optional[List[str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Send feedback to an agent.
+
+        Args:
+            recipient: ID of the agent to receive feedback
+            feedback_type: Type of feedback (performance, behavior, outcome)
+            rating: Numerical rating (if applicable)
+            description: Detailed feedback description
+            improvement_suggestions: Suggestions for improvement
+            context: Context in which the feedback applies
+
+        Returns:
+            The message ID of the feedback message
+        """
+        content = {
+            "feedback_type": feedback_type,
+            "rating": rating,
+            "description": description,
+            "improvement_suggestions": improvement_suggestions or [],
+            "context": context or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.FEEDBACK,
+            content=content,
+            priority=MessagePriority.NORMAL,
+        )
+
+    async def request_coordination(
+        self,
+        recipient: str,
+        coordination_type: str,
+        activities: List[Dict[str, Any]],
+        constraints: Optional[Dict[str, Any]] = None,
+        dependencies: Optional[Dict[str, List[str]]] = None,
+        priority: MessagePriority = MessagePriority.NORMAL,
+    ) -> str:
+        """Request coordination with another agent.
+
+        Args:
+            recipient: ID of the agent to coordinate with
+            coordination_type: Type of coordination needed
+            activities: Activities requiring coordination
+            constraints: Timing or resource constraints
+            dependencies: Dependencies on other agents or activities
+            priority: Priority of the coordination request
+
+        Returns:
+            The message ID of the coordination request
+        """
+        content = {
+            "coordination_type": coordination_type,
+            "activities": activities,
+            "constraints": constraints or {},
+            "dependencies": dependencies or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.COORDINATION_REQUEST,
+            content=content,
+            priority=priority,
+        )
+
+    async def send_coordination_response(
+        self,
+        request_id: str,
+        recipient: str,
+        coordination_id: str,
+        response: str,
+        availability: Dict[str, Any],
+        conditions: Optional[Dict[str, Any]] = None,
+        proposed_schedule: Optional[Dict[str, Any]] = None,
+    ):
+        """Send a response to a coordination request.
+
+        Args:
+            request_id: ID of the original coordination request
+            recipient: ID of the agent that requested coordination
+            coordination_id: ID of the coordination request
+            response: Accept, reject, or propose alternative
+            availability: Agent's availability for coordination
+            conditions: Any conditions for coordination
+            proposed_schedule: Proposed timing for coordinated activities
+        """
+        content = {
+            "coordination_id": coordination_id,
+            "response": response,
+            "availability": availability,
+            "conditions": conditions or {},
+            "proposed_schedule": proposed_schedule or {},
+        }
+
+        await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.COORDINATION_RESPONSE,
+            content=content,
+            correlation_id=request_id,
+        )
+
+    async def send_task_decomposition(
+        self,
+        recipient: str,
+        parent_task_id: str,
+        subtasks: List[Dict[str, Any]],
+        dependencies: Optional[Dict[str, List[str]]] = None,
+        allocation_suggestions: Optional[Dict[str, List[str]]] = None,
+        estimated_complexity: Optional[Dict[str, float]] = None,
+    ) -> str:
+        """Send a task decomposition to another agent.
+
+        Args:
+            recipient: ID of the agent to receive the decomposition
+            parent_task_id: ID of the parent task
+            subtasks: List of subtask descriptions
+            dependencies: Dependencies between subtasks
+            allocation_suggestions: Suggestions for which agents should handle which subtasks
+            estimated_complexity: Complexity assessment for each subtask
+
+        Returns:
+            The message ID of the task decomposition message
+        """
+        content = {
+            "parent_task_id": parent_task_id,
+            "subtasks": subtasks,
+            "dependencies": dependencies or {},
+            "allocation_suggestions": allocation_suggestions or {},
+            "estimated_complexity": estimated_complexity or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.TASK_DECOMPOSITION,
+            content=content,
+            priority=MessagePriority.NORMAL,
         )
