@@ -317,15 +317,13 @@ class RoleManager:
         agents = await self.registry.get_all_agents()
         roles = self.get_all_roles()
         
-        # Clear existing assignments
-        self.agent_roles = {}
-        
-        # Assign roles to compatible agents
+        # Merge new assignments with existing ones
         for agent in agents:
-            self.agent_roles[agent.agent_id] = []
+            if agent.agent_id not in self.agent_roles:
+                self.agent_roles[agent.agent_id] = []
+            existing_roles = set(self.agent_roles[agent.agent_id])
             for role in roles:
-                if role.is_compatible_with_agent(agent):
-                    self.agent_roles[agent.agent_id].append(role.role_id)
+                if role.is_compatible_with_agent(agent) and role.role_id not in existing_roles:
                     logger.info(f"Auto-assigned role {role.role_id} to agent {agent.agent_id}")
         
         return self.agent_roles
