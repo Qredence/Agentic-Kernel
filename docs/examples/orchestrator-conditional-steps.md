@@ -34,7 +34,7 @@ This example shows how `WorkflowStep` conditions might be defined. Assume `FileS
 ```python
 import asyncio
 from agentic_kernel.types import Task, Workflow, WorkflowStep, Condition
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent is the main class
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent is the main class
 
 # Assume agents are registered and orchestrator is initialized
 # orchestrator = OrchestratorAgent(...)
@@ -49,7 +49,7 @@ def create_default_config():
     return json.dumps({"setting": "default", "value": 1})
 
 async def run_conditional_workflow_example(simulate_file_exists: bool):
-    
+
     goal = "Ensure config file exists and use its settings."
     config_filename = "config.json"
 
@@ -100,7 +100,7 @@ async def run_conditional_workflow_example(simulate_file_exists: bool):
             outputs={"usage_result": "final_output"}
         ),
     ]
-    
+
     workflow = Workflow(
         workflow_id="conditional_config_demo",
         description=goal,
@@ -109,11 +109,11 @@ async def run_conditional_workflow_example(simulate_file_exists: bool):
 
     print(f"Starting workflow for: {goal}")
     print(f"Simulating file exists: {simulate_file_exists}\n")
-    
+
     # --- Orchestrator Execution (Simulation) ---
     # This requires the actual Orchestrator logic that evaluates conditions
     # based on the results stored in the ProgressLedger.
-    
+
     # result = await orchestrator.execute_workflow(workflow)
 
     print("--- Orchestrator Internals (Conceptual) ---")

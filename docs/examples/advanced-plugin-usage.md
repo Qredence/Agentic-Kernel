@@ -47,7 +47,7 @@ We want to create a workflow that:
 import asyncio
 import json
 from agentic_kernel.types import Task, Workflow, WorkflowStep, Condition
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent
 
 # Assume necessary agents/plugins are registered and configured
 # orchestrator = OrchestratorAgent(...)
@@ -69,7 +69,7 @@ from agentic_kernel.orchestrator import OrchestratorAgent # Assuming Orchestrato
 # orchestrator.register_agent(data_extractor_agent)
 
 async def run_advanced_plugin_workflow(simulate_file_exists: bool):
-    
+
     goal = "Find config, extract API version, and search for its docs."
     config_filename = "settings.json"
     setting_key = "api_version"
@@ -150,7 +150,7 @@ async def run_advanced_plugin_workflow(simulate_file_exists: bool):
 
     # --- Orchestrator Execution (Simulation) ---
     # result = await orchestrator.execute_workflow(workflow)
-    
+
     print("--- Orchestrator Internals (Conceptual) ---")
     # ... Simulate execution step-by-step, checking conditions ...
     # (Detailed simulation omitted for brevity, concept is similar to conditional example)

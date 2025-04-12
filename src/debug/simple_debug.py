@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 from dotenv import load_dotenv
 import chainlit as cl
 from agentic_kernel.plugins.base import BasePlugin
-from agentic_kernel.orchestrator import OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent
 from agentic_kernel.config.loader import ConfigLoader
 
 # Configure logging
@@ -27,33 +27,33 @@ def test_imports():
     try:
         from agentic_kernel.config.loader import ConfigLoader
         print("✅ ConfigLoader imported successfully")
-        
+
         from agentic_kernel.config import AgentConfig
         print("✅ AgentConfig imported successfully")
-        
+
         from agentic_kernel.agents.base import BaseAgent
         print("✅ BaseAgent imported successfully")
-        
+
         from agentic_kernel.types import Task, WorkflowStep
         print("✅ Task and WorkflowStep imported successfully")
-        
+
         from agentic_kernel.ledgers import TaskLedger, ProgressLedger
         print("✅ TaskLedger and ProgressLedger imported successfully")
-        
-        from agentic_kernel.orchestrator import OrchestratorAgent
+
+        from agentic_kernel.orchestrator.core import OrchestratorAgent
         print("✅ OrchestratorAgent imported successfully")
-        
+
         # Test initialization
         print("\nTesting component initialization...")
         config_loader = ConfigLoader()
         print("✅ ConfigLoader initialized successfully")
-        
+
         task_ledger = TaskLedger(goal="Test goal")
         print("✅ TaskLedger initialized successfully")
-        
+
         progress_ledger = ProgressLedger(task_id=str(uuid.uuid4()))
         print("✅ ProgressLedger initialized successfully")
-        
+
         return True
     except Exception as e:
         print(f"❌ Error during import testing: {e}")
@@ -67,15 +67,15 @@ async def start_chat():
         # Import and initialize the core components
         from agentic_kernel.config.loader import ConfigLoader
         from agentic_kernel.ledgers import TaskLedger, ProgressLedger
-        
+
         config_loader = ConfigLoader()
         task_ledger = TaskLedger(goal="Assist users with their requests")
         progress_ledger = ProgressLedger(task_id=str(uuid.uuid4()))
-        
+
         # Store in the user session
         cl.user_session.set("task_ledger", task_ledger)
         cl.user_session.set("progress_ledger", progress_ledger)
-        
+
         # Welcome message
         await cl.Message(
             content=(
@@ -83,7 +83,7 @@ async def start_chat():
                 "This is a minimal app for testing core functionality."
             )
         ).send()
-        
+
     except Exception as e:
         error_msg = f"Failed to initialize debug session: {str(e)}"
         logger.error(error_msg, exc_info=True)
@@ -93,7 +93,7 @@ async def start_chat():
 async def on_message(message: cl.Message):
     """Handle incoming messages."""
     msg = cl.Message(content="")
-    
+
     try:
         # Echo the message back
         await msg.stream_token(f"You said: {message.content}\n\n")
@@ -108,10 +108,10 @@ if __name__ == "__main__":
     # Run import test first
     if not test_imports():
         sys.exit(1)
-        
+
     print("\nAll tests passed! Starting Chainlit app...\n")
     print("Run with: chainlit run src/simple_debug.py -w\n")
-    
+
     # For direct debugging, uncomment this:
     # from chainlit.cli import run_chainlit
     # run_chainlit(__file__) 

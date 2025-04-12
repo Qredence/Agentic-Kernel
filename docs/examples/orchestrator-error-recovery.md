@@ -24,7 +24,7 @@ This example focuses on the retry mechanism. Assume a `WebRequestAgent` is regis
 ```python
 import asyncio
 from agentic_kernel.types import Task, Workflow, WorkflowStep
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent is the main class
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent is the main class
 
 # Assume agents are registered and orchestrator is initialized
 # orchestrator = OrchestratorAgent(max_step_retries=2) # Configure max retries
@@ -34,9 +34,9 @@ from agentic_kernel.orchestrator import OrchestratorAgent # Assuming Orchestrato
 # orchestrator.register_agent(data_processor_agent)
 
 async def run_error_recovery_example():
-    
+
     goal = "Fetch data from an external service and process it."
-    
+
     steps = [
         WorkflowStep(
             step_id="fetch_data",
@@ -57,7 +57,7 @@ async def run_error_recovery_example():
             outputs={"processed_result": "final_data"}
         ),
     ]
-    
+
     workflow = Workflow(
         workflow_id="error_recovery_demo",
         description=goal,
@@ -65,25 +65,25 @@ async def run_error_recovery_example():
     )
 
     print(f"Starting workflow for: {goal}")
-    
+
     # --- Orchestrator Execution (Simulation) ---
     print("\n--- Orchestrator Internals (Conceptual) ---")
     print("Attempt 1: Executing Step 1 'fetch_data'...")
     print("-> Failure detected (e.g., Timeout)!")
-    
+
     # Orchestrator checks retry policy (e.g., max_step_retries = 2)
     print("Orchestrator: Retrying Step 1 (Attempt 2)...")
     print("Attempt 2: Executing Step 1 'fetch_data'...")
     print("-> Success! Data fetched.")
     step1_result = {"status": "completed", "output": {"api_response": {"value": 123}}}
     print(f"Step 1 Result: {step1_result}")
-    
+
     print("\nExecuting Step 2 'process_data' with input from Step 1...")
     # Simulate processing
     step2_result = {"status": "completed", "output": {"processed_result": "Processed value: 123"}}
     print(f"Step 2 Result: {step2_result}")
     print("--- End Orchestrator Internals ---")
-    
+
     # Combine results conceptually
     final_result_placeholder = {
         "fetch_data": step1_result,

@@ -21,7 +21,7 @@ This example shows the high-level interaction. Assume we have `WeatherAgent` and
 ```python
 import asyncio
 from agentic_kernel.types import Task, Workflow, WorkflowStep
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent is the main class
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent is the main class
 
 # Assume agents are registered and orchestrator is initialized
 # orchestrator = OrchestratorAgent(...)
@@ -31,9 +31,9 @@ from agentic_kernel.orchestrator import OrchestratorAgent # Assuming Orchestrato
 # orchestrator.register_agent(web_search_agent)
 
 async def run_dynamic_weather_news_task():
-    
+
     initial_goal = "Get the weather for London and find a related news article."
-    
+
     # The orchestrator might initially generate a plan like this:
     initial_steps = [
         WorkflowStep(
@@ -49,7 +49,7 @@ async def run_dynamic_weather_news_task():
             outputs={"news_articles": "search_results"}
         ),
     ]
-    
+
     workflow = Workflow(
         workflow_id="weather_news_dynamic",
         description=initial_goal,
@@ -57,17 +57,17 @@ async def run_dynamic_weather_news_task():
     )
 
     print(f"Starting workflow for: {initial_goal}")
-    
+
     # --- Orchestrator Execution ---
     # During execution, the orchestrator runs step 1 ('get_weather').
     # Let's say the result is {'weather_result': 'Rainy'}
-    
+
     # The orchestrator analyzes the next step ('search_news') and the overall goal.
     # It realizes the search needs the weather context.
     # It dynamically modifies the plan:
     # 1. It might add an intermediate step to formulate the new query.
     # 2. It updates the inputs for the 'search_news' step.
-    
+
     # (Conceptual - Actual implementation is internal to the orchestrator)
     # Orchestrator internally might decide:
     # updated_search_task = Task(
