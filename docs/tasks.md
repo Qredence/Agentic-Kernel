@@ -25,9 +25,9 @@ This section focuses on integrating concepts from Google's A2A (Agent-to-Agent) 
 3. [x] Develop a robust A2A communication protocol with reliability guarantees
 4. [x] Implement a shared memory system for agent collaboration
 5. [x] Create a unified logging system for multi-agent interactions
-6. [ ] Develop a metrics collection system for agent performance monitoring
-7. [ ] Implement a dynamic agent discovery and capability advertisement mechanism
-8. [ ] Create standardized interfaces for agent-tool integration
+6. [x] Develop a metrics collection system for agent performance monitoring
+7. [x] Implement a dynamic agent discovery and capability advertisement mechanism
+8. [x] Create standardized interfaces for agent-tool integration
 9. [ ] Develop a robust orchestration system for multi-agent workflows
 10. [ ] Implement a versioning system for agent communication protocols
 

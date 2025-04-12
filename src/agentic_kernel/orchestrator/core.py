@@ -12,6 +12,7 @@ from .agent_selection import AgentSelector
 from .condition_evaluator import ConditionalBranchManager
 from .workflow_history import WorkflowHistory
 from .workflow_optimizer import WorkflowOptimizer
+from .agent_metrics import AgentMetricsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class OrchestratorAgent:
             ConditionalBranchManager()
         )  # Added for conditional branching
         self.workflow_optimizer = WorkflowOptimizer()  # Added for workflow optimization
+        self.metrics_collector = AgentMetricsCollector()  # Added for agent performance monitoring
 
     def register_agent(self, agent: BaseAgent) -> None:
         """Register an agent with the orchestrator.
@@ -74,6 +76,8 @@ class OrchestratorAgent:
             agent: Agent instance to register
         """
         self.agents[agent.agent_id] = agent
+        # Register agent with the metrics collector
+        self.metrics_collector.register_agent(agent.agent_id, agent.type)
         logger.info(f"Registered agent: {agent.type} with ID {agent.agent_id}")
 
     def register_agent_specialization(self, agent_id: str, domains: list[str]) -> None:
@@ -282,6 +286,15 @@ class OrchestratorAgent:
             if not agent:
                 raise ValueError(f"No suitable agent found for task: {task.name}")
 
+            # Start tracking task for metrics collection
+            task_info = {
+                "type": task.type,
+                "name": task.name,
+                "workflow_id": workflow_id,
+                "execution_id": execution_id,
+            }
+            self.metrics_collector.start_task(agent.agent_id, task.id, task_info)
+
             # Execute the task with the selected agent
             result = await agent.execute(task)
 
@@ -294,6 +307,9 @@ class OrchestratorAgent:
             self.agent_selector.record_execution_result(
                 agent.agent_id, task, success, execution_time
             )
+
+            # Collect metrics for the completed task
+            collected_metrics = self.metrics_collector.end_task(agent.agent_id, task.id, result)
 
             # Update task in ledger
             if success:
@@ -894,3 +910,73 @@ class OrchestratorAgent:
             "original_executions": original_metrics.get("execution_count", 0),
             "optimized_executions": optimized_metrics.get("execution_count", 0),
         }
+
+    def get_agent_metrics(
+        self, agent_id: str, metric_name: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get performance metrics for a specific agent.
+
+        Args:
+            agent_id: ID of the agent to get metrics for
+            metric_name: Optional name of a specific metric to retrieve
+            limit: Maximum number of metrics to return
+
+        Returns:
+            List of metric dictionaries
+        """
+        if agent_id not in self.agents:
+            logger.warning(f"Cannot get metrics for unknown agent: {agent_id}")
+            return []
+
+        return self.metrics_collector.get_agent_metrics(agent_id, metric_name, limit)
+
+    def get_agent_metric_summary(
+        self, agent_id: str, metric_name: str
+    ) -> Dict[str, Any]:
+        """Get a statistical summary of a specific metric for an agent.
+
+        Args:
+            agent_id: ID of the agent to get metrics for
+            metric_name: Name of the metric to summarize
+
+        Returns:
+            Dictionary with statistical summary
+        """
+        if agent_id not in self.agents:
+            logger.warning(f"Cannot get metric summary for unknown agent: {agent_id}")
+            return {
+                "count": 0,
+                "min": None,
+                "max": None,
+                "mean": None,
+                "median": None,
+            }
+
+        return self.metrics_collector.get_agent_metric_summary(agent_id, metric_name)
+
+    def get_all_agent_summaries(self) -> Dict[str, Dict[str, Any]]:
+        """Get performance summaries for all registered agents.
+
+        Returns:
+            Dictionary mapping agent IDs to their performance summaries
+        """
+        return self.metrics_collector.get_all_agent_summaries()
+
+    def get_system_health(self) -> Dict[str, Any]:
+        """Get overall system health metrics.
+
+        Returns:
+            Dictionary with system health indicators
+        """
+        return self.metrics_collector.get_system_health()
+
+    def export_agent_metrics(self, format_type: str = "json") -> Dict[str, Any]:
+        """Export all agent metrics in a specified format.
+
+        Args:
+            format_type: Format to export metrics in (currently only "json" is supported)
+
+        Returns:
+            Dictionary with exported metrics data
+        """
+        return self.metrics_collector.export_metrics(format_type)

@@ -1,13 +1,36 @@
-"""Tools module for the Agentic Kernel system."""
+"""Tools module for the Agentic Kernel system.
 
-from typing import Dict, Any, List, Optional, Callable
+This module provides standardized interfaces for agent-tool integration,
+including base classes for tools, tool providers, and tool registries.
+These interfaces enable agents to discover and use tools in a consistent
+manner, regardless of the tool's implementation details.
+"""
+
+from typing import Dict, Any, List, Optional, Callable, Union
 import logging
+
+from .tool_interface import (
+    BaseTool,
+    FunctionTool,
+    ToolRegistry,
+    StandardToolRegistry,
+    ToolMetadata,
+    ToolCategory,
+    ToolCapability,
+    register_tool,
+    register_function,
+    global_tool_registry,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class MCPToolRegistry:
-    """Registry for MCP tools that can be used by agents."""
+    """Registry for MCP tools that can be used by agents.
+
+    Note: This class is maintained for backward compatibility.
+    New code should use StandardToolRegistry instead.
+    """
 
     def __init__(self):
         """Initialize the MCP tool registry."""

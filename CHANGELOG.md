@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Architecture overview in `ARCHITECTURE.md`
   - Updated README with Orchestrator details
 - Python packaging rules in `.cursor/python-packager.mdc`
+- Full implementation of the A2A (Agent2Agent) protocol:
+  - JSON-RPC 2.0 over HTTP(S) communication
+  - Task lifecycle management with specific states
+  - Streaming updates via Server-Sent Events (SSE)
+  - Agent discovery via Agent Cards
+  - Support for different content types (text, files, structured data)
+  - Simple server and client implementations
+  - Example scripts demonstrating usage
+- Standardized interfaces for agent-tool integration:
+  - Base classes for tools and tool registries
+  - Rich metadata for tool discovery and documentation
+  - Support for both class-based and function-based tools
+  - Input validation and schema definitions
+  - Synchronous and asynchronous execution
+  - Example tool implementations
 
 ### Changed
 - Updated task tracking in `tasks.md` with current project status
