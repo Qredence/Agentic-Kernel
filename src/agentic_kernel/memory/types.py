@@ -13,6 +13,7 @@ class MemoryType(str, Enum):
     LONG_TERM = "long_term"  # Persistent memory across sessions
     WORKING = "working"  # Active processing memory
     EPISODIC = "episodic"  # Event-based memories with temporal context
+    COLLABORATIVE = "collaborative"  # Shared workspace for collaborative reasoning
 
 
 class MemoryEntry(BaseModel):
