@@ -12,16 +12,14 @@ Key features:
 5. Integration with the existing logging system
 """
 
-import json
 import logging
-import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 
-from ..communication.message import Message, MessageType
-from .logging import get_logger, JsonFormatter, log_scope, LogMetrics
+from ..communication.message import Message
+from .logging import JsonFormatter, LogMetrics, get_logger
 
 # Create a specialized logger for agent interactions
 agent_interaction_logger = get_logger("agent_interactions")
@@ -50,13 +48,13 @@ class AgentInteractionLogger:
         self.name = name
         self.logger = get_logger(name)
         self.metrics = LogMetrics(f"{name}.metrics")
-        self.conversation_contexts: Dict[str, Dict[str, Any]] = {}
+        self.conversation_contexts: dict[str, dict[str, Any]] = {}
     
     def log_message(
         self, 
         message: Message, 
         direction: str = "sent", 
-        extra: Optional[Dict[str, Any]] = None
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """Log an agent message.
         
@@ -67,7 +65,7 @@ class AgentInteractionLogger:
         """
         if not isinstance(message, Message):
             self.logger.warning(
-                f"Attempted to log non-Message object: {type(message)}"
+                f"Attempted to log non-Message object: {type(message)}",
             )
             return
             
@@ -111,7 +109,7 @@ class AgentInteractionLogger:
         # Log the message
         self.logger.info(
             f"Agent {direction} message: {message.message_type.value}",
-            extra={"agent_message": log_entry}
+            extra={"agent_message": log_entry},
         )
         
         # Update metrics
@@ -139,7 +137,7 @@ class AgentInteractionLogger:
             "conversation_id": conversation_id,
             "duration": self._calculate_duration(
                 context["start_time"], 
-                context["last_activity"]
+                context["last_activity"],
             ),
             "message_count": context["message_count"],
             "participants": list(context["participants"]),
@@ -148,7 +146,7 @@ class AgentInteractionLogger:
         
         self.logger.info(
             f"Conversation summary: {conversation_id}",
-            extra={"conversation_summary": summary}
+            extra={"conversation_summary": summary},
         )
     
     def _calculate_duration(self, start_time: str, end_time: str) -> float:
@@ -171,7 +169,7 @@ class AgentInteractionLogger:
         conversation_id: str, 
         initiator: str, 
         responder: str,
-        topic: Optional[str] = None
+        topic: str | None = None,
     ):
         """Context manager for tracking a conversation between agents.
         
@@ -204,8 +202,8 @@ class AgentInteractionLogger:
                     "responder": responder,
                     "topic": topic,
                     "timestamp": datetime.utcnow().isoformat(),
-                }
-            }
+                },
+            },
         )
         
         try:
@@ -217,8 +215,8 @@ class AgentInteractionLogger:
     def log_interaction_event(
         self, 
         event_type: str, 
-        agents: List[str], 
-        details: Dict[str, Any]
+        agents: list[str], 
+        details: dict[str, Any],
     ) -> None:
         """Log a general agent interaction event.
         
@@ -235,8 +233,8 @@ class AgentInteractionLogger:
                     "agents": agents,
                     "timestamp": datetime.utcnow().isoformat(),
                     "details": details,
-                }
-            }
+                },
+            },
         )
         
         # Update metrics
@@ -255,8 +253,8 @@ interaction_logger = AgentInteractionLogger()
 def agent_interaction_scope(
     initiator: str, 
     responder: str, 
-    topic: Optional[str] = None,
-    conversation_id: Optional[str] = None
+    topic: str | None = None,
+    conversation_id: str | None = None,
 ):
     """Context manager for tracking agent interactions.
     
@@ -274,7 +272,7 @@ def agent_interaction_scope(
     conv_id = conversation_id or str(uuid.uuid4())
     
     with interaction_logger.conversation_scope(
-        conv_id, initiator, responder, topic
+        conv_id, initiator, responder, topic,
     ) as logger:
         yield logger
 
@@ -282,7 +280,7 @@ def agent_interaction_scope(
 def log_agent_message(
     message: Message, 
     direction: str = "sent", 
-    extra: Optional[Dict[str, Any]] = None
+    extra: dict[str, Any] | None = None,
 ) -> None:
     """Convenience function to log an agent message.
     
@@ -295,9 +293,9 @@ def log_agent_message(
 
 
 def setup_agent_interaction_logging(
-    log_level: Union[str, int] = logging.INFO,
-    log_file: Optional[str] = None,
-    use_json: bool = True
+    log_level: str | int = logging.INFO,
+    log_file: str | None = None,
+    use_json: bool = True,
 ) -> None:
     """Set up logging specifically for agent interactions.
     
@@ -316,11 +314,11 @@ def setup_agent_interaction_logging(
                 "level": "levelname",
                 "name": "name",
                 "agent_interaction": True,
-            }
+            },
         )
     else:
         formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         
     handler.setFormatter(formatter)

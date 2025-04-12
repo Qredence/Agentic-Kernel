@@ -34,8 +34,12 @@ class MessageType(Enum):
 
     # Reliability-related message types
     MESSAGE_ACK = "message_ack"  # Acknowledgment of message receipt
-    DELIVERY_CONFIRMATION = "delivery_confirmation"  # Confirmation that a message was delivered
-    MESSAGE_RETRY = "message_retry"  # Request to retry a message that failed to be delivered
+    DELIVERY_CONFIRMATION = (
+        "delivery_confirmation"  # Confirmation that a message was delivered
+    )
+    MESSAGE_RETRY = (
+        "message_retry"  # Request to retry a message that failed to be delivered
+    )
 
     # A2A-specific message types
     CAPABILITY_REQUEST = "capability_request"  # Request for agent capabilities
