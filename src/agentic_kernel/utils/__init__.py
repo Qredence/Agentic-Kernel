@@ -7,6 +7,13 @@ from .logging import (
     LogMetrics,
     JsonFormatter,
 )
+from .agent_interaction_logger import (
+    AgentInteractionLogger,
+    interaction_logger,
+    agent_interaction_scope,
+    log_agent_message,
+    setup_agent_interaction_logging,
+)
 
 __all__ = [
     "MCPToolRegistry",
@@ -16,4 +23,9 @@ __all__ = [
     "get_logger",
     "LogMetrics",
     "JsonFormatter",
+    "AgentInteractionLogger",
+    "interaction_logger",
+    "agent_interaction_scope",
+    "log_agent_message",
+    "setup_agent_interaction_logging",
 ]

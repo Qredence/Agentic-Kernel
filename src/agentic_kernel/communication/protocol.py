@@ -16,7 +16,7 @@ Key features:
 import asyncio
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, Type
 
 from ..exceptions import (
@@ -248,8 +248,19 @@ class CommunicationProtocol:
         ] = {}
         self.error_handler = ErrorHandler(max_retries=3, retry_delay=1.0)
 
+        # Message tracking for reliability guarantees
+        self.sent_messages: Dict[str, Message] = {}  # Messages sent by this agent
+        self.received_messages: Dict[str, Message] = {}  # Messages received by this agent
+        self.pending_acknowledgments: Dict[str, Message] = {}  # Messages waiting for acknowledgment
+        self.pending_confirmations: Dict[str, Message] = {}  # Messages waiting for delivery confirmation
+
         # Register with message bus
         self.message_bus.subscribe(agent_id, self._handle_message)
+
+        # Register handlers for reliability-related message types
+        self.register_handler(MessageType.MESSAGE_ACK, self._handle_message_ack)
+        self.register_handler(MessageType.DELIVERY_CONFIRMATION, self._handle_delivery_confirmation)
+        self.register_handler(MessageType.MESSAGE_RETRY, self._handle_message_retry)
 
     async def send_message(
         self,
@@ -259,6 +270,11 @@ class CommunicationProtocol:
         priority: MessagePriority = MessagePriority.NORMAL,
         correlation_id: Optional[str] = None,
         validate: bool = True,
+        requires_acknowledgment: bool = False,
+        persistent: bool = False,
+        max_delivery_attempts: Optional[int] = None,
+        delivery_deadline: Optional[datetime] = None,
+        sequence_number: Optional[int] = None,
     ) -> str:
         """Send a message to another agent.
 
@@ -269,6 +285,11 @@ class CommunicationProtocol:
             priority: Message priority
             correlation_id: Optional ID to link related messages
             validate: Whether to validate the message before sending
+            requires_acknowledgment: Whether the message requires acknowledgment
+            persistent: Whether the message should be persisted
+            max_delivery_attempts: Maximum number of delivery attempts
+            delivery_deadline: Deadline for message delivery
+            sequence_number: Sequence number for ordering messages in a conversation
 
         Returns:
             The message ID of the sent message
@@ -285,6 +306,11 @@ class CommunicationProtocol:
             content=content,
             priority=priority,
             correlation_id=correlation_id,
+            requires_acknowledgment=requires_acknowledgment,
+            persistent=persistent,
+            max_delivery_attempts=max_delivery_attempts,
+            delivery_deadline=delivery_deadline,
+            sequence_number=sequence_number,
         )
 
         # Validate message if requested
@@ -298,6 +324,16 @@ class CommunicationProtocol:
                     "sender": self.agent_id
                 })
                 raise
+
+        # Track the message for reliability guarantees
+        self.sent_messages[message_id] = message
+
+        # Track messages requiring acknowledgment
+        if requires_acknowledgment:
+            self.pending_acknowledgments[message_id] = message
+
+        # Track messages requiring delivery confirmation
+        self.pending_confirmations[message_id] = message
 
         # Use error handler's retry mechanism for publishing
         async def publish_operation():
@@ -314,6 +350,14 @@ class CommunicationProtocol:
                     "sender": self.agent_id
                 }
             )
+
+            # Increment delivery attempts
+            message.delivery_attempts += 1
+
+            # If the message is persistent, store it
+            if persistent:
+                await self._persist_message(message)
+
         except Exception as e:
             # Convert to MessageDeliveryError if it's not already an AgenticKernelError
             if not isinstance(e, AgenticKernelError):
@@ -334,6 +378,237 @@ class CommunicationProtocol:
 
         return message_id
 
+    async def send_acknowledgment(
+        self,
+        recipient: str,
+        original_message_id: str,
+        status: str = "received",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Send an acknowledgment message.
+
+        Args:
+            recipient: ID of the agent to acknowledge
+            original_message_id: ID of the message being acknowledged
+            status: Status of the acknowledgment (e.g., "received", "processing", "rejected")
+            details: Any additional details about the acknowledgment
+
+        Returns:
+            The message ID of the acknowledgment message
+        """
+        content = {
+            "original_message_id": original_message_id,
+            "status": status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "details": details or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.MESSAGE_ACK,
+            content=content,
+            priority=MessagePriority.HIGH,  # Acknowledgments should be high priority
+            correlation_id=original_message_id,
+        )
+
+    async def send_delivery_confirmation(
+        self,
+        recipient: str,
+        original_message_id: str,
+        status: str = "delivered",
+        details: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Send a delivery confirmation message.
+
+        Args:
+            recipient: ID of the agent to confirm delivery to
+            original_message_id: ID of the message being confirmed
+            status: Status of the delivery (e.g., "delivered", "failed")
+            details: Any additional details about the delivery
+
+        Returns:
+            The message ID of the delivery confirmation message
+        """
+        content = {
+            "original_message_id": original_message_id,
+            "delivery_timestamp": datetime.utcnow().isoformat(),
+            "recipient_id": self.agent_id,
+            "status": status,
+            "details": details or {},
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.DELIVERY_CONFIRMATION,
+            content=content,
+            priority=MessagePriority.HIGH,  # Delivery confirmations should be high priority
+            correlation_id=original_message_id,
+        )
+
+    async def request_message_retry(
+        self,
+        recipient: str,
+        original_message_id: str,
+        reason: str,
+        retry_delay: Optional[float] = None,
+    ) -> str:
+        """Request retry of a message.
+
+        Args:
+            recipient: ID of the agent to request retry from
+            original_message_id: ID of the message to retry
+            reason: Reason for the retry
+            retry_delay: Delay before the next retry attempt
+
+        Returns:
+            The message ID of the retry request message
+        """
+        # Get the original message if we have it
+        original_message = self.sent_messages.get(original_message_id)
+
+        content = {
+            "original_message_id": original_message_id,
+            "reason": reason,
+            "retry_count": original_message.delivery_attempts if original_message else 0,
+            "max_retries": original_message.max_delivery_attempts if original_message else 3,
+            "retry_delay": retry_delay or self.error_handler.retry_delay,
+        }
+
+        return await self.send_message(
+            recipient=recipient,
+            message_type=MessageType.MESSAGE_RETRY,
+            content=content,
+            priority=MessagePriority.HIGH,  # Retry requests should be high priority
+            correlation_id=original_message_id,
+        )
+
+    async def _persist_message(self, message: Message) -> None:
+        """Persist a message for reliability.
+
+        This method stores a message to ensure it can be recovered in case of system failures.
+        In a production system, this would write to a persistent store like a database.
+
+        Args:
+            message: The message to persist
+        """
+        # In a real implementation, this would write to a database or other persistent store
+        # For now, we'll just log that we would persist the message
+        logger.info(f"Would persist message {message.message_id} (type: {message.message_type.value})")
+
+        # In a real implementation, we might do something like:
+        # await self.message_store.save(message.dict())
+        pass
+
+    async def check_pending_messages(self) -> None:
+        """Check the status of pending acknowledgments and confirmations.
+
+        This method checks for messages that are waiting for acknowledgment or
+        delivery confirmation and takes appropriate action based on their status.
+        """
+        current_time = datetime.utcnow()
+
+        # Check pending acknowledgments
+        for message_id, message in list(self.pending_acknowledgments.items()):
+            # Check if the message has a delivery deadline
+            if message.delivery_deadline and current_time > message.delivery_deadline:
+                logger.warning(f"Message {message_id} acknowledgment deadline exceeded")
+
+                # Request retry if max attempts not exceeded
+                max_attempts = message.max_delivery_attempts or 3
+                if message.delivery_attempts < max_attempts:
+                    await self.request_message_retry(
+                        recipient=message.recipient,
+                        original_message_id=message_id,
+                        reason="Acknowledgment timeout",
+                    )
+                else:
+                    logger.error(f"Max delivery attempts exceeded for message {message_id}")
+                    # Remove from pending acknowledgments
+                    del self.pending_acknowledgments[message_id]
+
+        # Check pending confirmations
+        for message_id, message in list(self.pending_confirmations.items()):
+            # Check if the message has a delivery deadline
+            if message.delivery_deadline and current_time > message.delivery_deadline:
+                logger.warning(f"Message {message_id} delivery confirmation deadline exceeded")
+
+                # Request retry if max attempts not exceeded
+                max_attempts = message.max_delivery_attempts or 3
+                if message.delivery_attempts < max_attempts:
+                    await self.request_message_retry(
+                        recipient=message.recipient,
+                        original_message_id=message_id,
+                        reason="Delivery confirmation timeout",
+                    )
+                else:
+                    logger.error(f"Max delivery attempts exceeded for message {message_id}")
+                    # Remove from pending confirmations
+                    del self.pending_confirmations[message_id]
+
+    def cleanup_old_messages(self, max_age_seconds: int = 3600) -> None:
+        """Clean up old messages to prevent memory leaks.
+
+        This method removes messages that are older than the specified age
+        and are no longer needed for reliability guarantees.
+
+        Args:
+            max_age_seconds: Maximum age of messages to keep in seconds (default: 1 hour)
+        """
+        current_time = datetime.utcnow()
+        cutoff_time = current_time - timedelta(seconds=max_age_seconds)
+
+        # Clean up sent messages
+        for message_id, message in list(self.sent_messages.items()):
+            # Keep messages that are still pending acknowledgment or confirmation
+            if message_id in self.pending_acknowledgments or message_id in self.pending_confirmations:
+                continue
+
+            # Remove messages older than the cutoff time
+            if message.timestamp < cutoff_time:
+                del self.sent_messages[message_id]
+                logger.debug(f"Cleaned up old sent message {message_id}")
+
+        # Clean up received messages
+        for message_id, message in list(self.received_messages.items()):
+            # Remove messages older than the cutoff time
+            if message.timestamp < cutoff_time:
+                del self.received_messages[message_id]
+                logger.debug(f"Cleaned up old received message {message_id}")
+
+    async def start_reliability_monitor(self, check_interval: float = 60.0) -> asyncio.Task:
+        """Start a background task to monitor message reliability.
+
+        This method starts a background task that periodically checks pending
+        messages and cleans up old messages to ensure reliability guarantees.
+
+        Args:
+            check_interval: Interval between checks in seconds (default: 60 seconds)
+
+        Returns:
+            The asyncio task for the monitor
+        """
+        async def monitor_task():
+            while True:
+                try:
+                    # Check pending messages
+                    await self.check_pending_messages()
+
+                    # Clean up old messages
+                    self.cleanup_old_messages()
+
+                    # Wait for the next check interval
+                    await asyncio.sleep(check_interval)
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.error(f"Error in reliability monitor: {str(e)}")
+                    await asyncio.sleep(check_interval)
+
+        # Start the monitor task
+        task = asyncio.create_task(monitor_task())
+        logger.info(f"Started reliability monitor with check interval {check_interval} seconds")
+        return task
+
     def register_handler(
         self, message_type: MessageType, handler: Callable[[Message], Awaitable[None]]
     ):
@@ -352,9 +627,28 @@ class CommunicationProtocol:
         Args:
             message: The received message
         """
+        # Track received message for reliability guarantees
+        self.received_messages[message.message_id] = message
+
+        # Send acknowledgment if required
+        if message.requires_acknowledgment and message.message_type != MessageType.MESSAGE_ACK:
+            await self.send_acknowledgment(
+                recipient=message.sender,
+                original_message_id=message.message_id,
+                status="received"
+            )
+
         if message.message_type in self.message_handlers:
             try:
                 await self.message_handlers[message.message_type](message)
+
+                # Send delivery confirmation to the message bus
+                if message.message_type != MessageType.DELIVERY_CONFIRMATION:
+                    await self.send_delivery_confirmation(
+                        recipient="message_bus",
+                        original_message_id=message.message_id,
+                        status="delivered"
+                    )
             except Exception as e:
                 # Convert to appropriate error type if it's not already an AgenticKernelError
                 if not isinstance(e, AgenticKernelError):
@@ -416,6 +710,82 @@ class CommunicationProtocol:
                 recovery_hints=error.recovery_hints,
                 correlation_id=message.message_id
             )
+
+    async def _handle_message_ack(self, message: MessageAckMessage):
+        """Handle an acknowledgment message.
+
+        Args:
+            message: The acknowledgment message
+        """
+        original_message_id = message.content.get("original_message_id")
+        if not original_message_id:
+            logger.warning(f"Received acknowledgment without original_message_id: {message.message_id}")
+            return
+
+        # Update the original message's acknowledgment status
+        if original_message_id in self.sent_messages:
+            original_message = self.sent_messages[original_message_id]
+            original_message.acknowledgment_received = True
+            logger.debug(f"Acknowledgment received for message {original_message_id}")
+
+            # Remove from pending acknowledgments
+            if original_message_id in self.pending_acknowledgments:
+                del self.pending_acknowledgments[original_message_id]
+        else:
+            logger.warning(f"Received acknowledgment for unknown message: {original_message_id}")
+
+    async def _handle_delivery_confirmation(self, message: DeliveryConfirmationMessage):
+        """Handle a delivery confirmation message.
+
+        Args:
+            message: The delivery confirmation message
+        """
+        original_message_id = message.content.get("original_message_id")
+        if not original_message_id:
+            logger.warning(f"Received delivery confirmation without original_message_id: {message.message_id}")
+            return
+
+        # Update the original message's delivery status
+        if original_message_id in self.sent_messages:
+            original_message = self.sent_messages[original_message_id]
+            original_message.delivery_confirmed = True
+            logger.debug(f"Delivery confirmed for message {original_message_id}")
+
+            # Remove from pending confirmations
+            if original_message_id in self.pending_confirmations:
+                del self.pending_confirmations[original_message_id]
+        else:
+            logger.warning(f"Received delivery confirmation for unknown message: {original_message_id}")
+
+    async def _handle_message_retry(self, message: MessageRetryMessage):
+        """Handle a message retry request.
+
+        Args:
+            message: The message retry request
+        """
+        original_message_id = message.content.get("original_message_id")
+        if not original_message_id:
+            logger.warning(f"Received retry request without original_message_id: {message.message_id}")
+            return
+
+        # Check if we have the original message
+        if original_message_id in self.sent_messages:
+            original_message = self.sent_messages[original_message_id]
+
+            # Increment delivery attempts
+            original_message.delivery_attempts += 1
+
+            # Check if we've exceeded max delivery attempts
+            max_attempts = original_message.max_delivery_attempts or 3
+            if original_message.delivery_attempts > max_attempts:
+                logger.warning(f"Max delivery attempts exceeded for message {original_message_id}")
+                return
+
+            # Retry sending the message
+            logger.info(f"Retrying message {original_message_id}, attempt {original_message.delivery_attempts}")
+            await self.message_bus.publish(original_message)
+        else:
+            logger.warning(f"Received retry request for unknown message: {original_message_id}")
 
     def _validate_message(self, message: Message) -> None:
         """Validate a message before sending.
