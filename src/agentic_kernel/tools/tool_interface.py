@@ -7,10 +7,11 @@ manner, regardless of the tool's implementation details.
 """
 
 import abc
-import logging
-from typing import Any, Dict, List, Optional, Set, Type, Union, Callable
 import inspect
+import logging
+from collections.abc import Callable
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +54,11 @@ class ToolMetadata:
         description: str,
         version: str = "1.0.0",
         author: str = "",
-        categories: Optional[List[ToolCategory]] = None,
-        capabilities: Optional[List[ToolCapability]] = None,
-        input_schema: Optional[Dict[str, Any]] = None,
-        output_schema: Optional[Dict[str, Any]] = None,
-        examples: Optional[List[Dict[str, Any]]] = None,
+        categories: list[ToolCategory] | None = None,
+        capabilities: list[ToolCapability] | None = None,
+        input_schema: dict[str, Any] | None = None,
+        output_schema: dict[str, Any] | None = None,
+        examples: list[dict[str, Any]] | None = None,
         documentation_url: str = "",
         is_async: bool = False,
     ):
@@ -88,7 +89,7 @@ class ToolMetadata:
         self.documentation_url = documentation_url
         self.is_async = is_async
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the metadata to a dictionary."""
         return {
             "name": self.name,
@@ -105,7 +106,7 @@ class ToolMetadata:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ToolMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "ToolMetadata":
         """Create a ToolMetadata instance from a dictionary."""
         categories = [ToolCategory(c) for c in data.get("categories", [])]
         capabilities = [ToolCapability(c) for c in data.get("capabilities", [])]
@@ -178,7 +179,7 @@ class BaseTool(abc.ABC):
         # Default implementation does no validation
         return True
     
-    def get_input_schema(self) -> Dict[str, Any]:
+    def get_input_schema(self) -> dict[str, Any]:
         """Get the JSON schema for the tool's input.
         
         Returns:
@@ -186,7 +187,7 @@ class BaseTool(abc.ABC):
         """
         return self.get_metadata().input_schema
     
-    def get_output_schema(self) -> Dict[str, Any]:
+    def get_output_schema(self) -> dict[str, Any]:
         """Get the JSON schema for the tool's output.
         
         Returns:
@@ -201,12 +202,12 @@ class FunctionTool(BaseTool):
     def __init__(
         self,
         func: Callable,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        categories: Optional[List[ToolCategory]] = None,
-        capabilities: Optional[List[ToolCapability]] = None,
-        input_schema: Optional[Dict[str, Any]] = None,
-        output_schema: Optional[Dict[str, Any]] = None,
+        name: str | None = None,
+        description: str | None = None,
+        categories: list[ToolCategory] | None = None,
+        capabilities: list[ToolCapability] | None = None,
+        input_schema: dict[str, Any] | None = None,
+        output_schema: dict[str, Any] | None = None,
     ):
         """Initialize a function tool.
         
@@ -244,7 +245,7 @@ class FunctionTool(BaseTool):
         """Execute the wrapped function."""
         if self._is_async:
             raise ValueError(
-                f"Tool {self._name} is async and should be called with execute_async"
+                f"Tool {self._name} is async and should be called with execute_async",
             )
         return self.func(**kwargs)
     
@@ -281,7 +282,7 @@ class ToolRegistry(abc.ABC):
         pass
     
     @abc.abstractmethod
-    def get_tool(self, tool_name: str) -> Optional[BaseTool]:
+    def get_tool(self, tool_name: str) -> BaseTool | None:
         """Get a tool by name.
         
         Args:
@@ -293,7 +294,7 @@ class ToolRegistry(abc.ABC):
         pass
     
     @abc.abstractmethod
-    def list_tools(self) -> List[ToolMetadata]:
+    def list_tools(self) -> list[ToolMetadata]:
         """List all registered tools.
         
         Returns:
@@ -304,10 +305,10 @@ class ToolRegistry(abc.ABC):
     @abc.abstractmethod
     def find_tools(
         self,
-        categories: Optional[List[ToolCategory]] = None,
-        capabilities: Optional[List[ToolCapability]] = None,
-        name_contains: Optional[str] = None,
-    ) -> List[ToolMetadata]:
+        categories: list[ToolCategory] | None = None,
+        capabilities: list[ToolCapability] | None = None,
+        name_contains: str | None = None,
+    ) -> list[ToolMetadata]:
         """Find tools matching the given criteria.
         
         Args:
@@ -326,7 +327,7 @@ class StandardToolRegistry(ToolRegistry):
     
     def __init__(self):
         """Initialize the registry."""
-        self.tools: Dict[str, BaseTool] = {}
+        self.tools: dict[str, BaseTool] = {}
     
     def register_tool(self, tool: BaseTool) -> None:
         """Register a tool with the registry."""
@@ -337,10 +338,10 @@ class StandardToolRegistry(ToolRegistry):
     def register_function(
         self,
         func: Callable,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        categories: Optional[List[ToolCategory]] = None,
-        capabilities: Optional[List[ToolCapability]] = None,
+        name: str | None = None,
+        description: str | None = None,
+        categories: list[ToolCategory] | None = None,
+        capabilities: list[ToolCapability] | None = None,
     ) -> None:
         """Register a function as a tool.
         
@@ -366,20 +367,20 @@ class StandardToolRegistry(ToolRegistry):
             del self.tools[tool_name]
             logger.info(f"Unregistered tool: {tool_name}")
     
-    def get_tool(self, tool_name: str) -> Optional[BaseTool]:
+    def get_tool(self, tool_name: str) -> BaseTool | None:
         """Get a tool by name."""
         return self.tools.get(tool_name)
     
-    def list_tools(self) -> List[ToolMetadata]:
+    def list_tools(self) -> list[ToolMetadata]:
         """List all registered tools."""
         return [tool.get_metadata() for tool in self.tools.values()]
     
     def find_tools(
         self,
-        categories: Optional[List[ToolCategory]] = None,
-        capabilities: Optional[List[ToolCapability]] = None,
-        name_contains: Optional[str] = None,
-    ) -> List[ToolMetadata]:
+        categories: list[ToolCategory] | None = None,
+        capabilities: list[ToolCapability] | None = None,
+        name_contains: str | None = None,
+    ) -> list[ToolMetadata]:
         """Find tools matching the given criteria."""
         results = []
         
@@ -459,13 +460,13 @@ def register_tool(tool: BaseTool) -> None:
 
 
 def register_function(
-    func: Optional[Callable] = None,
+    func: Callable | None = None,
     *,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    categories: Optional[List[ToolCategory]] = None,
-    capabilities: Optional[List[ToolCapability]] = None,
-) -> Union[Callable, Callable[[Callable], Callable]]:
+    name: str | None = None,
+    description: str | None = None,
+    categories: list[ToolCategory] | None = None,
+    capabilities: list[ToolCapability] | None = None,
+) -> Callable | Callable[[Callable], Callable]:
     """Register a function as a tool with the global registry.
     
     This can be used as a decorator:

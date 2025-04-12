@@ -7,19 +7,18 @@ how to create and register tools for use by agents.
 
 import logging
 import os
-import json
-import time
-from typing import Dict, List, Any, Optional
+from typing import Any
+
 import requests
 
 from .tool_interface import (
     BaseTool,
     FunctionTool,
-    ToolMetadata,
-    ToolCategory,
     ToolCapability,
-    register_tool,
+    ToolCategory,
+    ToolMetadata,
     register_function,
+    register_tool,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,32 +41,32 @@ class FileReadTool(BaseTool):
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "Path to the file to read"
+                        "description": "Path to the file to read",
                     },
                     "encoding": {
                         "type": "string",
                         "description": "Encoding to use when reading the file",
-                        "default": "utf-8"
-                    }
+                        "default": "utf-8",
+                    },
                 },
-                "required": ["path"]
+                "required": ["path"],
             },
             output_schema={
                 "type": "object",
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "Contents of the file"
+                        "description": "Contents of the file",
                     },
                     "path": {
                         "type": "string",
-                        "description": "Path to the file that was read"
+                        "description": "Path to the file that was read",
                     },
                     "size": {
                         "type": "integer",
-                        "description": "Size of the file in bytes"
-                    }
-                }
+                        "description": "Size of the file in bytes",
+                    },
+                },
             },
             examples=[
                 {
@@ -75,10 +74,10 @@ class FileReadTool(BaseTool):
                     "output": {
                         "content": "Example file content",
                         "path": "/path/to/file.txt",
-                        "size": 20
-                    }
-                }
-            ]
+                        "size": 20,
+                    },
+                },
+            ],
         )
     
     def validate_input(self, **kwargs: Any) -> bool:
@@ -104,7 +103,7 @@ class FileReadTool(BaseTool):
             raise ValueError(f"Invalid input: File not found or not accessible: {path}")
         
         try:
-            with open(path, "r", encoding=encoding) as f:
+            with open(path, encoding=encoding) as f:
                 content = f.read()
             
             size = os.path.getsize(path)
@@ -112,7 +111,7 @@ class FileReadTool(BaseTool):
             return {
                 "content": content,
                 "path": path,
-                "size": size
+                "size": size,
             }
         except Exception as e:
             logger.error(f"Error reading file {path}: {e}", exc_info=True)
@@ -136,36 +135,36 @@ class WebFetchTool(BaseTool):
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "URL to fetch data from"
+                        "description": "URL to fetch data from",
                     },
                     "headers": {
                         "type": "object",
-                        "description": "HTTP headers to include in the request"
+                        "description": "HTTP headers to include in the request",
                     },
                     "timeout": {
                         "type": "number",
                         "description": "Request timeout in seconds",
-                        "default": 10
-                    }
+                        "default": 10,
+                    },
                 },
-                "required": ["url"]
+                "required": ["url"],
             },
             output_schema={
                 "type": "object",
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "Content of the response"
+                        "description": "Content of the response",
                     },
                     "status_code": {
                         "type": "integer",
-                        "description": "HTTP status code"
+                        "description": "HTTP status code",
                     },
                     "headers": {
                         "type": "object",
-                        "description": "Response headers"
-                    }
-                }
+                        "description": "Response headers",
+                    },
+                },
             },
             examples=[
                 {
@@ -173,10 +172,10 @@ class WebFetchTool(BaseTool):
                     "output": {
                         "content": "<html>Example content</html>",
                         "status_code": 200,
-                        "headers": {"content-type": "text/html"}
-                    }
-                }
-            ]
+                        "headers": {"content-type": "text/html"},
+                    },
+                },
+            ],
         )
     
     def validate_input(self, **kwargs: Any) -> bool:
@@ -205,7 +204,7 @@ class WebFetchTool(BaseTool):
             return {
                 "content": response.text,
                 "status_code": response.status_code,
-                "headers": dict(response.headers)
+                "headers": dict(response.headers),
             }
         except Exception as e:
             logger.error(f"Error fetching URL {url}: {e}", exc_info=True)
@@ -213,7 +212,7 @@ class WebFetchTool(BaseTool):
 
 
 # Example of using the FunctionTool class to wrap a function
-def calculate_statistics(numbers: List[float]) -> Dict[str, float]:
+def calculate_statistics(numbers: list[float]) -> dict[str, float]:
     """Calculate basic statistics for a list of numbers.
     
     Args:
@@ -228,7 +227,7 @@ def calculate_statistics(numbers: List[float]) -> Dict[str, float]:
             "sum": 0,
             "mean": 0,
             "min": 0,
-            "max": 0
+            "max": 0,
         }
     
     return {
@@ -236,7 +235,7 @@ def calculate_statistics(numbers: List[float]) -> Dict[str, float]:
         "sum": sum(numbers),
         "mean": sum(numbers) / len(numbers),
         "min": min(numbers),
-        "max": max(numbers)
+        "max": max(numbers),
     }
 
 
@@ -245,12 +244,12 @@ def calculate_statistics(numbers: List[float]) -> Dict[str, float]:
     name="string_operations",
     description="Perform various operations on strings",
     categories=[ToolCategory.DATA_PROCESSING],
-    capabilities=[ToolCapability.TRANSFORMATION]
+    capabilities=[ToolCapability.TRANSFORMATION],
 )
 def string_operations(
     text: str,
     operation: str = "length",
-    additional_args: Optional[Dict[str, Any]] = None
+    additional_args: dict[str, Any] | None = None,
 ) -> Any:
     """Perform various operations on strings.
     
@@ -266,21 +265,20 @@ def string_operations(
     
     if operation == "length":
         return len(text)
-    elif operation == "reverse":
+    if operation == "reverse":
         return text[::-1]
-    elif operation == "uppercase":
+    if operation == "uppercase":
         return text.upper()
-    elif operation == "lowercase":
+    if operation == "lowercase":
         return text.lower()
-    elif operation == "split":
+    if operation == "split":
         delimiter = additional_args.get("delimiter", " ")
         return text.split(delimiter)
-    elif operation == "join":
+    if operation == "join":
         parts = additional_args.get("parts", [])
         delimiter = additional_args.get("delimiter", " ")
         return delimiter.join(parts)
-    else:
-        raise ValueError(f"Unknown operation: {operation}")
+    raise ValueError(f"Unknown operation: {operation}")
 
 
 # Register the example tools
