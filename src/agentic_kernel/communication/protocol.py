@@ -8,16 +8,26 @@ Key features:
 1. Message routing
 2. Asynchronous communication
 3. Message validation
-4. Error handling
+4. Standardized error handling
 5. Delivery guarantees
+6. Automatic retries for transient errors
 """
 
 import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, Type
 
+from ..exceptions import (
+    AgenticKernelError,
+    CommunicationError,
+    MessageDeliveryError,
+    MessageTimeoutError,
+    MessageValidationError,
+    ProtocolError,
+)
+from .error_handler import ErrorHandler
 from .message import (
     AgentDiscoveryMessage,
     CapabilityRequestMessage,
@@ -54,6 +64,7 @@ class MessageBus:
     Attributes:
         subscribers: Dictionary mapping agent IDs to their message handlers
         message_queue: Queue for asynchronous message processing
+        error_handler: Utility for standardized error handling
     """
 
     def __init__(self):
@@ -62,6 +73,7 @@ class MessageBus:
         self.message_queue: asyncio.Queue[Message] = asyncio.Queue()
         self._running = False
         self._processor_task: Optional[asyncio.Task] = None
+        self.error_handler = ErrorHandler(max_retries=3, retry_delay=1.0)
 
     async def start(self):
         """Start the message processing loop."""
@@ -124,33 +136,89 @@ class MessageBus:
                             f"Message {message.message_id} delivered to {message.recipient}"
                         )
                     except Exception as e:
-                        logger.error(
-                            f"Error delivering message {message.message_id}: {str(e)}"
+                        # Convert to MessageDeliveryError if it's not already an AgenticKernelError
+                        if not isinstance(e, AgenticKernelError):
+                            error = MessageDeliveryError(
+                                message=f"Failed to deliver message {message.message_id}: {str(e)}",
+                                details={
+                                    "message_id": message.message_id,
+                                    "sender": message.sender,
+                                    "recipient": message.recipient,
+                                    "message_type": message.message_type.value,
+                                    "original_error": str(e)
+                                },
+                                retry_possible=True
+                            )
+                        else:
+                            error = e
+
+                        # Log the error with context
+                        self.error_handler.log_error(error, {
+                            "message_id": message.message_id,
+                            "sender": message.sender,
+                            "recipient": message.recipient
+                        })
+
+                        # Create error message for sender with standardized format
+                        error_content = self.error_handler.format_error_message(
+                            error, 
+                            include_recovery=True,
+                            include_stack_trace=False
                         )
-                        # Create error message for sender
+
                         error_msg = ErrorMessage(
                             message_id=str(uuid.uuid4()),
                             sender="message_bus",
                             recipient=message.sender,
-                            content={
-                                "error_type": "delivery_failed",
-                                "description": f"Failed to deliver message {message.message_id}",
-                                "details": str(e),
-                            },
+                            content=error_content,
                             correlation_id=message.message_id,
                         )
                         await self.message_queue.put(error_msg)
                 else:
-                    logger.warning(
-                        f"No handler found for recipient {message.recipient}"
+                    # Create a standardized error for unknown recipient
+                    error = MessageDeliveryError(
+                        message=f"No handler found for recipient {message.recipient}",
+                        code="UNKNOWN_RECIPIENT",
+                        details={
+                            "message_id": message.message_id,
+                            "sender": message.sender,
+                            "recipient": message.recipient,
+                            "message_type": message.message_type.value
+                        },
+                        recovery_hints=[
+                            "Verify that the recipient agent ID is correct",
+                            "Check if the recipient agent is registered with the message bus",
+                            "Ensure the recipient agent is active and running"
+                        ],
+                        retry_possible=False
                     )
+
+                    self.error_handler.log_error(error)
+
+                    # Create error message for sender
+                    error_content = self.error_handler.format_error_message(error)
+                    error_msg = ErrorMessage(
+                        message_id=str(uuid.uuid4()),
+                        sender="message_bus",
+                        recipient=message.sender,
+                        content=error_content,
+                        correlation_id=message.message_id,
+                    )
+                    await self.message_queue.put(error_msg)
 
                 self.message_queue.task_done()
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error processing message: {str(e)}")
+                # Handle unexpected errors in the message processing loop
+                error = ProtocolError(
+                    message=f"Error processing message: {str(e)}",
+                    code="MESSAGE_PROCESSING_ERROR",
+                    details={"original_error": str(e)},
+                    retry_possible=False
+                )
+                self.error_handler.log_error(error)
 
 
 class CommunicationProtocol:
@@ -163,6 +231,7 @@ class CommunicationProtocol:
         agent_id: ID of the agent using this protocol
         message_bus: Reference to the central message bus
         message_handlers: Custom message type handlers
+        error_handler: Utility for standardized error handling
     """
 
     def __init__(self, agent_id: str, message_bus: MessageBus):
@@ -177,6 +246,7 @@ class CommunicationProtocol:
         self.message_handlers: Dict[
             MessageType, Callable[[Message], Awaitable[None]]
         ] = {}
+        self.error_handler = ErrorHandler(max_retries=3, retry_delay=1.0)
 
         # Register with message bus
         self.message_bus.subscribe(agent_id, self._handle_message)
@@ -188,6 +258,7 @@ class CommunicationProtocol:
         content: Dict[str, Any],
         priority: MessagePriority = MessagePriority.NORMAL,
         correlation_id: Optional[str] = None,
+        validate: bool = True,
     ) -> str:
         """Send a message to another agent.
 
@@ -197,9 +268,13 @@ class CommunicationProtocol:
             content: Message content
             priority: Message priority
             correlation_id: Optional ID to link related messages
+            validate: Whether to validate the message before sending
 
         Returns:
             The message ID of the sent message
+
+        Raises:
+            MessageValidationError: If validation fails and validate=True
         """
         message_id = str(uuid.uuid4())
         message = Message(
@@ -212,7 +287,51 @@ class CommunicationProtocol:
             correlation_id=correlation_id,
         )
 
-        await self.message_bus.publish(message)
+        # Validate message if requested
+        if validate:
+            try:
+                self._validate_message(message)
+            except MessageValidationError as e:
+                self.error_handler.log_error(e, {
+                    "message_type": message_type.value,
+                    "recipient": recipient,
+                    "sender": self.agent_id
+                })
+                raise
+
+        # Use error handler's retry mechanism for publishing
+        async def publish_operation():
+            await self.message_bus.publish(message)
+
+        try:
+            await self.error_handler.with_retries(
+                publish_operation,
+                retry_exceptions=[CommunicationError],
+                context={
+                    "message_id": message_id,
+                    "message_type": message_type.value,
+                    "recipient": recipient,
+                    "sender": self.agent_id
+                }
+            )
+        except Exception as e:
+            # Convert to MessageDeliveryError if it's not already an AgenticKernelError
+            if not isinstance(e, AgenticKernelError):
+                error = MessageDeliveryError(
+                    message=f"Failed to send message to {recipient}: {str(e)}",
+                    details={
+                        "message_id": message_id,
+                        "message_type": message_type.value,
+                        "recipient": recipient,
+                        "sender": self.agent_id,
+                        "original_error": str(e)
+                    },
+                    retry_possible=True
+                )
+                self.error_handler.log_error(error)
+                raise error
+            raise
+
         return message_id
 
     def register_handler(
@@ -234,10 +353,118 @@ class CommunicationProtocol:
             message: The received message
         """
         if message.message_type in self.message_handlers:
-            await self.message_handlers[message.message_type](message)
+            try:
+                await self.message_handlers[message.message_type](message)
+            except Exception as e:
+                # Convert to appropriate error type if it's not already an AgenticKernelError
+                if not isinstance(e, AgenticKernelError):
+                    error = CommunicationError(
+                        message=f"Error handling message of type {message.message_type.value}: {str(e)}",
+                        details={
+                            "message_id": message.message_id,
+                            "message_type": message.message_type.value,
+                            "sender": message.sender,
+                            "recipient": message.recipient,
+                            "original_error": str(e)
+                        },
+                        retry_possible=False
+                    )
+                else:
+                    error = e
+
+                self.error_handler.log_error(error, {
+                    "message_id": message.message_id,
+                    "message_type": message.message_type.value,
+                    "sender": message.sender
+                })
+
+                # Send error message back to sender
+                await self.send_error(
+                    recipient=message.sender,
+                    error_type=error.__class__.__name__,
+                    description=str(error),
+                    details=getattr(error, "details", {}),
+                    recovery_hints=self.error_handler.generate_recovery_hints(error),
+                    correlation_id=message.message_id
+                )
         else:
-            logger.warning(
-                f"No handler registered for message type {message.message_type.value}"
+            error = ProtocolError(
+                message=f"No handler registered for message type {message.message_type.value}",
+                code="UNHANDLED_MESSAGE_TYPE",
+                details={
+                    "message_id": message.message_id,
+                    "message_type": message.message_type.value,
+                    "sender": message.sender,
+                    "recipient": self.agent_id
+                },
+                recovery_hints=[
+                    f"Register a handler for message type {message.message_type.value}",
+                    "Update the agent to support this message type",
+                    "Check if the message type is correct"
+                ],
+                retry_possible=False
+            )
+
+            self.error_handler.log_error(error)
+
+            # Send error message back to sender
+            await self.send_error(
+                recipient=message.sender,
+                error_type="UNHANDLED_MESSAGE_TYPE",
+                description=f"No handler registered for message type {message.message_type.value}",
+                details={"message_type": message.message_type.value},
+                recovery_hints=error.recovery_hints,
+                correlation_id=message.message_id
+            )
+
+    def _validate_message(self, message: Message) -> None:
+        """Validate a message before sending.
+
+        Args:
+            message: The message to validate
+
+        Raises:
+            MessageValidationError: If validation fails
+        """
+        # Basic validation for all messages
+        required_fields = ["message_id", "message_type", "sender", "recipient", "content"]
+        message_dict = {
+            "message_id": message.message_id,
+            "message_type": message.message_type,
+            "sender": message.sender,
+            "recipient": message.recipient,
+            "content": message.content,
+            "priority": message.priority,
+            "correlation_id": message.correlation_id,
+            "timestamp": message.timestamp
+        }
+
+        self.error_handler.validate_message(
+            message_dict, 
+            required_fields,
+            field_types={
+                "message_id": str,
+                "sender": str,
+                "recipient": str,
+                "content": dict
+            }
+        )
+
+        # Additional validation based on message type
+        if message.message_type == MessageType.TASK_REQUEST:
+            self.error_handler.validate_message(
+                message.content,
+                ["task_description", "parameters"],
+                field_types={
+                    "task_description": str,
+                    "parameters": dict
+                }
+            )
+        elif message.message_type == MessageType.QUERY:
+            self.error_handler.validate_message(
+                message.content,
+                ["query"],
+                field_types={"query": str}
             )
 
     async def request_task(
@@ -391,30 +618,66 @@ class CommunicationProtocol:
         recipient: str,
         error_type: str,
         description: str,
+        details: Optional[Dict[str, Any]] = None,
         stack_trace: Optional[str] = None,
         recovery_hints: Optional[List[str]] = None,
-    ):
+        correlation_id: Optional[str] = None,
+    ) -> str:
         """Send an error message to another agent.
+
+        This method formats and sends a standardized error message to another agent.
+        It can be used to report errors encountered during processing or to respond
+        to invalid requests.
 
         Args:
             recipient: ID of the receiving agent
-            error_type: Type of error
-            description: Error description
-            stack_trace: Optional stack trace
-            recovery_hints: Optional recovery suggestions
+            error_type: Type of error (e.g., "MESSAGE_VALIDATION_ERROR")
+            description: Human-readable error description
+            details: Additional error details as a dictionary
+            stack_trace: Optional stack trace for debugging
+            recovery_hints: Suggestions for recovering from the error
+            correlation_id: Optional ID of the message that caused the error
+
+        Returns:
+            The message ID of the sent error message
+
+        Raises:
+            MessageDeliveryError: If the error message cannot be delivered
         """
+        # Create standardized error content
         content = {
             "error_type": error_type,
             "description": description,
-            "stack_trace": stack_trace,
+            "details": details or {},
             "recovery_hints": recovery_hints or [],
+            "timestamp": datetime.utcnow().isoformat(),
+            "sender_id": self.agent_id,
         }
 
-        await self.send_message(
+        # Add stack trace if provided and we're in debug mode
+        if stack_trace and logger.isEnabledFor(logging.DEBUG):
+            content["stack_trace"] = stack_trace
+
+        # Log the error being sent
+        self.error_handler.log_error(
+            CommunicationError(
+                message=f"Sending error to {recipient}: {error_type} - {description}",
+                code=error_type,
+                details=details,
+                recovery_hints=recovery_hints,
+                severity=ErrorSeverity.INFO  # This is just informational since we're sending, not receiving
+            ),
+            {"recipient": recipient, "correlation_id": correlation_id}
+        )
+
+        # Send the error message with high priority
+        return await self.send_message(
             recipient=recipient,
             message_type=MessageType.ERROR,
             content=content,
             priority=MessagePriority.HIGH,
+            correlation_id=correlation_id,
+            validate=True  # Ensure the error message itself is valid
         )
 
     # A2A-specific methods
