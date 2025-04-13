@@ -1,1 +1,1 @@
-"""Agent implementations.""" 
+"""Agent implementations."""

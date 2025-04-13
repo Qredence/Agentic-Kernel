@@ -1,1 +1,1 @@
-"""ADK Multi-Agent Example Package.""" 
+"""ADK Multi-Agent Example Package."""
