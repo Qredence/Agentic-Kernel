@@ -76,6 +76,10 @@ dependencies = [
     "typer[all]>=0.15.2,<1.0.0",
     "google-adk>=0.1.1,<0.2.0",
     "ruff>=0.11.4,<1.0.0",
+    "coverage>=7.4.0,<8.0.0",
+    "isort>=5.13.2,<6.0.0",
+    "pytest-asyncio>=0.26.0,<0.27.0",
+    "pylint>=3.1.0,<4.0.0",
 ]
 
 [project.optional-dependencies]
