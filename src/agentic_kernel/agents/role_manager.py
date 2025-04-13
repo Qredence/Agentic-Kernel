@@ -15,7 +15,11 @@ Key features:
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..communication.capability_registry import AgentCapability, AgentInfo, CapabilityRegistry
+from ..communication.capability_registry import (
+    AgentCapability,
+    AgentInfo,
+    CapabilityRegistry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +108,9 @@ class AgentRole:
         Returns:
             True if the agent has all required capabilities, False otherwise
         """
-        agent_capability_types = {cap.capability_type for cap in agent_info.capabilities}
+        agent_capability_types = {
+            cap.capability_type for cap in agent_info.capabilities
+        }
         return self.required_capabilities.issubset(agent_capability_types)
 
     def get_compatibility_score(self, agent_info: AgentInfo) -> float:
@@ -123,16 +129,24 @@ class AgentRole:
         if not self.is_compatible_with_agent(agent_info):
             return 0.0
 
-        agent_capability_types = {cap.capability_type for cap in agent_info.capabilities}
-        
+        agent_capability_types = {
+            cap.capability_type for cap in agent_info.capabilities
+        }
+
         # Calculate score based on required and preferred capabilities
-        total_capabilities = len(self.required_capabilities) + len(self.preferred_capabilities)
+        total_capabilities = len(self.required_capabilities) + len(
+            self.preferred_capabilities
+        )
         if total_capabilities == 0:
             return 1.0  # No capabilities required, so any agent is fully compatible
-        
-        matched_capabilities = len(self.required_capabilities)  # We know all required are matched
-        matched_capabilities += len(self.preferred_capabilities.intersection(agent_capability_types))
-        
+
+        matched_capabilities = len(
+            self.required_capabilities
+        )  # We know all required are matched
+        matched_capabilities += len(
+            self.preferred_capabilities.intersection(agent_capability_types)
+        )
+
         return matched_capabilities / total_capabilities
 
 
@@ -156,7 +170,9 @@ class RoleManager:
         """
         self.roles: Dict[str, AgentRole] = {}
         self.registry = registry
-        self.agent_roles: Dict[str, List[str]] = {}  # Maps agent IDs to assigned role IDs
+        self.agent_roles: Dict[
+            str, List[str]
+        ] = {}  # Maps agent IDs to assigned role IDs
 
     def add_role(self, role: AgentRole) -> None:
         """Add a role definition.
@@ -178,12 +194,12 @@ class RoleManager:
         """
         if role_id in self.roles:
             del self.roles[role_id]
-            
+
             # Remove this role from all agents
             for agent_id in self.agent_roles:
                 if role_id in self.agent_roles[agent_id]:
                     self.agent_roles[agent_id].remove(role_id)
-            
+
             logger.info(f"Removed role with ID {role_id}")
             return True
         return False
@@ -237,11 +253,11 @@ class RoleManager:
         # Assign role
         if agent_id not in self.agent_roles:
             self.agent_roles[agent_id] = []
-        
+
         if role_id not in self.agent_roles[agent_id]:
             self.agent_roles[agent_id].append(role_id)
             logger.info(f"Assigned role {role_id} to agent {agent_id}")
-        
+
         return True
 
     async def unassign_role_from_agent(self, agent_id: str, role_id: str) -> bool:
@@ -271,9 +287,12 @@ class RoleManager:
         """
         if agent_id not in self.agent_roles:
             return []
-        
-        return [self.roles[role_id] for role_id in self.agent_roles[agent_id] 
-                if role_id in self.roles]
+
+        return [
+            self.roles[role_id]
+            for role_id in self.agent_roles[agent_id]
+            if role_id in self.roles
+        ]
 
     async def find_agents_for_role(self, role_id: str) -> List[Tuple[AgentInfo, float]]:
         """Find agents that are compatible with a role.
@@ -292,14 +311,14 @@ class RoleManager:
 
         # Get all agents
         agents = await self.registry.get_all_agents()
-        
+
         # Filter and score compatible agents
         compatible_agents = []
         for agent in agents:
             if role.is_compatible_with_agent(agent):
                 score = role.get_compatibility_score(agent)
                 compatible_agents.append((agent, score))
-        
+
         # Sort by score in descending order
         return sorted(compatible_agents, key=lambda x: x[1], reverse=True)
 
@@ -316,19 +335,26 @@ class RoleManager:
         # Get all agents and roles
         agents = await self.registry.get_all_agents()
         roles = self.get_all_roles()
-        
+
         # Merge new assignments with existing ones
         for agent in agents:
             if agent.agent_id not in self.agent_roles:
                 self.agent_roles[agent.agent_id] = []
             existing_roles = set(self.agent_roles[agent.agent_id])
             for role in roles:
-                if role.is_compatible_with_agent(agent) and role.role_id not in existing_roles:
-                    logger.info(f"Auto-assigned role {role.role_id} to agent {agent.agent_id}")
-        
+                if (
+                    role.is_compatible_with_agent(agent)
+                    and role.role_id not in existing_roles
+                ):
+                    logger.info(
+                        f"Auto-assigned role {role.role_id} to agent {agent.agent_id}"
+                    )
+
         return self.agent_roles
 
-    async def find_best_agent_for_role(self, role_id: str) -> Optional[Tuple[AgentInfo, float]]:
+    async def find_best_agent_for_role(
+        self, role_id: str
+    ) -> Optional[Tuple[AgentInfo, float]]:
         """Find the best agent for a specific role.
 
         Args:
@@ -341,5 +367,5 @@ class RoleManager:
         compatible_agents = await self.find_agents_for_role(role_id)
         if not compatible_agents:
             return None
-        
+
         return compatible_agents[0]  # Return the highest-scoring agent

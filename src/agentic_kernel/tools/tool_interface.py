@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ToolCategory(Enum):
     """Categories for classifying tools."""
-    
+
     DATA_PROCESSING = "data_processing"
     FILE_OPERATIONS = "file_operations"
     WEB_INTERACTION = "web_interaction"
@@ -32,7 +32,7 @@ class ToolCategory(Enum):
 
 class ToolCapability(Enum):
     """Capabilities that tools can provide."""
-    
+
     READ = "read"
     WRITE = "write"
     EXECUTE = "execute"
@@ -47,7 +47,7 @@ class ToolCapability(Enum):
 
 class ToolMetadata:
     """Metadata for a tool."""
-    
+
     def __init__(
         self,
         name: str,
@@ -63,7 +63,7 @@ class ToolMetadata:
         is_async: bool = False,
     ):
         """Initialize tool metadata.
-        
+
         Args:
             name: The name of the tool
             description: A description of what the tool does
@@ -88,7 +88,7 @@ class ToolMetadata:
         self.examples = examples or []
         self.documentation_url = documentation_url
         self.is_async = is_async
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the metadata to a dictionary."""
         return {
@@ -104,13 +104,13 @@ class ToolMetadata:
             "documentation_url": self.documentation_url,
             "is_async": self.is_async,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ToolMetadata":
         """Create a ToolMetadata instance from a dictionary."""
         categories = [ToolCategory(c) for c in data.get("categories", [])]
         capabilities = [ToolCapability(c) for c in data.get("capabilities", [])]
-        
+
         return cls(
             name=data.get("name", ""),
             description=data.get("description", ""),
@@ -128,68 +128,68 @@ class ToolMetadata:
 
 class BaseTool(abc.ABC):
     """Base class for all tools.
-    
+
     All tools should inherit from this class and implement the required methods.
     """
-    
+
     @abc.abstractmethod
     def get_metadata(self) -> ToolMetadata:
         """Get the tool's metadata.
-        
+
         Returns:
             The tool's metadata
         """
         pass
-    
+
     @abc.abstractmethod
     def execute(self, **kwargs: Any) -> Any:
         """Execute the tool with the given arguments.
-        
+
         Args:
             **kwargs: Arguments to pass to the tool
-            
+
         Returns:
             The result of executing the tool
         """
         pass
-    
+
     async def execute_async(self, **kwargs: Any) -> Any:
         """Execute the tool asynchronously.
-        
+
         By default, this calls the synchronous execute method. Tools that are
         inherently asynchronous should override this method.
-        
+
         Args:
             **kwargs: Arguments to pass to the tool
-            
+
         Returns:
             The result of executing the tool
         """
         return self.execute(**kwargs)
-    
+
     def validate_input(self, **kwargs: Any) -> bool:
         """Validate the input arguments.
-        
+
         Args:
             **kwargs: Arguments to validate
-            
+
         Returns:
             True if the arguments are valid, False otherwise
         """
         # Default implementation does no validation
         return True
-    
+
     def get_input_schema(self) -> dict[str, Any]:
         """Get the JSON schema for the tool's input.
-        
+
         Returns:
             The input schema
         """
         return self.get_metadata().input_schema
-    
+
     def get_output_schema(self) -> dict[str, Any]:
         """Get the JSON schema for the tool's output.
-        
+
         Returns:
             The output schema
         """
@@ -198,7 +198,7 @@ class BaseTool(abc.ABC):
 
 class FunctionTool(BaseTool):
     """A tool that wraps a function."""
-    
+
     def __init__(
         self,
         func: Callable,
@@ -210,7 +210,7 @@ class FunctionTool(BaseTool):
         output_schema: dict[str, Any] | None = None,
     ):
         """Initialize a function tool.
-        
+
         Args:
             func: The function to wrap
             name: The name of the tool (defaults to the function name)
@@ -228,7 +228,7 @@ class FunctionTool(BaseTool):
         self._input_schema = input_schema or {}
         self._output_schema = output_schema or {}
         self._is_async = inspect.iscoroutinefunction(func)
-    
+
     def get_metadata(self) -> ToolMetadata:
         """Get the tool's metadata."""
         return ToolMetadata(
@@ -240,7 +240,7 @@ class FunctionTool(BaseTool):
             output_schema=self._output_schema,
             is_async=self._is_async,
         )
-    
+
     def execute(self, **kwargs: Any) -> Any:
         """Execute the wrapped function."""
         if self._is_async:
@@ -248,7 +248,7 @@ class FunctionTool(BaseTool):
                 f"Tool {self._name} is async and should be called with execute_async",
             )
         return self.func(**kwargs)
-    
+
     async def execute_async(self, **kwargs: Any) -> Any:
         """Execute the wrapped function asynchronously."""
         if not self._is_async:
@@ -258,50 +258,50 @@ class FunctionTool(BaseTool):
 
 class ToolRegistry(abc.ABC):
     """Base class for tool registries.
-    
+
     Tool registries manage collections of tools and provide methods for
     discovering and accessing them.
     """
-    
+
     @abc.abstractmethod
     def register_tool(self, tool: BaseTool) -> None:
         """Register a tool with the registry.
-        
+
         Args:
             tool: The tool to register
         """
         pass
-    
+
     @abc.abstractmethod
     def unregister_tool(self, tool_name: str) -> None:
         """Unregister a tool from the registry.
-        
+
         Args:
             tool_name: The name of the tool to unregister
         """
         pass
-    
+
     @abc.abstractmethod
     def get_tool(self, tool_name: str) -> BaseTool | None:
         """Get a tool by name.
-        
+
         Args:
             tool_name: The name of the tool
-            
+
         Returns:
             The tool if found, None otherwise
         """
         pass
-    
+
     @abc.abstractmethod
     def list_tools(self) -> list[ToolMetadata]:
         """List all registered tools.
-        
+
         Returns:
             List of tool metadata
         """
         pass
-    
+
     @abc.abstractmethod
     def find_tools(
         self,
@@ -310,12 +310,12 @@ class ToolRegistry(abc.ABC):
         name_contains: str | None = None,
     ) -> list[ToolMetadata]:
         """Find tools matching the given criteria.
-        
+
         Args:
             categories: Filter by categories
             capabilities: Filter by capabilities
             name_contains: Filter by name containing this string
-            
+
         Returns:
             List of matching tool metadata
         """
@@ -324,17 +324,17 @@ class ToolRegistry(abc.ABC):
 
 class StandardToolRegistry(ToolRegistry):
     """Standard implementation of a tool registry."""
-    
+
     def __init__(self):
         """Initialize the registry."""
         self.tools: dict[str, BaseTool] = {}
-    
+
     def register_tool(self, tool: BaseTool) -> None:
         """Register a tool with the registry."""
         metadata = tool.get_metadata()
         self.tools[metadata.name] = tool
         logger.info(f"Registered tool: {metadata.name}")
-    
+
     def register_function(
         self,
         func: Callable,
@@ -344,7 +344,7 @@ class StandardToolRegistry(ToolRegistry):
         capabilities: list[ToolCapability] | None = None,
     ) -> None:
         """Register a function as a tool.
-        
+
         Args:
             func: The function to register
             name: The name of the tool (defaults to the function name)
@@ -360,21 +360,21 @@ class StandardToolRegistry(ToolRegistry):
             capabilities=capabilities,
         )
         self.register_tool(tool)
-    
+
     def unregister_tool(self, tool_name: str) -> None:
         """Unregister a tool from the registry."""
         if tool_name in self.tools:
             del self.tools[tool_name]
             logger.info(f"Unregistered tool: {tool_name}")
-    
+
     def get_tool(self, tool_name: str) -> BaseTool | None:
         """Get a tool by name."""
         return self.tools.get(tool_name)
-    
+
     def list_tools(self) -> list[ToolMetadata]:
         """List all registered tools."""
         return [tool.get_metadata() for tool in self.tools.values()]
-    
+
     def find_tools(
         self,
         categories: list[ToolCategory] | None = None,
@@ -383,66 +383,68 @@ class StandardToolRegistry(ToolRegistry):
     ) -> list[ToolMetadata]:
         """Find tools matching the given criteria."""
         results = []
-        
+
         for tool in self.tools.values():
             metadata = tool.get_metadata()
-            
+
             # Check categories
             if categories and not any(c in metadata.categories for c in categories):
                 continue
-            
+
             # Check capabilities
-            if capabilities and not any(c in metadata.capabilities for c in capabilities):
+            if capabilities and not any(
+                c in metadata.capabilities for c in capabilities
+            ):
                 continue
-            
+
             # Check name
             if name_contains and name_contains.lower() not in metadata.name.lower():
                 continue
-            
+
             results.append(metadata)
-        
+
         return results
-    
+
     def execute_tool(self, tool_name: str, **kwargs: Any) -> Any:
         """Execute a tool by name.
-        
+
         Args:
             tool_name: The name of the tool
             **kwargs: Arguments to pass to the tool
-            
+
         Returns:
             The result of executing the tool
-            
+
         Raises:
             ValueError: If the tool is not found
         """
         tool = self.get_tool(tool_name)
         if not tool:
             raise ValueError(f"Tool not found: {tool_name}")
-        
+
         try:
             return tool.execute(**kwargs)
         except Exception as e:
             logger.error(f"Error executing tool {tool_name}: {e}", exc_info=True)
             raise
-    
+
     async def execute_tool_async(self, tool_name: str, **kwargs: Any) -> Any:
         """Execute a tool asynchronously.
-        
+
         Args:
             tool_name: The name of the tool
             **kwargs: Arguments to pass to the tool
-            
+
         Returns:
             The result of executing the tool
-            
+
         Raises:
             ValueError: If the tool is not found
         """
         tool = self.get_tool(tool_name)
         if not tool:
             raise ValueError(f"Tool not found: {tool_name}")
-        
+
         try:
             return await tool.execute_async(**kwargs)
         except Exception as e:
@@ -468,29 +470,30 @@ def register_function(
     capabilities: list[ToolCapability] | None = None,
 ) -> Callable | Callable[[Callable], Callable]:
     """Register a function as a tool with the global registry.
-    
+
     This can be used as a decorator:
-    
+
     @register_function
     def my_tool():
         ...
-    
+
     Or with arguments:
-    
+
     @register_function(name="my_custom_name", description="Does something cool")
     def my_tool():
         ...
-    
+
     Args:
         func: The function to register
         name: The name of the tool (defaults to the function name)
         description: A description of what the tool does (defaults to the function docstring)
         categories: Categories that the tool belongs to
         capabilities: Capabilities that the tool provides
-        
+
     Returns:
         The original function (when used as a decorator)
     """
+
     def decorator(f: Callable) -> Callable:
         tool = FunctionTool(
             func=f,
@@ -501,8 +504,8 @@ def register_function(
         )
         register_tool(tool)
         return f
-    
+
     if func is None:
         return decorator
-    
+
     return decorator(func)

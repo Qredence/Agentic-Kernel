@@ -14,33 +14,40 @@ from agentic_kernel.config.loader import ConfigLoader
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
+
 def test_imports():
     """Test critical imports."""
     print("Testing imports...")
     try:
         from agentic_kernel.config.loader import ConfigLoader
+
         print("✅ ConfigLoader imported successfully")
 
         from agentic_kernel.config import AgentConfig
+
         print("✅ AgentConfig imported successfully")
 
         from agentic_kernel.agents.base import BaseAgent
+
         print("✅ BaseAgent imported successfully")
 
         from agentic_kernel.types import Task, WorkflowStep
+
         print("✅ Task and WorkflowStep imported successfully")
 
         from agentic_kernel.ledgers import TaskLedger, ProgressLedger
+
         print("✅ TaskLedger and ProgressLedger imported successfully")
 
         from agentic_kernel.orchestrator.core import OrchestratorAgent
+
         print("✅ OrchestratorAgent imported successfully")
 
         # Test initialization
@@ -59,6 +66,7 @@ def test_imports():
         print(f"❌ Error during import testing: {e}")
         logger.error(f"Import testing failed: {e}", exc_info=True)
         return False
+
 
 @cl.on_chat_start
 async def start_chat():
@@ -89,6 +97,7 @@ async def start_chat():
         logger.error(error_msg, exc_info=True)
         await cl.Message(content=error_msg).send()
 
+
 @cl.on_message
 async def on_message(message: cl.Message):
     """Handle incoming messages."""
@@ -104,6 +113,7 @@ async def on_message(message: cl.Message):
         logger.error(error_msg, exc_info=True)
         await cl.Message(content=f"⚠️ {error_msg}").send()
 
+
 if __name__ == "__main__":
     # Run import test first
     if not test_imports():
@@ -114,7 +124,7 @@ if __name__ == "__main__":
 
     # For direct debugging, uncomment this:
     # from chainlit.cli import run_chainlit
-    # run_chainlit(__file__) 
+    # run_chainlit(__file__)
 
 # Configuration Loading
 # Ensure you have a valid config.json or provide the path
@@ -131,12 +141,15 @@ from agentic_kernel.config_types import AgentConfig, LLMMapping
 from agentic_kernel.types import Task, WorkflowStep
 from agentic_kernel.ledgers import TaskLedger, ProgressLedger
 
+
 # Dummy Plugin for testing
 class DummyPlugin(BasePlugin):
     """A dummy plugin for testing purposes."""
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         print(f"DummyPlugin executed with args: {kwargs}")
         return {"result": "Dummy plugin result"}
+
 
 @cl.on_chat_start
 async def main():
@@ -155,12 +168,14 @@ async def main():
     # ...
     print("Debug workflow setup complete.")
 
+
 async def run_debug_workflow():
     """Runs the actual debug logic (placeholder)."""
     # Replace with your actual debug workflow logic
     print("Executing debug workflow...")
-    await asyncio.sleep(2) # Simulate work
+    await asyncio.sleep(2)  # Simulate work
     print("Debug workflow finished.")
+
 
 if __name__ == "__main__":
     # This part might not run correctly with Chainlit's execution model.
@@ -172,8 +187,9 @@ if __name__ == "__main__":
     # If you need to run chainlit from script (less common):
     try:
         from chainlit.cli import run_chainlit
+
         # This might require specific setup or context
-        # run_chainlit(__file__) 
-        pass # Placeholder to avoid syntax error
+        # run_chainlit(__file__)
+        pass  # Placeholder to avoid syntax error
     except ImportError:
-        print("Chainlit CLI not found. Run with 'chainlit run simple_debug.py -w'") 
+        print("Chainlit CLI not found. Run with 'chainlit run simple_debug.py -w'")

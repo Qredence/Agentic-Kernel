@@ -24,7 +24,7 @@ Example:
         }
     )
     agent = TerminalAgent(config)
-    
+
     # Execute a command
     task = Task(
         description="List files in current directory",

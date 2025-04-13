@@ -183,7 +183,11 @@ class TaskManager:
         task = self.tasks[task_id]
 
         # Check if the task is in a final state
-        if task.status.state in [TaskState.COMPLETED, TaskState.CANCELED, TaskState.FAILED]:
+        if task.status.state in [
+            TaskState.COMPLETED,
+            TaskState.CANCELED,
+            TaskState.FAILED,
+        ]:
             raise ValueError(f"Task is not cancelable: {task_id}")
 
         # Update task status
@@ -198,7 +202,9 @@ class TaskManager:
 
         return task
 
-    async def subscribe_to_task(self, task_id: str) -> AsyncGenerator[TaskStatusUpdateEvent | TaskArtifactUpdateEvent, None]:
+    async def subscribe_to_task(
+        self, task_id: str
+    ) -> AsyncGenerator[TaskStatusUpdateEvent | TaskArtifactUpdateEvent, None]:
         """Subscribe to task updates.
 
         This method enables real-time streaming of task updates to clients.
@@ -407,7 +413,8 @@ class TaskManager:
         event = TaskStatusUpdateEvent(
             id=task.id,
             status=task.status,
-            final=task.status.state in [
+            final=task.status.state
+            in [
                 TaskState.COMPLETED,
                 TaskState.CANCELED,
                 TaskState.FAILED,

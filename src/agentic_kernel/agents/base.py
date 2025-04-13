@@ -107,7 +107,7 @@ class BaseAgent(ABC):
         protocol (CommunicationProtocol): Protocol for inter-agent communication.
 
     Example:
-        .. code-block:: python 
+        .. code-block:: python
 
             class DataProcessor(BaseAgent):
                 async def execute(self, task: Task) -> Dict[str, Any]:
@@ -150,15 +150,12 @@ class BaseAgent(ABC):
             # Performance parameters
             "response_time_target": 1.0,  # Target response time in seconds
             "max_tokens_per_response": 1000,  # Maximum tokens per response
-
             # Quality parameters
             "quality_threshold": 0.7,  # Minimum quality threshold (0.0-1.0)
             "review_frequency": 0.2,  # Frequency of response review (0.0-1.0)
-
             # Accuracy parameters
             "fact_checking_enabled": False,  # Whether fact checking is enabled
             "confidence_threshold": 0.8,  # Minimum confidence threshold (0.0-1.0)
-
             # Communication parameters
             "verbosity": 0.5,  # Verbosity level (0.0-1.0)
             "formality": 0.5,  # Formality level (0.0-1.0)
@@ -208,9 +205,7 @@ class BaseAgent(ABC):
         )
 
         # Register feedback handler
-        self.protocol.register_handler(
-            MessageType.FEEDBACK, self._handle_feedback
-        )
+        self.protocol.register_handler(MessageType.FEEDBACK, self._handle_feedback)
 
     async def _handle_task_request(self, message: Message):
         """Handle incoming task requests.
@@ -538,7 +533,9 @@ class BaseAgent(ABC):
             message (Message): The consensus request message.
         """
         if not self.collaborative_protocol:
-            logger.error("Cannot handle consensus request: collaborative protocol not initialized")
+            logger.error(
+                "Cannot handle consensus request: collaborative protocol not initialized"
+            )
             return
 
         try:
@@ -560,10 +557,12 @@ class BaseAgent(ABC):
                     consensus_id=consensus_id,
                     vote=vote,
                     confidence=confidence,
-                    rationale=rationale
+                    rationale=rationale,
                 )
             else:
-                logger.warning(f"Received consensus request with no options: {consensus_id}")
+                logger.warning(
+                    f"Received consensus request with no options: {consensus_id}"
+                )
         except Exception as e:
             logger.error(f"Error handling consensus request: {str(e)}")
 
@@ -574,7 +573,9 @@ class BaseAgent(ABC):
             message (Message): The consensus vote message.
         """
         if not self.collaborative_protocol:
-            logger.error("Cannot handle consensus vote: collaborative protocol not initialized")
+            logger.error(
+                "Cannot handle consensus vote: collaborative protocol not initialized"
+            )
             return
 
         try:
@@ -591,7 +592,7 @@ class BaseAgent(ABC):
                 consensus_id=consensus_id,
                 vote=vote,
                 confidence=confidence,
-                rationale=rationale
+                rationale=rationale,
             )
         except Exception as e:
             logger.error(f"Error handling consensus vote: {str(e)}")
@@ -608,7 +609,9 @@ class BaseAgent(ABC):
             result = message.content.get("result")
             confidence = message.content.get("confidence")
 
-            logger.info(f"Received consensus result for {consensus_id}: {result} (confidence: {confidence})")
+            logger.info(
+                f"Received consensus result for {consensus_id}: {result} (confidence: {confidence})"
+            )
         except Exception as e:
             logger.error(f"Error handling consensus result: {str(e)}")
 
@@ -642,7 +645,9 @@ class BaseAgent(ABC):
             RuntimeError: If collaborative protocol is not initialized
         """
         if not self.collaborative_protocol:
-            raise RuntimeError("Cannot request consensus: collaborative protocol not initialized")
+            raise RuntimeError(
+                "Cannot request consensus: collaborative protocol not initialized"
+            )
 
         return await self.collaborative_protocol.create_consensus_process(
             recipients=recipients,
@@ -705,9 +710,13 @@ class BaseAgent(ABC):
             RuntimeError: If collaborative protocol is not initialized
         """
         if not self.collaborative_protocol:
-            raise RuntimeError("Cannot check consensus status: collaborative protocol not initialized")
+            raise RuntimeError(
+                "Cannot check consensus status: collaborative protocol not initialized"
+            )
 
-        is_complete, result = await self.collaborative_protocol.check_consensus_status(consensus_id)
+        is_complete, result = await self.collaborative_protocol.check_consensus_status(
+            consensus_id
+        )
 
         if is_complete and result:
             return True, {
@@ -774,7 +783,7 @@ class BaseAgent(ABC):
                 context=context,
                 task_id=context.get("task_id"),
                 conversation_id=message.conversation_id,
-                metadata={"message_id": message.message_id}
+                metadata={"message_id": message.message_id},
             )
 
             # Process the feedback and update parameters
@@ -825,7 +834,7 @@ class BaseAgent(ABC):
         self,
         category: Optional[FeedbackCategory] = None,
         metric_name: Optional[str] = None,
-        window_size: int = 10
+        window_size: int = 10,
     ) -> Dict[str, List[Tuple[datetime, float]]]:
         """Get performance metrics for this agent.
 
@@ -852,9 +861,7 @@ class BaseAgent(ABC):
         return metrics
 
     def get_performance_trend(
-        self,
-        metric_name: str,
-        window_size: int = 5
+        self, metric_name: str, window_size: int = 5
     ) -> Optional[float]:
         """Get the trend for a specific performance metric.
 
@@ -874,9 +881,7 @@ class BaseAgent(ABC):
         )
 
     def get_insights(
-        self,
-        category: Optional[FeedbackCategory] = None,
-        min_confidence: float = 0.6
+        self, category: Optional[FeedbackCategory] = None, min_confidence: float = 0.6
     ) -> List[Dict[str, Any]]:
         """Get insights derived from feedback analysis.
 
@@ -912,7 +917,7 @@ class BaseAgent(ABC):
         self,
         category: Optional[FeedbackCategory] = None,
         min_confidence: float = 0.6,
-        applied_only: bool = False
+        applied_only: bool = False,
     ) -> List[Dict[str, Any]]:
         """Get adjustments made to agent parameters.
 
@@ -954,7 +959,7 @@ class BaseAgent(ABC):
         rating: float,
         description: str,
         improvement_suggestions: Optional[List[str]] = None,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Send feedback to another agent.
 
@@ -981,7 +986,7 @@ class BaseAgent(ABC):
             rating=rating,
             description=description,
             improvement_suggestions=improvement_suggestions,
-            context=context or {}
+            context=context or {},
         )
 
     def get_capabilities(self) -> AgentCapabilities:

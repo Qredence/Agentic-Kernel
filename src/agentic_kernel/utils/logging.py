@@ -42,6 +42,7 @@ from typing import Any, Dict, Optional, Union
 # Default logging format for structured logging
 DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+
 # JSON logging formatter for structured logs
 class JsonFormatter(logging.Formatter):
     """Format log records as JSON strings.
@@ -88,17 +89,17 @@ class JsonFormatter(logging.Formatter):
         """
         # Create base record dictionary with mapped default fields
         record_dict = {}
-        
+
         # Process default fields first
         for output_field, record_field in self.default_fields.items():
             if hasattr(record, record_field):
                 record_dict[output_field] = getattr(record, record_field)
 
         # Add the formatted message
-        record_dict['message'] = self.formatMessage(record)
+        record_dict["message"] = self.formatMessage(record)
 
         # Add any extra fields from the record
-        if hasattr(record, 'extra_fields'):
+        if hasattr(record, "extra_fields"):
             record_dict.update(record.extra_fields)
 
         # Handle exception info if present
@@ -106,10 +107,10 @@ class JsonFormatter(logging.Formatter):
             # Only process if exc_info is a tuple (type, value, traceback)
             if isinstance(record.exc_info, tuple):
                 formatted = self.formatException(record.exc_info)
-                record_dict['exc_info'] = formatted
+                record_dict["exc_info"] = formatted
 
         # Remove internal fields that we don't want in the output
-        for key in ('msg', 'args', 'exc_info', 'exc_text'):
+        for key in ("msg", "args", "exc_info", "exc_text"):
             record_dict.pop(key, None)
 
         # Apply any additional field mapping
@@ -231,9 +232,7 @@ def log_scope(
         )
 
 
-def get_logger(
-    name: str, level: Union[str, int] = logging.INFO
-) -> logging.Logger:
+def get_logger(name: str, level: Union[str, int] = logging.INFO) -> logging.Logger:
     """Get a logger with the specified name and level.
 
     Args:
@@ -314,4 +313,4 @@ class LogMetrics:
             level: Logging level to use.
         """
         self.logger.log(level, "Metrics", extra={"metrics": self.metrics.copy()})
-        self.metrics.clear() 
+        self.metrics.clear()

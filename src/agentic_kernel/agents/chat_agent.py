@@ -18,7 +18,7 @@ Example:
         config = AgentConfig(temperature=0.7, max_tokens=1000)
         client = AsyncAzureOpenAI(...)
         agent = ChatAgent(config, client)
-        
+
         # Execute a chat task
         task = Task(
             description="Tell me about Python",
@@ -172,28 +172,37 @@ class ChatAgent(BaseAgent):
                 messages=self.chat_history,
                 temperature=self.config.llm_mapping.temperature,
                 max_tokens=self.config.llm_mapping.max_tokens,
-                stream=True
+                stream=True,
             )
 
             response_chunks: List[str] = []
-            
+
             async for chunk in stream:
                 # Check if chunk has choices and delta content
-                if (hasattr(chunk, 'choices') and 
-                    len(chunk.choices) > 0 and 
-                    hasattr(chunk.choices[0], 'delta') and 
-                    hasattr(chunk.choices[0].delta, 'content') and 
-                    chunk.choices[0].delta.content):
+                if (
+                    hasattr(chunk, "choices")
+                    and len(chunk.choices) > 0
+                    and hasattr(chunk.choices[0], "delta")
+                    and hasattr(chunk.choices[0].delta, "content")
+                    and chunk.choices[0].delta.content
+                ):
                     response_chunks.append(chunk.choices[0].delta.content)
                     yield chunk.choices[0].delta.content
 
             # Add complete response to history if we got any chunks
             complete_response = "".join(response_chunks)
             if complete_response:
-                self.chat_history.append({"role": "assistant", "content": complete_response})
+                self.chat_history.append(
+                    {"role": "assistant", "content": complete_response}
+                )
             else:
                 logger.warning("Received empty response from model")
-                self.chat_history.append({"role": "assistant", "content": "I apologize, but I received an empty response. Could you please try again?"})
+                self.chat_history.append(
+                    {
+                        "role": "assistant",
+                        "content": "I apologize, but I received an empty response. Could you please try again?",
+                    }
+                )
                 yield "I apologize, but I received an empty response. Could you please try again?"
 
         except Exception as e:

@@ -126,7 +126,11 @@ class CollaborativeMemoryManager:
         logger.info("Collaborative memory manager stopped")
 
     async def create_workspace(
-        self, name: str, description: str, created_by: str, tags: Optional[List[str]] = None
+        self,
+        name: str,
+        description: str,
+        created_by: str,
+        tags: Optional[List[str]] = None,
     ) -> CollaborativeWorkspace:
         """Create a new collaborative workspace.
 
@@ -481,7 +485,8 @@ class CollaborativeMemoryManager:
         filtered_results = [
             result
             for result in results
-            if hasattr(result.entry, "metadata") and result.entry.metadata.get("workspace_id") == workspace_id
+            if hasattr(result.entry, "metadata")
+            and result.entry.metadata.get("workspace_id") == workspace_id
         ]
 
         return filtered_results

@@ -81,17 +81,14 @@ __all__ = [
     "MessageAckMessage",
     "DeliveryConfirmationMessage",
     "MessageRetryMessage",
-    
     # Capability registry
     "AgentCapability",
     "AgentInfo",
     "CapabilityRegistry",
-    
     # Dynamic capability registry
     "CapabilitySubscription",
     "AgentPresenceMonitor",
     "DynamicCapabilityRegistry",
-    
     # Communication protocol
     "CommunicationProtocol",
 ]

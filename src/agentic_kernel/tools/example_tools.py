@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class FileReadTool(BaseTool):
     """Tool for reading files from the filesystem."""
-    
+
     def get_metadata(self) -> ToolMetadata:
         """Get the tool's metadata."""
         return ToolMetadata(
@@ -79,35 +79,35 @@ class FileReadTool(BaseTool):
                 },
             ],
         )
-    
+
     def validate_input(self, **kwargs: Any) -> bool:
         """Validate the input arguments."""
         if "path" not in kwargs:
             return False
-        
+
         path = kwargs["path"]
         if not os.path.exists(path):
             return False
-        
+
         if not os.path.isfile(path):
             return False
-        
+
         return True
-    
+
     def execute(self, **kwargs: Any) -> Any:
         """Execute the tool with the given arguments."""
         path = kwargs["path"]
         encoding = kwargs.get("encoding", "utf-8")
-        
+
         if not self.validate_input(**kwargs):
             raise ValueError(f"Invalid input: File not found or not accessible: {path}")
-        
+
         try:
             with open(path, encoding=encoding) as f:
                 content = f.read()
-            
+
             size = os.path.getsize(path)
-            
+
             return {
                 "content": content,
                 "path": path,
@@ -120,7 +120,7 @@ class FileReadTool(BaseTool):
 
 class WebFetchTool(BaseTool):
     """Tool for fetching data from web URLs."""
-    
+
     def get_metadata(self) -> ToolMetadata:
         """Get the tool's metadata."""
         return ToolMetadata(
@@ -177,30 +177,32 @@ class WebFetchTool(BaseTool):
                 },
             ],
         )
-    
+
     def validate_input(self, **kwargs: Any) -> bool:
         """Validate the input arguments."""
         if "url" not in kwargs:
             return False
-        
+
         url = kwargs["url"]
         if not url.startswith(("http://", "https://")):
             return False
-        
+
         return True
-    
+
     def execute(self, **kwargs: Any) -> Any:
         """Execute the tool with the given arguments."""
         url = kwargs["url"]
         headers = kwargs.get("headers", {})
         timeout = kwargs.get("timeout", 10)
-        
+
         if not self.validate_input(**kwargs):
-            raise ValueError(f"Invalid input: URL must start with http:// or https://: {url}")
-        
+            raise ValueError(
+                f"Invalid input: URL must start with http:// or https://: {url}"
+            )
+
         try:
             response = requests.get(url, headers=headers, timeout=timeout)
-            
+
             return {
                 "content": response.text,
                 "status_code": response.status_code,
@@ -214,10 +216,10 @@ class WebFetchTool(BaseTool):
 # Example of using the FunctionTool class to wrap a function
 def calculate_statistics(numbers: list[float]) -> dict[str, float]:
     """Calculate basic statistics for a list of numbers.
-    
+
     Args:
         numbers: List of numbers to calculate statistics for
-        
+
     Returns:
         Dictionary containing the calculated statistics
     """
@@ -229,7 +231,7 @@ def calculate_statistics(numbers: list[float]) -> dict[str, float]:
             "min": 0,
             "max": 0,
         }
-    
+
     return {
         "count": len(numbers),
         "sum": sum(numbers),
@@ -252,17 +254,17 @@ def string_operations(
     additional_args: dict[str, Any] | None = None,
 ) -> Any:
     """Perform various operations on strings.
-    
+
     Args:
         text: The input text to operate on
         operation: The operation to perform (length, reverse, uppercase, lowercase)
         additional_args: Additional arguments for the operation
-        
+
     Returns:
         The result of the operation
     """
     additional_args = additional_args or {}
-    
+
     if operation == "length":
         return len(text)
     if operation == "reverse":
@@ -287,7 +289,7 @@ def register_example_tools():
     # Register the class-based tools
     register_tool(FileReadTool())
     register_tool(WebFetchTool())
-    
+
     # Register the function-based tool
     stats_tool = FunctionTool(
         func=calculate_statistics,
@@ -297,9 +299,9 @@ def register_example_tools():
         capabilities=[ToolCategory.COMPUTATION],
     )
     register_tool(stats_tool)
-    
+
     # Note: string_operations is already registered via the decorator
-    
+
     logger.info("Registered example tools")
 
 

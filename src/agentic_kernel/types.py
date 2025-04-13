@@ -25,6 +25,9 @@ TaskStatus = Literal[
     "timeout",  # Task exceeded its time limit
 ]
 
+# Agent type literal
+AgentType = str  # Simple type alias for agent types
+
 
 class Task(BaseModel):
     """A task to be executed by an agent.
@@ -37,7 +40,7 @@ class Task(BaseModel):
         id (str): Unique identifier for the task
         name (str): Human-readable name of the task
         description (Optional[str]): Detailed description of the task's purpose
-        agent_type (str): Type of agent qualified to execute this task
+        agent_type (AgentType): Type of agent qualified to execute this task
         parameters (Dict[str, Any]): Configuration parameters for task execution
         status (TaskStatus): Current status in the task lifecycle
         max_retries (int): Maximum number of retry attempts on failure
@@ -62,7 +65,7 @@ class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     description: Optional[str] = None
-    agent_type: str
+    agent_type: AgentType
     parameters: Dict[str, Any] = Field(default_factory=dict)
     status: TaskStatus = "pending"
     max_retries: int = 3

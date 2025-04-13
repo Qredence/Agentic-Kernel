@@ -77,7 +77,9 @@ class AgentMetricsCollector:
         if agent_id not in self.metrics:
             self.metrics[agent_id] = []
 
-    def start_task(self, agent_id: str, task_id: str, task_info: dict[str, Any]) -> None:
+    def start_task(
+        self, agent_id: str, task_id: str, task_info: dict[str, Any]
+    ) -> None:
         """Record the start of a task for an agent.
 
         Args:
@@ -89,7 +91,10 @@ class AgentMetricsCollector:
         self.active_tasks[f"{agent_id}:{task_id}"] = task_info
 
     def end_task(
-        self, agent_id: str, task_id: str, result: dict[str, Any],
+        self,
+        agent_id: str,
+        task_id: str,
+        result: dict[str, Any],
     ) -> dict[str, Any]:
         """Record the end of a task and collect metrics.
 
@@ -102,39 +107,39 @@ class AgentMetricsCollector:
             Dictionary of collected metrics
         """
         task_key = f"{agent_id}:{task_id}"
-        
+
         # Calculate execution time
         execution_time = 0.0
         if task_key in self.start_times:
             execution_time = time.time() - self.start_times[task_key]
             del self.start_times[task_key]
-        
+
         # Get task info
         task_info = {}
         if task_key in self.active_tasks:
             task_info = self.active_tasks[task_key]
             del self.active_tasks[task_key]
-        
+
         # Collect basic metrics
         metrics = {
             "execution_time": execution_time,
             "success": result.get("status") == "success",
         }
-        
+
         # Add any metrics from the result
         if "metrics" in result:
             metrics.update(result["metrics"])
-        
+
         # Record all metrics
         timestamp = datetime.now()
         tags = {
             "task_id": task_id,
             "task_type": task_info.get("type", "unknown"),
         }
-        
+
         for name, value in metrics.items():
             self.add_metric(agent_id, name, value, timestamp, tags)
-        
+
         return metrics
 
     def add_metric(
@@ -155,14 +160,19 @@ class AgentMetricsCollector:
             tags: Additional contextual tags for the metric
         """
         metric = AgentMetric(name, value, timestamp, tags)
-        
+
         # Add to metrics list, maintaining max history size
         self.metrics[agent_id].append(metric)
         if len(self.metrics[agent_id]) > self.max_history_per_agent:
-            self.metrics[agent_id] = self.metrics[agent_id][-self.max_history_per_agent:]
+            self.metrics[agent_id] = self.metrics[agent_id][
+                -self.max_history_per_agent :
+            ]
 
     def get_agent_metrics(
-        self, agent_id: str, metric_name: str | None = None, limit: int = 100,
+        self,
+        agent_id: str,
+        metric_name: str | None = None,
+        limit: int = 100,
     ) -> list[dict[str, Any]]:
         """Get metrics for a specific agent.
 
@@ -176,22 +186,24 @@ class AgentMetricsCollector:
         """
         if agent_id not in self.metrics:
             return []
-        
+
         filtered_metrics = [
-            m.to_dict() 
-            for m in self.metrics[agent_id] 
+            m.to_dict()
+            for m in self.metrics[agent_id]
             if metric_name is None or m.name == metric_name
         ]
-        
+
         # Return most recent metrics first
         return sorted(
-            filtered_metrics, 
-            key=lambda m: m["timestamp"], 
+            filtered_metrics,
+            key=lambda m: m["timestamp"],
             reverse=True,
         )[:limit]
 
     def get_agent_metric_summary(
-        self, agent_id: str, metric_name: str,
+        self,
+        agent_id: str,
+        metric_name: str,
     ) -> dict[str, Any]:
         """Get statistical summary of a metric for an agent.
 
@@ -210,14 +222,14 @@ class AgentMetricsCollector:
                 "mean": None,
                 "median": None,
             }
-        
+
         # Filter metrics by name and ensure they're numeric
         values = [
-            float(m.value) 
-            for m in self.metrics[agent_id] 
+            float(m.value)
+            for m in self.metrics[agent_id]
             if m.name == metric_name and isinstance(m.value, (int, float))
         ]
-        
+
         if not values:
             return {
                 "count": 0,
@@ -226,7 +238,7 @@ class AgentMetricsCollector:
                 "mean": None,
                 "median": None,
             }
-        
+
         return {
             "count": len(values),
             "min": min(values),
@@ -243,15 +255,15 @@ class AgentMetricsCollector:
             Dictionary mapping agent IDs to their performance summaries
         """
         summaries = {}
-        
+
         for agent_id in self.metrics:
             # Get all unique metric names for this agent
             metric_names = {m.name for m in self.metrics[agent_id]}
-            
+
             # Calculate success rate
             success_values = [
-                m.value 
-                for m in self.metrics[agent_id] 
+                m.value
+                for m in self.metrics[agent_id]
                 if m.name == "success" and isinstance(m.value, bool)
             ]
             success_rate = (
@@ -259,29 +271,34 @@ class AgentMetricsCollector:
                 if success_values
                 else None
             )
-            
+
             # Get execution time statistics
             execution_time_summary = self.get_agent_metric_summary(
-                agent_id, "execution_time",
+                agent_id,
+                "execution_time",
             )
-            
+
             # Build summary
             summaries[agent_id] = {
                 "agent_type": self.agent_types.get(agent_id, "unknown"),
                 "success_rate": success_rate,
                 "execution_time": execution_time_summary,
-                "task_count": len(set(
-                    m.tags.get("task_id") 
-                    for m in self.metrics[agent_id] 
-                    if "task_id" in m.tags
-                )),
+                "task_count": len(
+                    set(
+                        m.tags.get("task_id")
+                        for m in self.metrics[agent_id]
+                        if "task_id" in m.tags
+                    )
+                ),
                 "available_metrics": list(metric_names),
             }
-        
+
         return summaries
 
     def compare_agents(
-        self, agent_ids: list[str], metric_name: str,
+        self,
+        agent_ids: list[str],
+        metric_name: str,
     ) -> dict[str, dict[str, Any]]:
         """Compare multiple agents based on a specific metric.
 
@@ -309,22 +326,24 @@ class AgentMetricsCollector:
         for task_key in self.active_tasks:
             agent_id = task_key.split(":")[0]
             active_agents.add(agent_id)
-        
+
         # Calculate overall success rate
         all_success_metrics = []
         for agent_metrics in self.metrics.values():
-            all_success_metrics.extend([
-                m.value 
-                for m in agent_metrics 
-                if m.name == "success" and isinstance(m.value, bool)
-            ])
-        
+            all_success_metrics.extend(
+                [
+                    m.value
+                    for m in agent_metrics
+                    if m.name == "success" and isinstance(m.value, bool)
+                ]
+            )
+
         success_rate = (
             sum(1 for v in all_success_metrics if v) / len(all_success_metrics)
             if all_success_metrics
             else None
         )
-        
+
         return {
             "active_agents": len(active_agents),
             "active_tasks": len(self.active_tasks),
@@ -344,7 +363,7 @@ class AgentMetricsCollector:
         """
         if format_type != "json":
             raise ValueError(f"Unsupported export format: {format_type}")
-        
+
         return {
             "timestamp": datetime.now().isoformat(),
             "system_health": self.get_system_health(),

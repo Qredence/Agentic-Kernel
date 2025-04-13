@@ -83,7 +83,6 @@ class EnvironmentConfig(BaseModel):
     azure_openai_api_version: str = "2023-12-01-preview"
 
 
-
 # --- Constants ---
 DEPLOYMENT_NAMES = {"Fast": "gpt-4o-mini", "Max": "gpt-4o"}
 DEFAULT_DEPLOYMENT = DEPLOYMENT_NAMES.get("Fast", "gpt-4o-mini")

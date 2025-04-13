@@ -35,7 +35,7 @@ class ConditionEvaluator:
             context: Initial context variables available for evaluation
         """
         self.context: Dict[str, Any] = context or {}
-        
+
         # Define safe functions that can be used in conditions
         self.safe_functions: Dict[str, Callable] = {
             # Comparison
@@ -45,31 +45,34 @@ class ConditionEvaluator:
             "gt": operator.gt,
             "le": operator.le,
             "ge": operator.ge,
-            
             # String operations
             "contains": lambda s, sub: sub in s if isinstance(s, str) else False,
-            "startswith": lambda s, prefix: s.startswith(prefix) if isinstance(s, str) else False,
-            "endswith": lambda s, suffix: s.endswith(suffix) if isinstance(s, str) else False,
-            
+            "startswith": lambda s, prefix: s.startswith(prefix)
+            if isinstance(s, str)
+            else False,
+            "endswith": lambda s, suffix: s.endswith(suffix)
+            if isinstance(s, str)
+            else False,
             # List operations
-            "in": lambda item, container: item in container if hasattr(container, "__contains__") else False,
-            "not_in": lambda item, container: item not in container if hasattr(container, "__contains__") else True,
+            "in": lambda item, container: item in container
+            if hasattr(container, "__contains__")
+            else False,
+            "not_in": lambda item, container: item not in container
+            if hasattr(container, "__contains__")
+            else True,
             "any": lambda items: any(items) if hasattr(items, "__iter__") else False,
             "all": lambda items: all(items) if hasattr(items, "__iter__") else False,
             "length": lambda x: len(x) if hasattr(x, "__len__") else 0,
-            
             # Type checking
             "is_string": lambda x: isinstance(x, str),
             "is_number": lambda x: isinstance(x, (int, float)),
             "is_list": lambda x: isinstance(x, list),
             "is_dict": lambda x: isinstance(x, dict),
             "is_null": lambda x: x is None,
-            
             # Logical operations
             "and": lambda a, b: a and b,
             "or": lambda a, b: a or b,
             "not": lambda x: not x,
-            
             # Math operations
             "add": operator.add,
             "sub": operator.sub,
@@ -100,27 +103,27 @@ class ConditionEvaluator:
         """
         if not condition or not condition.strip():
             return True  # Empty conditions always evaluate to true
-            
+
         try:
             # Parse condition using special syntax for variable access
             parsed_condition = self._parse_template_vars(condition)
-            
+
             # Create a restricted environment for evaluation
             restricted_globals = {
                 "__builtins__": {},  # No built-ins allowed for security
                 **self.safe_functions,  # Only explicitly allowed functions
             }
-            
+
             # Evaluate the parsed condition in the restricted environment
             result = eval(parsed_condition, restricted_globals, self.context)
-            
+
             # Ensure result is boolean
             if not isinstance(result, bool):
                 result = bool(result)
-                
+
             logger.debug(f"Condition '{condition}' evaluated to {result}")
             return result
-            
+
         except Exception as e:
             logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             # Return False on error, but log the issue
@@ -137,10 +140,11 @@ class ConditionEvaluator:
         Returns:
             Processed text with variable references replaced
         """
+
         def replace_var(match: Match) -> str:
             """Replace a variable reference with its Python access code."""
-            var_path = match.group(1).split('.')
-            
+            var_path = match.group(1).split(".")
+
             # Convert the dot notation to dictionary access
             if len(var_path) == 1:
                 # Simple variable access
@@ -151,9 +155,9 @@ class ConditionEvaluator:
                 accessors = var_path[1:]
                 accessor_str = "".join(f".get('{key}', {{}})" for key in accessors)
                 return f"context.get('{root}', {{}}){''.join(accessor_str)}"
-                
+
         # Replace ${var.path} with appropriate dictionary access
-        pattern = r'\${([a-zA-Z0-9_.]+)}'
+        pattern = r"\${([a-zA-Z0-9_.]+)}"
         return re.sub(pattern, replace_var, text)
 
     def evaluate_complex_condition(self, condition_obj: Dict[str, Any]) -> bool:
@@ -180,16 +184,16 @@ class ConditionEvaluator:
         """
         if not condition_obj or not isinstance(condition_obj, dict):
             return True  # Empty or invalid conditions evaluate to true
-            
+
         try:
             # Get operator and arguments
             op = condition_obj.get("op")
             args = condition_obj.get("args", [])
-            
+
             if not op or op not in self.safe_functions:
                 logger.error(f"Invalid or unsafe operator: {op}")
                 return False
-                
+
             # Process arguments recursively
             processed_args = []
             for arg in args:
@@ -201,21 +205,25 @@ class ConditionEvaluator:
                     parsed_arg = self._parse_template_vars(arg)
                     try:
                         # Evaluate the parsed argument
-                        processed_args.append(eval(parsed_arg, {"__builtins__": {}}, self.context))
+                        processed_args.append(
+                            eval(parsed_arg, {"__builtins__": {}}, self.context)
+                        )
                     except Exception as e:
                         logger.error(f"Error evaluating argument '{arg}': {str(e)}")
                         processed_args.append(None)
                 else:
                     # Use literal value
                     processed_args.append(arg)
-                    
+
             # Apply the operation to processed arguments
             func = self.safe_functions[op]
             result = func(*processed_args)
-            
-            logger.debug(f"Complex condition with operator '{op}' evaluated to {result}")
+
+            logger.debug(
+                f"Complex condition with operator '{op}' evaluated to {result}"
+            )
             return bool(result)
-            
+
         except Exception as e:
             logger.error(f"Error evaluating complex condition: {str(e)}")
             return False
@@ -250,7 +258,7 @@ class ConditionalBranchManager:
         """
         self.execution_context.update(updates)
         self.evaluator.update_context(self.execution_context)
-        
+
     def record_step_result(self, step_name: str, result: Dict[str, Any]) -> None:
         """Record a step execution result in the context.
 
@@ -264,18 +272,20 @@ class ConditionalBranchManager:
         # Add step result to context under step_results dictionary
         if "step_results" not in self.execution_context:
             self.execution_context["step_results"] = {}
-            
+
         self.execution_context["step_results"][step_name] = result
-        
+
         # Add a convenience shortcut for the result's status
         if "step_status" not in self.execution_context:
             self.execution_context["step_status"] = {}
-            
-        self.execution_context["step_status"][step_name] = result.get("status", "unknown")
-        
+
+        self.execution_context["step_status"][step_name] = result.get(
+            "status", "unknown"
+        )
+
         # Update the evaluator's context
         self.evaluator.update_context(self.execution_context)
-        
+
     def should_execute_step(self, step_name: str, condition: Optional[str]) -> bool:
         """Determine if a step should be executed based on its condition.
 
@@ -288,12 +298,12 @@ class ConditionalBranchManager:
         """
         if not condition:
             return True  # No condition means always execute
-            
+
         logger.debug(f"Evaluating condition for step '{step_name}': {condition}")
-        
+
         # Add current step name to context
         self.execution_context["current_step"] = step_name
-        
+
         # Evaluate the condition
         try:
             result = self.evaluator.evaluate(condition)
@@ -302,7 +312,7 @@ class ConditionalBranchManager:
         except Exception as e:
             logger.error(f"Error evaluating condition for step '{step_name}': {str(e)}")
             return False  # Fail closed on errors
-            
+
     def should_execute_complex_step(
         self, step_name: str, condition_obj: Optional[Dict[str, Any]]
     ) -> bool:
@@ -317,21 +327,25 @@ class ConditionalBranchManager:
         """
         if not condition_obj:
             return True  # No condition means always execute
-            
+
         logger.debug(f"Evaluating complex condition for step '{step_name}'")
-        
+
         # Add current step name to context
         self.execution_context["current_step"] = step_name
-        
+
         # Evaluate the complex condition
         try:
             result = self.evaluator.evaluate_complex_condition(condition_obj)
-            logger.info(f"Complex condition for step '{step_name}' evaluated to {result}")
+            logger.info(
+                f"Complex condition for step '{step_name}' evaluated to {result}"
+            )
             return result
         except Exception as e:
-            logger.error(f"Error evaluating complex condition for step '{step_name}': {str(e)}")
+            logger.error(
+                f"Error evaluating complex condition for step '{step_name}': {str(e)}"
+            )
             return False  # Fail closed on errors
-            
+
     def get_ready_steps_with_conditions(
         self, workflow_id: str, steps: List[Dict[str, Any]], completed_steps: List[str]
     ) -> List[str]:
@@ -346,24 +360,24 @@ class ConditionalBranchManager:
             List of step names that are ready to execute
         """
         ready_steps = []
-        
+
         # Add workflow ID to context
         self.execution_context["workflow_id"] = workflow_id
-        
+
         for step in steps:
             step_name = step.get("name", "")
-            
+
             # Skip completed steps
             if step_name in completed_steps:
                 continue
-                
+
             # Check if dependencies are satisfied
             dependencies = step.get("dependencies", [])
             deps_completed = all(dep in completed_steps for dep in dependencies)
-            
+
             if not deps_completed:
                 continue
-                
+
             # Check if condition is satisfied
             condition = step.get("condition")
             if condition:
@@ -372,22 +386,22 @@ class ConditionalBranchManager:
                     if isinstance(condition, dict)
                     else self.should_execute_step(step_name, condition)
                 )
-                
+
                 if not condition_result:
                     # Mark this step as "skipped" in the context
                     if "step_status" not in self.execution_context:
                         self.execution_context["step_status"] = {}
                     self.execution_context["step_status"][step_name] = "skipped"
-                    
+
                     # Add to "skipped_steps" list
                     if "skipped_steps" not in self.execution_context:
                         self.execution_context["skipped_steps"] = []
                     if step_name not in self.execution_context["skipped_steps"]:
                         self.execution_context["skipped_steps"].append(step_name)
-                        
+
                     continue
-                    
+
             # Step is ready to execute
             ready_steps.append(step_name)
-            
-        return ready_steps 
+
+        return ready_steps

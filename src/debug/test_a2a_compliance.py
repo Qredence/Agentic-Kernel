@@ -17,10 +17,15 @@ sys.path.append("src")
 from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.communication.message import Message, MessageType
 from agentic_kernel.communication.protocol import CommunicationProtocol, MessageBus
-from agentic_kernel.communication.capability_registry import CapabilityRegistry, AgentCapability
+from agentic_kernel.communication.capability_registry import (
+    CapabilityRegistry,
+    AgentCapability,
+)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +34,7 @@ class TestAgent(BaseAgent):
 
     def __init__(self, agent_id: str, capabilities: List[str]):
         """Initialize the test agent.
-        
+
         Args:
             agent_id: ID of the agent
             capabilities: List of capability names
@@ -55,12 +60,16 @@ class TestAgent(BaseAgent):
 
     async def _handle_capability_request(self, message: Message):
         """Handle a capability request message."""
-        logger.info(f"Agent {self.agent_id} received capability request from {message.sender}")
+        logger.info(
+            f"Agent {self.agent_id} received capability request from {message.sender}"
+        )
         await self.capability_registry.handle_capability_request_message(message)
 
     async def _handle_capability_response(self, message: Message):
         """Handle a capability response message."""
-        logger.info(f"Agent {self.agent_id} received capability response from {message.sender}")
+        logger.info(
+            f"Agent {self.agent_id} received capability response from {message.sender}"
+        )
         self.received_capabilities = message.content.get("capabilities", [])
 
     async def register_capabilities(self):
@@ -71,20 +80,22 @@ class TestAgent(BaseAgent):
                 description=f"Capability: {cap_name}",
                 capability_type=cap_name,
             )
-            await self.capability_registry.add_agent_capability(self.agent_id, capability)
+            await self.capability_registry.add_agent_capability(
+                self.agent_id, capability
+            )
 
-    async def request_capabilities(self, recipient: str, capability_types: Optional[List[str]] = None):
+    async def request_capabilities(
+        self, recipient: str, capability_types: Optional[List[str]] = None
+    ):
         """Request capabilities from another agent."""
         logger.info(f"Agent {self.agent_id} requesting capabilities from {recipient}")
         await self.capability_registry.request_agent_capabilities(
-            recipient=recipient,
-            capability_types=capability_types,
-            detail_level="full"
+            recipient=recipient, capability_types=capability_types, detail_level="full"
         )
 
     def get_capabilities(self) -> List[Dict[str, Any]]:
         """Get the agent's capabilities.
-        
+
         Returns:
             List of capability dictionaries
         """
@@ -116,9 +127,13 @@ async def main():
     expected_names = agent2.capability_names
 
     if all(name in capability_names for name in expected_names):
-        logger.info("A2A compliance test PASSED: All expected capabilities were received")
+        logger.info(
+            "A2A compliance test PASSED: All expected capabilities were received"
+        )
     else:
-        logger.error(f"A2A compliance test FAILED: Expected {expected_names}, got {capability_names}")
+        logger.error(
+            f"A2A compliance test FAILED: Expected {expected_names}, got {capability_names}"
+        )
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class SimpleA2AServer(A2AServer):
     """Simple implementation of the A2A server."""
-    
+
     def __init__(
         self,
         name: str,
@@ -33,7 +33,7 @@ class SimpleA2AServer(A2AServer):
         debug: bool = False,
     ):
         """Initialize the simple A2A server.
-        
+
         Args:
             name: The name of the agent
             description: The description of the agent
@@ -58,7 +58,8 @@ class SimpleA2AServer(A2AServer):
             ),
             default_input_modes=["text"],
             default_output_modes=["text"],
-            skills=skills or [
+            skills=skills
+            or [
                 AgentSkill(
                     id="echo",
                     name="Echo",
@@ -68,7 +69,7 @@ class SimpleA2AServer(A2AServer):
                 ),
             ],
         )
-        
+
         # Initialize the A2A server
         super().__init__(
             agent_card=agent_card,
@@ -77,33 +78,33 @@ class SimpleA2AServer(A2AServer):
             cors_origins=cors_origins,
             debug=debug,
         )
-        
+
         # Initialize the task manager
         self.task_manager = task_manager or InMemoryTaskManager()
-    
+
     # Implement the abstract methods from A2AServer
-    
+
     async def process_task(self, params):
         """Process a task.
-        
+
         Args:
             params: The task parameters
-            
+
         Returns:
             The task
         """
         return await self.task_manager.process_task(params)
-    
+
     async def get_task(self, task_id, history_length=None):
         """Get a task.
-        
+
         Args:
             task_id: The task ID
             history_length: The number of history items to include
-            
+
         Returns:
             The task
-            
+
         Raises:
             A2AErrorCode.TASK_NOT_FOUND: If the task is not found
         """
@@ -111,16 +112,16 @@ class SimpleA2AServer(A2AServer):
             return await self.task_manager.get_task(task_id, history_length)
         except KeyError:
             raise ValueError(f"Task not found: {task_id}") from None
-    
+
     async def cancel_task(self, task_id):
         """Cancel a task.
-        
+
         Args:
             task_id: The task ID
-            
+
         Returns:
             The updated task
-            
+
         Raises:
             A2AErrorCode.TASK_NOT_FOUND: If the task is not found
             A2AErrorCode.TASK_NOT_CANCELABLE: If the task is not cancelable
@@ -131,16 +132,16 @@ class SimpleA2AServer(A2AServer):
             raise ValueError(f"Task not found: {task_id}") from None
         except ValueError:
             raise ValueError(f"Task is not cancelable: {task_id}") from None
-    
+
     async def subscribe_to_task(self, task_id):
         """Subscribe to task updates.
-        
+
         Args:
             task_id: The task ID
-            
+
         Yields:
             Task status and artifact update events
-            
+
         Raises:
             A2AErrorCode.TASK_NOT_FOUND: If the task is not found
         """
@@ -163,7 +164,7 @@ def create_simple_server(
     debug: bool = False,
 ) -> SimpleA2AServer:
     """Create a simple A2A server.
-    
+
     Args:
         name: The name of the agent
         description: The description of the agent
@@ -174,7 +175,7 @@ def create_simple_server(
         port: The port to bind to
         cors_origins: List of allowed CORS origins
         debug: Whether to enable debug mode
-        
+
     Returns:
         A simple A2A server
     """

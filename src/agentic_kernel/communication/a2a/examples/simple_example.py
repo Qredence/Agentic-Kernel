@@ -29,14 +29,14 @@ logger = logging.getLogger(__name__)
 
 async def run_server(host: str = "localhost", port: int = 8000):
     """Run the A2A server.
-    
+
     Args:
         host: The host to bind to
         port: The port to bind to
     """
     # Create a task manager
     task_manager = InMemoryTaskManager()
-    
+
     # Create a simple A2A server
     server = create_simple_server(
         name="SimpleEchoAgent",
@@ -47,7 +47,7 @@ async def run_server(host: str = "localhost", port: int = 8000):
         port=port,
         debug=True,
     )
-    
+
     # Run the server
     logger.info(f"Starting A2A server at http://{host}:{port}")
     server.run()
@@ -55,14 +55,14 @@ async def run_server(host: str = "localhost", port: int = 8000):
 
 async def run_client(host: str = "localhost", port: int = 8000):
     """Run the A2A client.
-    
+
     Args:
         host: The server host
         port: The server port
     """
     # Create an A2A client
     client = A2AClient(f"http://{host}:{port}")
-    
+
     try:
         # Get the agent card
         logger.info("Getting agent card...")
@@ -72,7 +72,7 @@ async def run_client(host: str = "localhost", port: int = 8000):
         logger.info(f"Agent version: {agent_card.version}")
         logger.info(f"Agent capabilities: {agent_card.capabilities}")
         logger.info(f"Agent skills: {[skill.name for skill in agent_card.skills]}")
-        
+
         # Send a task
         logger.info("Sending task...")
         task_params = TaskSendParams(
@@ -89,12 +89,12 @@ async def run_client(host: str = "localhost", port: int = 8000):
         task = await client.tasks_send(task_params)
         logger.info(f"Task ID: {task.id}")
         logger.info(f"Task status: {task.status.state}")
-        
+
         # Get the task
         logger.info("Getting task...")
         task = await client.tasks_get(task.id)
         logger.info(f"Task status: {task.status.state}")
-        
+
         if task.artifacts:
             logger.info(f"Task artifacts: {len(task.artifacts)}")
             for artifact in task.artifacts:
@@ -103,7 +103,7 @@ async def run_client(host: str = "localhost", port: int = 8000):
                 for part in artifact.parts:
                     if part.type == "text":
                         logger.info(f"Artifact text: {part.text}")
-        
+
         # Send a task with streaming
         logger.info("Sending task with streaming...")
         task_params = TaskSendParams(
@@ -117,7 +117,7 @@ async def run_client(host: str = "localhost", port: int = 8000):
                 ],
             ),
         )
-        
+
         async for event in client.tasks_send_subscribe(task_params):
             if isinstance(event, TaskStatusUpdateEvent):
                 logger.info(f"Task status update: {event.status.state}")
@@ -128,7 +128,7 @@ async def run_client(host: str = "localhost", port: int = 8000):
                 for part in event.artifact.parts:
                     if part.type == "text":
                         logger.info(f"Artifact text: {part.text}")
-    
+
     finally:
         # Close the client
         await client.close()
@@ -138,12 +138,15 @@ async def main():
     """Run the example."""
     # Parse command line arguments
     import argparse
+
     parser = argparse.ArgumentParser(description="Simple A2A Protocol Example")
     parser.add_argument("--host", default="localhost", help="Server host")
     parser.add_argument("--port", type=int, default=8000, help="Server port")
-    parser.add_argument("--mode", choices=["server", "client"], required=True, help="Run mode")
+    parser.add_argument(
+        "--mode", choices=["server", "client"], required=True, help="Run mode"
+    )
     args = parser.parse_args()
-    
+
     # Run in the specified mode
     if args.mode == "server":
         await run_server(args.host, args.port)

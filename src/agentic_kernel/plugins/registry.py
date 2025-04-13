@@ -57,19 +57,19 @@ class PluginRegistry:
         async with self._lock:
             # Create plugin instance
             plugin = plugin_class(**kwargs)
-            
+
             # Check if plugin with same name already exists
             if plugin.name in self.plugins:
                 raise ValueError(f"Plugin '{plugin.name}' is already registered")
-            
+
             # Register plugin
             self.plugins[plugin.name] = plugin
             logger.info(f"Registered plugin: {plugin.name}")
-            
+
             # Advertise plugin capabilities to A2A registry if available
             if self.capability_registry:
                 await self._advertise_plugin_capabilities(plugin)
-            
+
             return plugin
 
     async def unregister(self, plugin_name: str) -> bool:
@@ -85,21 +85,21 @@ class PluginRegistry:
             if plugin_name not in self.plugins:
                 logger.warning(f"Attempted to unregister unknown plugin: {plugin_name}")
                 return False
-            
+
             # Get plugin instance
             plugin = self.plugins[plugin_name]
-            
+
             # Clean up plugin resources
             try:
                 plugin.cleanup()
                 logger.info(f"Cleaned up plugin: {plugin_name}")
             except Exception as e:
                 logger.error(f"Error cleaning up plugin {plugin_name}: {e}")
-            
+
             # Remove plugin from registry
             del self.plugins[plugin_name]
             logger.info(f"Unregistered plugin: {plugin_name}")
-            
+
             return True
 
     async def get_plugin(self, plugin_name: str) -> BasePlugin | None:
@@ -157,10 +157,10 @@ class PluginRegistry:
         """
         if not self.capability_registry:
             return
-        
+
         # Get plugin capabilities
         capabilities = plugin.get_capabilities()
-        
+
         # Convert to A2A capabilities and register with capability registry
         for cap_name, cap_desc in capabilities.items():
             capability = AgentCapability(
@@ -171,13 +171,15 @@ class PluginRegistry:
                 limitations={"provided_by_plugin": plugin.name},
                 version=getattr(plugin, "version", "1.0.0"),
             )
-            
+
             # Use a placeholder agent ID based on the plugin name
             agent_id = f"plugin.{plugin.name}"
-            
+
             # Register capability with the A2A registry
             await self.capability_registry.add_agent_capability(agent_id, capability)
-            logger.info(f"Advertised capability '{cap_name}' for plugin '{plugin.name}'")
+            logger.info(
+                f"Advertised capability '{cap_name}' for plugin '{plugin.name}'"
+            )
 
     def _map_to_a2a_capability_type(self, capability_name: str) -> str:
         """Map a plugin capability name to an A2A capability type.
@@ -191,7 +193,10 @@ class PluginRegistry:
         # Simple mapping based on keywords in the capability name
         if "search" in capability_name.lower():
             return "perception"
-        if "summarize" in capability_name.lower() or "analyze" in capability_name.lower():
+        if (
+            "summarize" in capability_name.lower()
+            or "analyze" in capability_name.lower()
+        ):
             return "reasoning"
         if "generate" in capability_name.lower():
             return "creativity"

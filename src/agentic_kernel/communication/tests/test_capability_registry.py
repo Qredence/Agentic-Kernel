@@ -496,7 +496,7 @@ class TestCapabilityRegistry(unittest.IsolatedAsyncioTestCase):
     async def test_handle_agent_discovery_message(self, mock_logger):
         """Test handling an agent discovery message."""
         registry = CapabilityRegistry()
-        
+
         # Create a mock message
         message = MagicMock(spec=AgentDiscoveryMessage)
         message.content = {
@@ -524,7 +524,9 @@ class TestCapabilityRegistry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(agent_info.metadata, {"created_by": "test"})
 
         # Check that the logger was called
-        mock_logger.assert_called_with("Processed agent discovery message from test-agent")
+        mock_logger.assert_called_with(
+            "Processed agent discovery message from test-agent"
+        )
 
     @patch.object(CommunicationProtocol, "send_capability_response")
     async def test_handle_capability_request_message(self, mock_send_response):

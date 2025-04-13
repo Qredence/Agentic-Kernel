@@ -67,9 +67,7 @@ class PGVectorStore:
                     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     embedding vector({dimension})
                 )
-            """.format(
-                    dimension=self._config.dimension
-                )
+            """.format(dimension=self._config.dimension)
             )
 
             # Create indexes
@@ -87,18 +85,14 @@ class PGVectorStore:
                 CREATE INDEX IF NOT EXISTS memories_embedding_idx ON memories 
                 USING ivfflat (embedding vector_l2_ops)
                 WITH (lists = {lists})
-            """.format(
-                    lists=self._config.lists
-                )
+            """.format(lists=self._config.lists)
             )
 
             # Set number of probes for search
             await conn.execute(
                 """
                 SET ivfflat.probes = {probes}
-            """.format(
-                    probes=self._config.probes
-                )
+            """.format(probes=self._config.probes)
             )
 
     async def cleanup(self):
@@ -314,7 +308,7 @@ class PGVectorStore:
             row = await conn.fetchrow(
                 f"""
                 UPDATE memories
-                SET {', '.join(set_clauses)}
+                SET {", ".join(set_clauses)}
                 WHERE id = $1::uuid
                 RETURNING *
             """,
