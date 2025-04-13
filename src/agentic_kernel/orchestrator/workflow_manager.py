@@ -6,21 +6,21 @@ resource management, workflow templates, and enhanced error handling.
 """
 
 import asyncio
-import logging
 import json
+import logging
 import os
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Set, Tuple, Callable, Union
 import uuid
+from datetime import datetime
+from typing import Any
 
 from ..agents.base import BaseAgent
 from ..communication.dynamic_capability_registry import DynamicCapabilityRegistry
 from ..types import Task, WorkflowStep
-from .workflow_history import WorkflowHistory, WorkflowVersion, ExecutionRecord
-from .agent_selection import AgentSelector
-from .workflow_optimizer import WorkflowOptimizer
-from .condition_evaluator import ConditionalBranchManager
 from .agent_metrics import AgentMetricsCollector
+from .agent_selection import AgentSelector
+from .condition_evaluator import ConditionalBranchManager
+from .workflow_history import WorkflowHistory, WorkflowVersion
+from .workflow_optimizer import WorkflowOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +46,10 @@ class WorkflowTemplate:
         self,
         name: str,
         description: str,
-        parameters: Dict[str, Dict[str, Any]],
-        steps: List[Dict[str, Any]],
+        parameters: dict[str, dict[str, Any]],
+        steps: list[dict[str, Any]],
         created_by: str = "system",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Initialize a workflow template.
 
@@ -71,8 +71,8 @@ class WorkflowTemplate:
         self.metadata = metadata or {}
 
     def instantiate(
-        self, parameter_values: Dict[str, Any], workflow_name: Optional[str] = None
-    ) -> List[WorkflowStep]:
+        self, parameter_values: dict[str, Any], workflow_name: str | None = None,
+    ) -> list[WorkflowStep]:
         """Create a concrete workflow from the template.
 
         Args:
@@ -122,7 +122,7 @@ class WorkflowTemplate:
         return workflow_steps
 
     def _substitute_parameters(
-        self, obj: Any, parameter_values: Dict[str, Any]
+        self, obj: Any, parameter_values: dict[str, Any],
     ) -> Any:
         """Recursively substitute parameters in an object.
 
@@ -139,16 +139,15 @@ class WorkflowTemplate:
                 param_name = obj[2:-1]
                 if param_name in parameter_values:
                     return parameter_values[param_name]
-                elif param_name in self.parameters and "default" in self.parameters[param_name]:
+                if param_name in self.parameters and "default" in self.parameters[param_name]:
                     return self.parameters[param_name]["default"]
                 return obj  # Keep as is if no substitution found
             return obj
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._substitute_parameters(item, parameter_values) for item in obj]
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return {k: self._substitute_parameters(v, parameter_values) for k, v in obj.items()}
-        else:
-            return obj
+        return obj
 
 
 class WorkflowManager:
@@ -170,8 +169,8 @@ class WorkflowManager:
 
     def __init__(
         self,
-        capability_registry: Optional[DynamicCapabilityRegistry] = None,
-        persistence_path: Optional[str] = None,
+        capability_registry: DynamicCapabilityRegistry | None = None,
+        persistence_path: str | None = None,
     ):
         """Initialize the workflow manager.
 
@@ -183,11 +182,11 @@ class WorkflowManager:
         self.capability_registry = capability_registry
         self.agent_selector = AgentSelector()
         self.workflow_optimizer = WorkflowOptimizer()
-        self.templates: Dict[str, WorkflowTemplate] = {}
-        self.active_workflows: Dict[str, Dict[str, Any]] = {}
+        self.templates: dict[str, WorkflowTemplate] = {}
+        self.active_workflows: dict[str, dict[str, Any]] = {}
         self.persistence_path = persistence_path
         self.metrics_collector = AgentMetricsCollector()
-        self.agents: Dict[str, BaseAgent] = {}
+        self.agents: dict[str, BaseAgent] = {}
 
         # Create persistence directory if needed
         if persistence_path and not os.path.exists(persistence_path):
@@ -196,8 +195,8 @@ class WorkflowManager:
     async def register_agent(
         self,
         agent: BaseAgent,
-        capabilities: Optional[List[Dict[str, Any]]] = None,
-        specializations: Optional[List[str]] = None,
+        capabilities: list[dict[str, Any]] | None = None,
+        specializations: list[str] | None = None,
     ) -> None:
         """Register an agent with the workflow manager.
 
@@ -215,7 +214,7 @@ class WorkflowManager:
         # Register specializations if provided
         if specializations:
             self.agent_selector.skill_matrix.register_agent_specialization(
-                agent.agent_id, specializations
+                agent.agent_id, specializations,
             )
 
         # Register with the capability registry if available
@@ -235,8 +234,8 @@ class WorkflowManager:
         logger.info(f"Registered agent: {agent.type} with ID {agent.agent_id}")
 
     async def discover_agents(
-        self, capability_types: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
+        self, capability_types: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Discover agents with specific capabilities.
 
         Args:
@@ -260,7 +259,7 @@ class WorkflowManager:
         return discovered
 
     async def register_workflow_template(
-        self, template: WorkflowTemplate
+        self, template: WorkflowTemplate,
     ) -> str:
         """Register a workflow template.
 
@@ -282,12 +281,12 @@ class WorkflowManager:
     async def create_workflow_from_template(
         self,
         template_id: str,
-        parameter_values: Dict[str, Any],
-        workflow_name: Optional[str] = None,
-        description: Optional[str] = None,
+        parameter_values: dict[str, Any],
+        workflow_name: str | None = None,
+        description: str | None = None,
         creator: str = "system",
-        tags: Optional[List[str]] = None,
-    ) -> Optional[str]:
+        tags: list[str] | None = None,
+    ) -> str | None:
         """Create a workflow from a template.
 
         Args:
@@ -311,7 +310,7 @@ class WorkflowManager:
         try:
             # Instantiate the template
             workflow_steps = template.instantiate(
-                parameter_values, workflow_name
+                parameter_values, workflow_name,
             )
 
             # Create the workflow
@@ -333,9 +332,9 @@ class WorkflowManager:
     async def execute_workflow(
         self,
         workflow_id: str,
-        version_id: Optional[str] = None,
-        execution_timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        version_id: str | None = None,
+        execution_timeout: float | None = None,
+    ) -> dict[str, Any]:
         """Execute a workflow.
 
         Args:
@@ -358,7 +357,7 @@ class WorkflowManager:
         try:
             # Start execution record in history
             execution = await self.workflow_history.start_execution(
-                workflow_id, version.version_id
+                workflow_id, version.version_id,
             )
             execution_id = execution.execution_id
 
@@ -381,7 +380,7 @@ class WorkflowManager:
                     "execution_id": execution_id,
                     "version_id": version.version_id,
                     "start_time": datetime.now().isoformat(),
-                }
+                },
             )
 
             # Track active workflow
@@ -413,7 +412,7 @@ class WorkflowManager:
                         skipped_steps,
                         retried_steps,
                         metrics,
-                    )
+                    ),
                 )
 
                 try:
@@ -489,12 +488,12 @@ class WorkflowManager:
         version: WorkflowVersion,
         execution_id: str,
         branch_manager: ConditionalBranchManager,
-        completed_steps: List[str],
-        failed_steps: List[str],
-        skipped_steps: List[str],
-        retried_steps: List[str],
-        metrics: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        completed_steps: list[str],
+        failed_steps: list[str],
+        skipped_steps: list[str],
+        retried_steps: list[str],
+        metrics: dict[str, Any],
+    ) -> dict[str, Any]:
         """Execute the steps of a workflow.
 
         Args:
@@ -531,7 +530,7 @@ class WorkflowManager:
                     try:
                         # Get updated steps from replanning
                         updated_steps = await self._replan_workflow(
-                            workflow_id, version.steps, completed_steps, failed_steps
+                            workflow_id, version.steps, completed_steps, failed_steps,
                         )
 
                         # Create new version with replanned steps
@@ -572,7 +571,7 @@ class WorkflowManager:
 
                     # Get steps ready for execution
                     ready_steps = await self._get_ready_steps(
-                        version.steps, completed_steps, failed_steps, skipped_steps
+                        version.steps, completed_steps, failed_steps, skipped_steps,
                     )
 
                     if not ready_steps:
@@ -585,7 +584,7 @@ class WorkflowManager:
                         )
                         if remaining and not ready_steps:
                             logger.warning(
-                                f"Potential deadlock detected. Remaining steps: {remaining}"
+                                f"Potential deadlock detected. Remaining steps: {remaining}",
                             )
                             break
                         await asyncio.sleep(0.1)
@@ -600,19 +599,19 @@ class WorkflowManager:
                         # Check if this step should be executed based on its condition
                         if step.condition:
                             should_execute = branch_manager.should_execute_step(
-                                step_name, step.condition
+                                step_name, step.condition,
                             )
                             if not should_execute:
                                 # Skip this step due to condition evaluation
                                 logger.info(
-                                    f"Skipping step {step_name} due to condition evaluation"
+                                    f"Skipping step {step_name} due to condition evaluation",
                                 )
                                 skipped_steps.append(step_name)
                                 continue
 
                         # Execute the step
                         result = await self._execute_step(
-                            workflow_id, step, execution_id, branch_manager
+                            workflow_id, step, execution_id, branch_manager,
                         )
 
                         # Process result
@@ -627,11 +626,11 @@ class WorkflowManager:
 
                     # Check for progress
                     progress = self._calculate_progress(
-                        version.steps, completed_steps, failed_steps, skipped_steps
+                        version.steps, completed_steps, failed_steps, skipped_steps,
                     )
                     if progress < reflection_threshold and inner_loop_iterations > 3:
                         logger.info(
-                            f"Insufficient progress ({progress:.2f}). Breaking inner loop to reflect and replan."
+                            f"Insufficient progress ({progress:.2f}). Breaking inner loop to reflect and replan.",
                         )
                         break
 
@@ -678,7 +677,7 @@ class WorkflowManager:
         step: WorkflowStep,
         execution_id: str,
         branch_manager: ConditionalBranchManager,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute a workflow step.
 
         Args:
@@ -698,7 +697,7 @@ class WorkflowManager:
             # Select the best agent for this task
             context = {"workflow_id": workflow_id, "step_name": task.name}
             agent_id = await self.agent_selector.select_agent(
-                task, self.agents, context
+                task, self.agents, context,
             )
 
             if not agent_id:
@@ -727,7 +726,7 @@ class WorkflowManager:
             # Record execution for future agent selection
             success = result.get("status") == "success"
             self.agent_selector.record_execution_result(
-                agent_id, task, success, execution_time
+                agent_id, task, success, execution_time,
             )
 
             # Collect metrics for the completed task
@@ -742,7 +741,7 @@ class WorkflowManager:
 
             # Record step result in workflow history
             await self.workflow_history.record_step_result(
-                execution_id=execution_id, step_name=task.name, result=result
+                execution_id=execution_id, step_name=task.name, result=result,
             )
 
             # Record step result in branch manager for conditional branching
@@ -757,7 +756,7 @@ class WorkflowManager:
             # Record error in workflow history
             error_result = {"status": "failed", "error": str(e)}
             await self.workflow_history.record_step_result(
-                execution_id=execution_id, step_name=task.name, result=error_result
+                execution_id=execution_id, step_name=task.name, result=error_result,
             )
 
             # Record error in branch manager for conditional branching
@@ -768,11 +767,11 @@ class WorkflowManager:
 
     async def _get_ready_steps(
         self,
-        workflow_steps: List[WorkflowStep],
-        completed_steps: List[str],
-        failed_steps: List[str],
-        skipped_steps: List[str],
-    ) -> List[str]:
+        workflow_steps: list[WorkflowStep],
+        completed_steps: list[str],
+        failed_steps: list[str],
+        skipped_steps: list[str],
+    ) -> list[str]:
         """Get steps that are ready for execution.
 
         Args:
@@ -811,9 +810,9 @@ class WorkflowManager:
 
     def _should_replan(
         self,
-        workflow_steps: List[WorkflowStep],
-        completed_steps: List[str],
-        failed_steps: List[str],
+        workflow_steps: list[WorkflowStep],
+        completed_steps: list[str],
+        failed_steps: list[str],
     ) -> bool:
         """Determine if workflow replanning is needed.
 
@@ -851,10 +850,10 @@ class WorkflowManager:
 
     def _calculate_progress(
         self,
-        workflow_steps: List[WorkflowStep],
-        completed_steps: List[str],
-        failed_steps: List[str],
-        skipped_steps: List[str],
+        workflow_steps: list[WorkflowStep],
+        completed_steps: list[str],
+        failed_steps: list[str],
+        skipped_steps: list[str],
     ) -> float:
         """Calculate workflow progress as a percentage.
 
@@ -879,10 +878,10 @@ class WorkflowManager:
     async def _replan_workflow(
         self,
         workflow_id: str,
-        original_steps: List[WorkflowStep],
-        completed_steps: List[str],
-        failed_steps: List[str],
-    ) -> List[WorkflowStep]:
+        original_steps: list[WorkflowStep],
+        completed_steps: list[str],
+        failed_steps: list[str],
+    ) -> list[WorkflowStep]:
         """Replan a workflow based on execution results.
 
         Args:
@@ -966,7 +965,7 @@ class WorkflowManager:
 
             # Ensure all dependencies are still valid
             replanned_steps = self._validate_and_fix_dependencies(
-                replanned_steps, completed_steps
+                replanned_steps, completed_steps,
             )
 
             logger.info(f"Successfully replanned workflow with {len(replanned_steps)} steps")
@@ -1026,8 +1025,8 @@ class WorkflowManager:
         return new_step
 
     def _validate_and_fix_dependencies(
-        self, steps: List[WorkflowStep], completed_steps: List[str]
-    ) -> List[WorkflowStep]:
+        self, steps: list[WorkflowStep], completed_steps: list[str],
+    ) -> list[WorkflowStep]:
         """Validate and fix dependencies in replanned steps.
 
         Args:
@@ -1151,7 +1150,7 @@ class WorkflowManager:
         templates_path = os.path.join(self.persistence_path, "templates.json")
         if os.path.exists(templates_path):
             try:
-                with open(templates_path, "r") as f:
+                with open(templates_path) as f:
                     serialized_templates = json.load(f)
 
                 for template_data in serialized_templates.values():
@@ -1177,7 +1176,7 @@ class WorkflowManager:
         history_path = os.path.join(self.persistence_path, "workflow_history.json")
         if os.path.exists(history_path):
             try:
-                with open(history_path, "r") as f:
+                with open(history_path) as f:
                     serialized_history = json.load(f)
 
                 await self.workflow_history.from_dict(serialized_history)
