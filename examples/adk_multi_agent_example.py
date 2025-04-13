@@ -21,11 +21,19 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-# Note: These imports are placeholders until the actual ADK package is available
-# from google.adk.agents import Agent
-# from google.adk.sessions import InMemorySessionService
-# from google.adk.tools import FunctionTool
-# from google.genai import types
+from google.adk.agents import Agent
+from google.adk.sessions import InMemorySessionService
+from google.adk.tools import FunctionTool
+from google.genai import types
+
+from agentic_kernel.communication.coordination import (
+    Activity,
+    ActivityPriority,
+    ActivityStatus,
+    CoordinationManager,
+)
+from agentic_kernel.communication.trust import TrustManager
+
 
 # Temporary placeholder classes until ADK is available
 class Agent:
@@ -48,13 +56,6 @@ class FunctionTool:
         self.description = description
         self.function = function
 
-from agentic_kernel.communication.coordination import (
-    Activity,
-    ActivityPriority,
-    ActivityStatus,
-    CoordinationManager,
-)
-from agentic_kernel.communication.trust import TrustManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

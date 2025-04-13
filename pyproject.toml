@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.1.22"
+version = "0.2.0"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"}
@@ -55,7 +55,7 @@ dependencies = [
     "asyncpg>=0.29.0,<1.0.0",
     "beautifulsoup4>=4.12.2,<5.0.0",
     # CLI/Dev tools
-    "typer>=0.15.2,<1.0.0",
+    "typer[all]>=0.15.2,<1.0.0",
     "ruff>=0.11.4,<1.0.0",
     "black>=24.10.0",
     "isort>=5.13.2",
@@ -66,6 +66,15 @@ dependencies = [
     "responses>=0.25.0,<1.0.0",
     "matplotlib>=3.10.1",
     "httpx>=0.28.1",
+    "google-adk>=0.1.0",
+    "pydot>=3.0.4",
+    "networkx>=3.4.2",
+    "rich>=14.0.0",
+    "markitdown>=0.1.1",
+    "tabulate>=0.9.0",
+    "fastapi>=0.115.12",
+    "starlette>=0.41.3",
+    
 ]
 
 [project.optional-dependencies]

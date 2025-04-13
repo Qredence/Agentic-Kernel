@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from typing import Dict, Any
 from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.plugins.base import BasePlugin
-from agentic_kernel.orchestrator import OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent
 from agentic_kernel.config.loader import ConfigLoader
 from agentic_kernel.config_types import AgentConfig
 from agentic_kernel.ledgers import TaskLedger, ProgressLedger
@@ -26,7 +26,7 @@ load_dotenv()
 def main():
     """Main debug function to validate components."""
     logger.info("Starting debug validation")
-    
+
     try:
         # Test imports
         logger.info("Testing imports...")
@@ -35,18 +35,18 @@ def main():
         from agentic_kernel.agents.base import BaseAgent
         from agentic_kernel.types import Task, WorkflowStep
         from agentic_kernel.ledgers import TaskLedger, ProgressLedger
-        from agentic_kernel.orchestrator import OrchestratorAgent
-        
+        from agentic_kernel.orchestrator.core import OrchestratorAgent
+
         logger.info("Imports successful")
-        
+
         # Test initialization
         logger.info("Testing component initialization...")
         config_loader = ConfigLoader()
         task_ledger = TaskLedger(goal="Test goal")
         progress_ledger = ProgressLedger(task_id="test_task_id")
-        
+
         logger.info("Component initialization successful")
-        
+
         return 0
     except Exception as e:
         logger.error(f"Debug validation failed: {e}", exc_info=True)

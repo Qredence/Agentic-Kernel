@@ -96,7 +96,10 @@ class Message(BaseModel):
     """
 
     # Class variables for validation
+    # A2A capability types based on Google's A2A standard
+    # https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/
     A2A_CAPABILITY_TYPES: ClassVar[Set[str]] = {
+        # Core capabilities
         "reasoning",
         "planning",
         "learning",
@@ -110,6 +113,14 @@ class Message(BaseModel):
         "creativity",
         "social_intelligence",
         "emotional_intelligence",
+        # A2A-specific capabilities
+        "capability_discovery",
+        "agent_discovery",
+        "consensus_building",
+        "conflict_resolution",
+        "feedback_processing",
+        "task_decomposition",
+        "collaborative_memory",
     }
 
     # Required fields

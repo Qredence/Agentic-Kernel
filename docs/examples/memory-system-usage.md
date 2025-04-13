@@ -38,7 +38,7 @@ Let's demonstrate a simple memory interaction within a workflow:
 ```python
 import asyncio
 from agentic_kernel.types import Task, Workflow, WorkflowStep
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent
 # Assume MemoryManager is available/accessible, perhaps via the orchestrator or agent context
 # from agentic_kernel.memory import MemoryManager 
 
@@ -53,7 +53,7 @@ async def run_memory_workflow_part1():
     # Part 1: Search and Memorize
     goal = "Research microservices benefits and store the findings."
     topic = "microservices benefits"
-    
+
     steps = [
         WorkflowStep(
             step_id="search_web",
@@ -79,7 +79,7 @@ async def run_memory_workflow_part1():
             outputs={}
         ),
     ]
-    
+
     workflow = Workflow(
         workflow_id="research_and_memorize",
         description=goal,
@@ -88,12 +88,12 @@ async def run_memory_workflow_part1():
 
     print(f"Starting Workflow Part 1: {goal}")
     # result = await orchestrator.execute_workflow(workflow)
-    
+
     print("\n--- Orchestrator Internals (Conceptual) ---")
     print("Step 1 'search_web': Executing...")
     step1_output = {"search_results_data": ["Scalability", "Indep. Deployment", "Tech Diversity"]}
     print(f"-> Result: {step1_output}")
-    
+
     print("\nStep 2 'add_to_memory': Executing...")
     print(f"-> Input: {{'content_to_store': {step1_output['search_results_data']}, 'memory_topic': '{topic}'}}")
     # MemoryAgent interacts with MemoryManager
@@ -101,14 +101,14 @@ async def run_memory_workflow_part1():
     step2_output = {"memory_add_status": "success"}
     print(f"-> Result: {step2_output}")
     print("--- End Orchestrator Internals ---")
-    
+
     print("\nWorkflow Part 1 completed.")
 
 async def run_memory_workflow_part2():
     # Part 2: Recall from Memory
     goal = "Retrieve stored information about microservices benefits."
     query = "microservices benefits"
-    
+
     steps = [
         WorkflowStep(
             step_id="search_memory",

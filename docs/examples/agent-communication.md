@@ -35,7 +35,7 @@ Assume `WebSearchAgent` and `SummarizerAgent` are registered.
 ```python
 import asyncio
 from agentic_kernel.types import Task, Workflow, WorkflowStep
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent is the main class
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent is the main class
 
 # Assume agents are registered and orchestrator is initialized
 # orchestrator = OrchestratorAgent(...)
@@ -45,10 +45,10 @@ from agentic_kernel.orchestrator import OrchestratorAgent # Assuming Orchestrato
 # orchestrator.register_agent(summarize_agent)
 
 async def run_agent_communication_example():
-    
+
     goal = "Search for agentic design patterns and summarize the first result."
     search_topic = "agentic design patterns"
-    
+
     steps = [
         WorkflowStep(
             step_id="search_step",
@@ -72,7 +72,7 @@ async def run_agent_communication_example():
             outputs={"summary": "summary_text"}
         ),
     ]
-    
+
     workflow = Workflow(
         workflow_id="search_summarize_comm_demo",
         description=goal,
@@ -80,11 +80,11 @@ async def run_agent_communication_example():
     )
 
     print(f"Starting workflow for: {goal}")
-    
+
     # --- Orchestrator Execution (Simulation) ---
     # Actual execution involves the orchestrator managing the data flow based 
     # on the input/output mappings and results stored in the ProgressLedger.
-    
+
     # result = await orchestrator.execute_workflow(workflow)
 
     print("\n--- Orchestrator Internals (Conceptual) ---")
@@ -99,7 +99,7 @@ async def run_agent_communication_example():
     # It retrieves the value associated with "target_url" from Step 1's output.
     step2_input_value = step1_output["first_result_url"] # Simplified lookup
     print(f"-> Providing input {{'url_input': '{step2_input_value}'}} to SummarizerAgent.")
-    
+
     print("Step 2 'summarize_step': Executing...")
     # Simulate summarizer agent output
     step2_output = {"summary": "Agentic patterns involve autonomous agents collaborating..."}

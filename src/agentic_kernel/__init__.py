@@ -13,24 +13,23 @@ Main Components:
 from typing import List, Type
 
 # Version info
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Qredence"
 __license__ = "MIT"
 
 # Core types
-from .types import Task, WorkflowStep
-from .config_types import AgentConfig, LLMMapping
-
 # Agent system
 from .agents.base import BaseAgent
-from .orchestrator import OrchestratorAgent
-from .plugins.base import BasePlugin
-
-# Ledgers for tracking
-from .ledgers import TaskLedger, ProgressLedger
 
 # Configuration
 from .config.loader import ConfigLoader
+from .config_types import AgentConfig, LLMMapping
+
+# Ledgers for tracking
+from .ledgers import ProgressLedger, TaskLedger
+from .orchestrator.core import OrchestratorAgent
+from .plugins.base import BasePlugin
+from .types import Task, WorkflowStep
 
 __all__ = [
     # Version info

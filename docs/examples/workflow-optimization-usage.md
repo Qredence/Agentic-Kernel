@@ -27,7 +27,7 @@ This example shows the user-facing interaction points, not the internal optimiza
 ```python
 import asyncio
 from agentic_kernel.types import Workflow # Assuming Workflow definition
-from agentic_kernel.orchestrator import OrchestratorAgent # Assuming OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent # Assuming OrchestratorAgent
 
 # Assume orchestrator is initialized and has access to execution history
 # orchestrator = OrchestratorAgent(history_store=...)
@@ -36,16 +36,16 @@ from agentic_kernel.orchestrator import OrchestratorAgent # Assuming Orchestrato
 # existing_workflow: Workflow = load_workflow_definition("data_pipeline_v1")
 
 async def run_optimization_example():
-    
+
     workflow_id_to_optimize = "data_pipeline_v1"
-    
+
     print(f"Attempting to optimize workflow: {workflow_id_to_optimize}")
 
     # --- Trigger Optimization --- 
     # This call invokes the WorkflowOptimizer within the orchestrator
     try:
         # optimization_result = await orchestrator.optimize_workflow(workflow_id_to_optimize)
-        
+
         # --- Simulation of Optimization Result ---
         print("\n--- Orchestrator Internals (Conceptual) ---")
         print(f"Analyzing execution history for '{workflow_id_to_optimize}'...")
@@ -61,12 +61,12 @@ async def run_optimization_example():
         }
         print("--- End Orchestrator Internals ---")
         # ----------------------------------------
-        
+
         if optimization_result and optimization_result.get("status") == "success":
             optimized_workflow_id = optimization_result["optimized_workflow_id"]
             print(f"\nOptimization successful! Created new version: {optimized_workflow_id}")
             print(f"Summary: {optimization_result.get('summary')}")
-            
+
             # --- Optional: Compare Versions (Conceptual) ---
             # comparison = await orchestrator.compare_optimized_version(
             #     workflow_id=workflow_id_to_optimize, # Original ID

@@ -38,11 +38,11 @@ from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
 
 from ..communication.collaborative_protocol import CollaborativeProtocol
 from ..communication.feedback import (
-    FeedbackCategory, 
-    FeedbackEntry, 
-    FeedbackManager, 
+    FeedbackCategory,
+    FeedbackEntry,
+    FeedbackManager,
     FeedbackSeverity,
-    LearningStrategy
+    LearningStrategy,
 )
 from ..communication.message import Message, MessageType
 from ..communication.protocol import CommunicationProtocol, MessageBus

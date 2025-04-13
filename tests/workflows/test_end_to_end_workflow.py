@@ -11,7 +11,7 @@ from agentic_kernel.agents import (
     FileSurferAgent,
     WebSurferAgent,
 )
-from agentic_kernel.orchestrator import OrchestratorAgent
+from agentic_kernel.orchestrator.core import OrchestratorAgent
 from agentic_kernel.config_types import AgentConfig, LLMMapping  # Simple AgentConfig for single agents
 from agentic_kernel.config.agent_team import AgentTeamConfig  # For teams
 from agentic_kernel.ledgers import TaskLedger, ProgressLedger
@@ -38,19 +38,19 @@ async def mock_agents(agent_config):
     terminal = TerminalAgent(config=agent_config)
     file_surfer = FileSurferAgent(config=agent_config)
     web_surfer = WebSurferAgent(config=agent_config)
-    
+
     # Mock the execute methods
     coder.execute = AsyncMock(return_value={"status": "success", "result": "Code generated"})
     terminal.execute = AsyncMock(return_value={"status": "success", "result": "Command executed"})
     file_surfer.execute = AsyncMock(return_value={"status": "success", "result": "File processed"})
     web_surfer.execute = AsyncMock(return_value={"status": "success", "result": "Web content fetched"})
-    
+
     # Set agent types
     coder.type = "coder"
     terminal.type = "terminal"
     file_surfer.type = "file_surfer"
     web_surfer.type = "web_surfer"
-    
+
     return {
         "coder": coder,
         "terminal": terminal,
@@ -63,17 +63,17 @@ async def orchestrator(agent_config, mock_agents):
     """Create an orchestrator instance with mock agents."""
     task_ledger = TaskLedger(goal="Test workflow execution")
     progress_ledger = ProgressLedger(task_id="test_task")
-    
+
     orchestrator = OrchestratorAgent(
         config=agent_config,
         task_ledger=task_ledger,
         progress_ledger=progress_ledger
     )
-    
+
     # Register mock agents
     for agent in mock_agents.values():
         orchestrator.register_agent(agent)
-    
+
     return orchestrator
 
 @pytest.mark.asyncio
@@ -100,10 +100,10 @@ async def test_simple_workflow_execution(orchestrator, mock_agents):
             dependencies=["fetch_web_content"]
         )
     ]
-    
+
     # Execute workflow
     result = await orchestrator.execute_workflow(workflow)
-    
+
     # Verify execution
     assert result["status"] == "success"
     assert len(result["completed_steps"]) == 2
@@ -143,10 +143,10 @@ async def test_parallel_workflow_execution(orchestrator, mock_agents):
             dependencies=["fetch_file_1", "fetch_file_2"]
         )
     ]
-    
+
     # Execute workflow
     result = await orchestrator.execute_workflow(workflow)
-    
+
     # Verify execution
     assert result["status"] == "success"
     assert len(result["completed_steps"]) == 3
@@ -160,7 +160,7 @@ async def test_error_handling_and_recovery(orchestrator, mock_agents):
     mock_agents["terminal"].execute = AsyncMock(
         side_effect=[Exception("Command failed"), {"status": "success", "result": "Retry succeeded"}]
     )
-    
+
     workflow = [
         WorkflowStep(
             task=Task(
@@ -173,10 +173,10 @@ async def test_error_handling_and_recovery(orchestrator, mock_agents):
             dependencies=[]
         )
     ]
-    
+
     # Execute workflow
     result = await orchestrator.execute_workflow(workflow)
-    
+
     # Verify error handling
     assert result["status"] == "success"
     assert mock_agents["terminal"].execute.call_count == 2
@@ -196,10 +196,10 @@ async def test_workflow_metrics_collection(orchestrator, mock_agents):
             dependencies=[]
         )
     ]
-    
+
     # Execute workflow
     result = await orchestrator.execute_workflow(workflow)
-    
+
     # Verify metrics
     assert "metrics" in result
     assert "execution_time" in result["metrics"]
