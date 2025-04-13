@@ -13,6 +13,7 @@ from .workflow_optimizer import (
     AgentSelectionOptimizer,
     ResourceOptimizer
 )
+from .agent_metrics import AgentMetricsCollector, AgentMetric
 
 __all__ = [
     "OrchestratorAgent",
@@ -33,4 +34,6 @@ __all__ = [
     "ParallelizationOptimizer",
     "AgentSelectionOptimizer",
     "ResourceOptimizer",
+    "AgentMetricsCollector",
+    "AgentMetric",
 ]

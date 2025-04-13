@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.2.0"
+version = "0.2.10"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"}
 ]
-requires-python = ">=3.10,<=3.13"
+requires-python = ">=3.10,<3.14"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE*", "CHANGELOG.md"]
@@ -31,62 +31,62 @@ dependencies = [
     # Core dependencies
     "pydantic>=2.6.3,<3.0.0",
     "aiohttp>=3.11.14,<4.0.0",
-    "python-dotenv==1.1.0",
+    "python-dotenv>=1.1.0,<1.2.0",
     "requests>=2.31.0,<3.0.0",
+    "asyncio>=3.4.3,<4.0.0",
+    "httpx>=0.28.1,<0.29.0",
+    "psutil>=5.9.5,<6.0.0",
     # Azure dependencies
     "azure-core>=1.30.1,<2.0.0",
     "azure-identity>=1.15.0,<2.0.0",
     "azure-storage-blob>=12.19.0,<13.0.0",
     "azure-ai-projects>=1.0.0b6,<2.0.0",
     "azure-ai-inference>=1.0.0b1,<2.0.0",
-    "azure-ai-evaluation==1.5.0",
-    "azure-search-documents==11.6.0b10",
-    "azure-ai-documentintelligence==1.0.2",
+    "azure-ai-evaluation>=1.5.0,<1.6.0",
+    "azure-search-documents>=11.6.0b10,<12.0.0",
+    "azure-ai-documentintelligence>=1.0.2,<1.1.0",
     # AI/ML dependencies
-    "semantic-kernel==1.28.0",
-    "openai==1.72.0",
+    "semantic-kernel>=1.28.0,<1.29.0",
+    "openai>=1.72.0,<1.73.0",
     "langchain>=0.0.309,<1.0.0",
-    "mem0ai==0.1.90",
+    "mem0ai>=0.1.90,<0.2.0",
     # UI/Interaction dependencies
     "chainlit>=2.4.400,<3.0.0",
     "playwright>=1.51.0,<2.0.0",
     "pyautogui>=0.9.54,<1.0.0",
+    "fastapi>=0.115.12,<0.116.0",
+    "starlette>=0.41.3,<0.42.0",
+    "rich>=14.0.0,<15.0.0",
+    "tabulate>=0.9.0,<0.10.0",
+    "markitdown>=0.1.1,<0.2.0",
     # Database/Storage
     "asyncpg>=0.29.0,<1.0.0",
-    "beautifulsoup4>=4.12.2,<5.0.0",
-    # CLI/Dev tools
+    "beautifulsoup4>=4.13.3,<4.14.0",
+    # Data visualization and analysis
+    "matplotlib>=3.10.1,<3.11.0",
+    "pydot>=3.0.4,<3.1.0",
+    "networkx>=3.4.2,<3.5.0",
+    # CLI tools
     "typer[all]>=0.15.2,<1.0.0",
+    "google-adk>=0.1.1,<0.2.0",
     "ruff>=0.11.4,<1.0.0",
-    "black>=24.10.0",
-    "isort>=5.13.2",
-    "mypy>=1.15.0",
-    # Testing
-    "pytest>=8.3.5",
-    "pytest-asyncio>=0.26.0",
-    "responses>=0.25.0,<1.0.0",
-    "matplotlib>=3.10.1",
-    "httpx>=0.28.1",
-    "google-adk>=0.1.0",
-    "pydot>=3.0.4",
-    "networkx>=3.4.2",
-    "rich>=14.0.0",
-    "markitdown>=0.1.1",
-    "tabulate>=0.9.0",
-    "fastapi>=0.115.12",
-    "starlette>=0.41.3",
-    
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black>=24.2.0,<25.0.0",
+    "black>=24.10.0,<25.0.0",
     "isort>=5.13.2,<6.0.0",
-    "mypy>=1.9.0,<2.0.0",
+    "mypy>=1.15.0,<2.0.0",
     "pylint>=3.1.0,<4.0.0",
+    "ruff>=0.11.4,<1.0.0",
     "pytest>=8.3.5,<9.0.0",
-    "pytest-asyncio>=0.23.0,<1.0.0",
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=1.3.0"
+    "pytest-asyncio>=0.26.0,<0.27.0",
+    "responses>=0.25.0,<1.0.0",
+    "sphinx>=7.0.0,<8.0.0",
+    "sphinx-rtd-theme>=1.3.0,<1.4.0",
+    "coverage[toml]>=7.4.0,<8.0.0",
+    "types-requests>=2.31.0,<3.0.0",
+    "types-tabulate>=0.9.0,<0.10.0"
 ]
 
 [project.urls]
@@ -101,15 +101,15 @@ packages = ["src/agentic_kernel"]
 
 [tool.hatch.envs.default]
 dependencies = [
-    "coverage[toml]>=7.4.0",
-    "pytest"
+    "coverage[toml]>=7.4.0,<8.0.0",
+    "pytest>=8.3.5,<9.0.0"
 ]
 
 [tool.hatch.envs.test]
 dependencies = [
-    "coverage[toml]>=7.4.0",
-    "pytest>=8.3.5",
-    "pytest-asyncio>=0.23.0"
+    "coverage[toml]>=7.4.0,<8.0.0",
+    "pytest>=8.3.5,<9.0.0",
+    "pytest-asyncio>=0.26.0,<0.27.0"
 ]
 
 [tool.hatch.envs.test.scripts]
@@ -137,10 +137,25 @@ asyncio_mode = "auto"
 line-length = 88
 target-version = ['py310']
 include = '\.pyi?$'
+exclude = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist"
+]
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
 
 [tool.mypy]
 python_version = "3.10"
@@ -148,13 +163,27 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_any_generics = false
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+check_untyped_defs = true
 
 [tool.pylint.messages_control]
 disable = [
     "C0111",  # missing-docstring
     "C0103",  # invalid-name
     "C0330",  # bad-continuation
-    "C0326"   # bad-whitespace
+    "C0326", # bad-whitespace
+    "R0903", # too-few-public-methods
+    "R0913", # too-many-arguments
 ]
 
 [tool.pylint.format]
@@ -163,8 +192,36 @@ max-line-length = 88
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-select = ["E", "F", "B", "I"]
-ignore = []
+select = [
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "B", # flake8-bugbear
+    "I", # isort
+    "C4", # flake8-comprehensions
+    "N", # pep8-naming
+    "UP", # pyupgrade
+    "S", # flake8-bandit (security)
+    "A", # flake8-builtins
+    "COM", # flake8-commas
+    "DTZ", # flake8-datetimez
+    "T20", # flake8-print
+    "PT", # flake8-pytest-style
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "ERA"  # eradicate
+]
+ignore = [
+    "E501", # line too long (managed by black)
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-third-party = ["pydantic", "aiohttp", "requests", "azure", "openai"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
 
 [tool.coverage.run]
 branch = true

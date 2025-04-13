@@ -1,7 +1,7 @@
 """Chainlit event handlers for the Agentic Kernel application."""
 
 import logging
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 # Try importing Chainlit, but allow tests to run without it
 try:
@@ -35,11 +35,11 @@ except ImportError:
     ClientSession = Any  # Type alias for tests
 
 # Import necessary components from agentic_kernel
+from agentic_kernel.agents.file_surfer_agent import FileSurferAgent
+from agentic_kernel.agents.web_surfer_agent import WebSurferAgent
+from agentic_kernel.config.agent_team import LLMMapping
 from agentic_kernel.config.loader import ConfigLoader
 from agentic_kernel.config_types import AgentConfig
-from agentic_kernel.agents.web_surfer_agent import WebSurferAgent
-from agentic_kernel.agents.file_surfer_agent import FileSurferAgent
-from agentic_kernel.config.agent_team import LLMMapping
 from agentic_kernel.systems.agent_system import AgentSystem
 from agentic_kernel.ui.chat_interface import ChainlitChatInterface
 

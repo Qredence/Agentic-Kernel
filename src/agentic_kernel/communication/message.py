@@ -32,6 +32,15 @@ class MessageType(Enum):
     STATUS_UPDATE = "status_update"  # Agent status update
     ERROR = "error"  # Error notification
 
+    # Reliability-related message types
+    MESSAGE_ACK = "message_ack"  # Acknowledgment of message receipt
+    DELIVERY_CONFIRMATION = (
+        "delivery_confirmation"  # Confirmation that a message was delivered
+    )
+    MESSAGE_RETRY = (
+        "message_retry"  # Request to retry a message that failed to be delivered
+    )
+
     # A2A-specific message types
     CAPABILITY_REQUEST = "capability_request"  # Request for agent capabilities
     CAPABILITY_RESPONSE = "capability_response"  # Response with agent capabilities
@@ -160,6 +169,29 @@ class Message(BaseModel):
     routing_path: List[str] = Field(
         default_factory=list,
         description="Path the message has taken through the agent network",
+    )
+
+    # Reliability-specific fields
+    sequence_number: Optional[int] = Field(
+        None, description="Sequence number for ordering messages in a conversation"
+    )
+    delivery_attempts: int = Field(
+        0, description="Number of times delivery has been attempted"
+    )
+    max_delivery_attempts: Optional[int] = Field(
+        None, description="Maximum number of delivery attempts"
+    )
+    delivery_deadline: Optional[datetime] = Field(
+        None, description="Deadline for message delivery"
+    )
+    acknowledgment_received: bool = Field(
+        False, description="Whether an acknowledgment has been received"
+    )
+    delivery_confirmed: bool = Field(
+        False, description="Whether delivery has been confirmed"
+    )
+    persistent: bool = Field(
+        False, description="Whether the message should be persisted"
     )
 
     @validator("trust_level")
@@ -562,3 +594,53 @@ class TaskDecompositionMessage(Message):
     """
 
     message_type: MessageType = MessageType.TASK_DECOMPOSITION
+
+
+class MessageAckMessage(Message):
+    """Message for acknowledging receipt of a message.
+
+    This message type is used to acknowledge that a message has been received.
+    It is sent in response to messages that have requires_acknowledgment=True.
+
+    The content field should contain:
+    - original_message_id: ID of the message being acknowledged
+    - status: Status of the acknowledgment (e.g., "received", "processing", "rejected")
+    - timestamp: When the message was received
+    - details: Any additional details about the acknowledgment
+    """
+
+    message_type: MessageType = MessageType.MESSAGE_ACK
+
+
+class DeliveryConfirmationMessage(Message):
+    """Message for confirming delivery of a message.
+
+    This message type is used to confirm that a message has been successfully delivered
+    to its recipient. It is sent by the message bus to the original sender.
+
+    The content field should contain:
+    - original_message_id: ID of the message being confirmed
+    - delivery_timestamp: When the message was delivered
+    - recipient_id: ID of the recipient that received the message
+    - status: Status of the delivery (e.g., "delivered", "failed")
+    - details: Any additional details about the delivery
+    """
+
+    message_type: MessageType = MessageType.DELIVERY_CONFIRMATION
+
+
+class MessageRetryMessage(Message):
+    """Message for requesting retry of a message.
+
+    This message type is used to request that a message be retried after a delivery failure.
+    It can be sent by the original sender or by the message bus.
+
+    The content field should contain:
+    - original_message_id: ID of the message to retry
+    - reason: Reason for the retry
+    - retry_count: Number of times the message has been retried
+    - max_retries: Maximum number of retries allowed
+    - retry_delay: Delay before the next retry attempt
+    """
+
+    message_type: MessageType = MessageType.MESSAGE_RETRY
