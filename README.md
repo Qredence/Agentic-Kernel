@@ -3,41 +3,45 @@
 
 # Agentic Kernel: A Modular Framework for Autonomous AI Agents
 
-<!-- GitAds-Verify: TKYMBH2ORRFZ8TBQZ3MULLAW37BSXJ1P -->
+
+<div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-<!-- [![PyPI version](https://badge.fury.io/py/agentic-kernel.svg)](https://badge.fury.io/py/agentic-kernel) -->
-<!-- [![Build Status](https://travis-ci.org/your-repo/agentic-kernel.svg?branch=main)](https://travis-ci.org/your-repo/agentic-kernel) -->
-<!-- [![Coverage Status](https://coveralls.io/repos/github/your-repo/agentic-kernel/badge.svg?branch=main)](https://coveralls.io/github/your-repo/agentic-kernel?branch=main) -->
+[![PyPI version](https://badge.fury.io/py/agentic-kernel.svg)](https://badge.fury.io/py/agentic-kernel)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**Build, orchestrate, and manage sophisticated multi-agent systems with ease.**
+</div>
 
-Agentic Kernel provides a robust and flexible foundation for creating A2A-compatible autonomous AI agents that can
-collaborate, reason, and execute complex tasks through standardized agent-to-agent communication protocols. Built with
-Google's A2A standard
-at its core, and leveraging the ADK (Agent Development Kit) framework, it implements key interoperability features like
-capability
-discovery,
-consensus building, and collaborative memory while offering a modular architecture, dynamic workflow management, and
-seamless integration capabilities.
+**Build, orchestrate, and manage sophisticated multi-agent systems with ease.**
 ---
+
+
+Agentic Kernel provides a robust and flexible foundation for creating A2A-compatible autonomous AI agents that can collaborate, reason, and execute complex tasks through standardized agent-to-agent communication protocols. 
+Built on Google's A2A standard at its core, and leveraging the ADK (Agent Development Kit) framework, it implements key interoperability features like capability discovery, consensus building, and collaborative memory while offering a modular architecture, dynamic workflow management, and seamless integration capabilities.
 
 ## ✨ Key Features
 
-* **🤖 Modular Multi-Agent Architecture:** Design systems with specialized agents, dynamic registration, and secure
-  communication.
-* **⚙️ Sophisticated Workflow Engine:** Intelligently decompose tasks, track progress in real-time, handle errors
-  gracefully, and manage concurrent execution.
-* **🧠 Dynamic Planning & Orchestration:** Features a powerful Orchestrator Agent capable of creating, managing, and
-  adapting complex plans using a nested loop architecture.
-* **🔌 Pluggable Components:** Easily extend functionality with custom plugins, tools, and memory systems.
+* **🤖 Modular Multi-Agent Architecture:** 
+Design systems with specialized agents, dynamic registration, and secure communication.
+  
+* **⚙️ Sophisticated Workflow Engine:** 
+Intelligently decompose tasks, track progress in real-time, handle errors gracefully, and manage concurrent execution.
+  
+* **🧠 Dynamic Planning & Orchestration:** 
+Features a powerful Orchestrator Agent capable of creating, managing, and adapting complex plans using a nested loop architecture.
+  
+* **🔌 Pluggable Components:** 
+Easily extend functionality with custom plugins, tools, and memory systems.
+  
 * **💬 Standardized Communication:** Agents interact using a clear and consistent message format, compliant with
   Google's [A2A (Agent-to-Agent) interoperability standard](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/).
+  
 * **🖥️ Interactive UI:** Includes a Chainlit-based interface for real-time interaction, task visualization, and
   monitoring.
+  
 * **🛠️ Rich Tooling & Integration:** Leverage built-in tools and integrate with external systems (e.g., via MCP).
+
 
 ## 🚀 Getting Started
 
@@ -53,7 +57,7 @@ Follow these steps to get Agentic Kernel up and running on your local machine.
 
 1. **Clone the Repository (if you haven't already):**
     ```bash
-    git clone https://github.com/qredence/agentic-kernel.git # Replace with your repo URL
+    git clone https://github.com/qredence/agentic-kernel.git
     cd agentic-kernel
     ```
 
@@ -74,15 +78,7 @@ Follow these steps to get Agentic Kernel up and running on your local machine.
 3. **Install Dependencies:**
     ```bash
     # Using uv
-    uv pip install -r requirements.txt
-
-    # Using pip
-    # pip install -r requirements.txt
-    ```
-   *Note: If you plan to develop the kernel itself, you might install it in editable mode:*
-    ```bash
-    # uv pip install -e .
-    # pip install -e .
+    uv sync
     ```
 
 4. **Configure Environment Variables:**
@@ -93,24 +89,55 @@ Follow these steps to get Agentic Kernel up and running on your local machine.
     * Edit the `.env` file and add your API keys and endpoints for required services (e.g., Azure OpenAI, specific
       tools).
 
-**Running the Chainlit UI:**
+**Running the [A2A Agents Orchestrations (ADK Chat)](./src/agentic_kernel/adk_chat/README.md):**
 
 1. **Ensure your virtual environment is active.**
-2. **Run the application using the provided script or manually:**
 
-    * **Using the script:**
-        ```bash
-        ./scripts/run_chainlit.sh
-        ```
-      *(This script conveniently handles activating the environment and setting the `PYTHONPATH`)*
+    ```bash
+    # Using uv
+    uv venv
+    source .venv/bin/activate
+    ``` 
+    
 
-    *   **Manually with Chainlit:**
-        ```bash
-        chainlit run src/agentic_kernel/app.py -w
-        ```
-        *(The `-w` flag enables auto-reloading during development)*
+## Setup
 
-3. **Access the application** in your web browser, typically at `http://localhost:8000`.
+1. **Install Dependencies:** From the workspace root (`Agentic-Kernel`), install the required packages:
+   ```bash
+   uv pip install -r src/agentic_kernel/adk_chat/requirements.txt
+   ```
+
+2. **Configure Environment Variables:** Ensure you have the necessary API keys set in your `.env` file (or the specific `.env` within the `adk_chat` directory if you prefer):
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   GOOGLE_API_KEY=your_google_api_key
+   ```
+
+## Running the Example
+
+From the workspace root (`Agentic-Kernel`), run:
+
+```bash
+python src/agentic_kernel/adk_chat/main.py
+```
+
+This will start the chat server and client, allowing you to interact with the multi-agent system.
+
+### Running with Mesop UI
+
+You can also run the system with a web-based UI using Mesop:
+
+```bash
+python src/agentic_kernel/adk_chat/main.py --mode mesop
+```
+
+This will start the server and launch the Mesop UI in your default web browser. The UI provides a more user-friendly
+interface for interacting with the multi-agent system, with features like:
+
+- Agent information display
+- Chat history with markdown formatting
+- Message input with real-time feedback
+- Visual indicators for processing state
 
 ## 🏛️ System Architecture
 
@@ -118,7 +145,7 @@ Agentic Kernel employs a modular design centered around interacting components:
 
 ```
 src/agentic_kernel/
-├── agents/         # Specialized agent implementations (e.g., Orchestrator, Worker)
+├── agents/         # Specialized agent implementations (e.g.,    Orchestrator, Worker)
 ├── communication/  # Protocols and message formats for inter-agent communication
 ├── config/        # Configuration loading and management
 ├── ledgers/       # State tracking for tasks and progress
@@ -129,7 +156,8 @@ src/agentic_kernel/
 ├── tools/         # Reusable tools agents can leverage
 ├── ui/           # User interface components (e.g., Chainlit app)
 ├── utils/        # Helper functions and utilities
-└── workflows/     # Definitions and handlers for specific workflows
+├── workflows/     # Definitions and handlers for specific workflows
+└── adk_chat/      # ADK A2A Chat System
 ```
 
 ### A2A Compliance
@@ -180,11 +208,11 @@ Explore the capabilities of Agentic Kernel through practical examples:
   agents (Task Manager, Worker, Validator).
     * See the [Multi-Agent Example README](examples/adk_multi_agent/README.md) for setup and execution instructions.
 
-* **ADK A2A Chat System (`examples/adk_a2a_chat/`)**: A multi-agent chat system using Google's Agent Development Kit (
+* **ADK A2A Chat System (`src/agentic_kernel/adk_chat/`)**: A multi-agent chat system using Google's Agent Development Kit (
   ADK) and Agent-to-Agent (A2A) communication protocol.
     * Features specialized agents (Orchestrator, Research, Creative, Reasoning) that communicate using the A2A protocol
     * Includes both a command-line interface and a web-based UI using Mesop
-    * See the [ADK A2A Chat README](examples/adk_a2a_chat/README.md) for setup and execution instructions
+    * See the [ADK A2A Chat README](src/agentic_kernel/adk_chat/README.md) for setup and execution instructions
 
 ## 🤝 Contributing
 
