@@ -11,7 +11,7 @@ resolution-markers = [
 
 [[package]]
 name = "agentic-kernel"
-version = "0.2.0"
+version = "0.2.10"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -44,6 +44,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "rich" },
+    { name = "ruff" },
     { name = "semantic-kernel" },
     { name = "starlette" },
     { name = "tabulate" },
@@ -107,6 +108,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.31.0,<3.0.0" },
     { name = "responses", marker = "extra == 'dev'", specifier = ">=0.25.0,<1.0.0" },
     { name = "rich", specifier = ">=14.0.0,<15.0.0" },
+    { name = "ruff", specifier = ">=0.11.4,<1.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.4,<1.0.0" },
     { name = "semantic-kernel", specifier = ">=1.28.0,<1.29.0" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = ">=7.0.0,<8.0.0" },
