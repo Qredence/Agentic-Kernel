@@ -42,9 +42,7 @@ def mock_time():
 def mock_uuid():
     """Fixture for mocking uuid.uuid4() to return consistent values."""
     with patch("uuid.uuid4") as mock:
-        mock.return_value = MagicMock(
-            __str__=lambda _: "test-uuid"
-        )
+        mock.return_value = MagicMock(__str__=lambda _: "test-uuid")
         yield mock
 
 
@@ -144,9 +142,7 @@ class TestSetupLogging:
         setup_logging(use_json=True)
         root_logger = logging.getLogger()
 
-        assert any(
-            isinstance(h.formatter, JsonFormatter) for h in root_logger.handlers
-        )
+        assert any(isinstance(h.formatter, JsonFormatter) for h in root_logger.handlers)
 
     def test_setup_with_custom_level(self):
         """Test logging setup with custom log level."""
@@ -252,4 +248,4 @@ class TestLogMetrics:
             "requests": 1,
             "duration": 0.5,
             "memory": 1024,
-        } 
+        }

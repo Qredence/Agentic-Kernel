@@ -12,8 +12,9 @@ from src.agentic_kernel.memory.persistence import PostgresConfig
 from src.agentic_kernel.memory.vector_store import (
     PGVectorStore,
     VectorSearchConfig,
-    VectorSearchResult
+    VectorSearchResult,
 )
+
 
 @pytest.fixture
 def vector_config():
@@ -25,6 +26,7 @@ def vector_config():
         probes=10,  # Number of lists to probe during search
     )
 
+
 @pytest.fixture
 def postgres_config():
     """Create test database configuration."""
@@ -33,8 +35,9 @@ def postgres_config():
         port=int(os.getenv("TEST_DB_PORT", "5432")),
         database=os.getenv("TEST_DB_NAME", "test_memory"),
         user=os.getenv("TEST_DB_USER", "postgres"),
-        password=os.getenv("TEST_DB_PASSWORD", "postgres")
+        password=os.getenv("TEST_DB_PASSWORD", "postgres"),
     )
+
 
 @pytest.fixture
 def embedding_config():
@@ -43,13 +46,15 @@ def embedding_config():
         endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         api_key=os.getenv("AZURE_OPENAI_KEY"),
         deployment_name="text-embedding-ada-002",
-        cache_embeddings=True
+        cache_embeddings=True,
     )
+
 
 @pytest.fixture
 def embedding_service(embedding_config):
     """Create embedding service."""
     return EmbeddingService(embedding_config)
+
 
 @pytest.fixture
 async def db_pool(postgres_config) -> AsyncGenerator[asyncpg.Pool, None]:
@@ -59,18 +64,22 @@ async def db_pool(postgres_config) -> AsyncGenerator[asyncpg.Pool, None]:
         port=postgres_config.port,
         database=postgres_config.database,
         user=postgres_config.user,
-        password=postgres_config.password
+        password=postgres_config.password,
     )
     yield pool
     await pool.close()
 
+
 @pytest.fixture
-async def vector_store(db_pool, vector_config, embedding_service) -> AsyncGenerator[PGVectorStore, None]:
+async def vector_store(
+    db_pool, vector_config, embedding_service
+) -> AsyncGenerator[PGVectorStore, None]:
     """Create vector store instance."""
     store = PGVectorStore(db_pool, vector_config, embedding_service)
     await store.initialize()
     yield store
     await store.cleanup()
+
 
 @pytest.mark.asyncio
 async def test_vector_store_initialization(vector_store):
@@ -83,7 +92,7 @@ async def test_vector_store_initialization(vector_store):
             )
         """)
         assert result is True
-        
+
         # Verify vector index
         result = await conn.fetchval("""
             SELECT EXISTS (
@@ -94,6 +103,7 @@ async def test_vector_store_initialization(vector_store):
             )
         """)
         assert result is True
+
 
 @pytest.mark.asyncio
 async def test_vector_similarity_search(vector_store):
@@ -106,7 +116,7 @@ async def test_vector_similarity_search(vector_store):
             memory_type=MemoryType.LONG_TERM,
             agent_id="agent1",
             importance=0.8,
-            tags=["programming", "python"]
+            tags=["programming", "python"],
         ),
         MemoryEntry(
             id="",
@@ -114,7 +124,7 @@ async def test_vector_similarity_search(vector_store):
             memory_type=MemoryType.LONG_TERM,
             agent_id="agent1",
             importance=0.7,
-            tags=["ml", "ai"]
+            tags=["ml", "ai"],
         ),
         MemoryEntry(
             id="",
@@ -122,37 +132,34 @@ async def test_vector_similarity_search(vector_store):
             memory_type=MemoryType.LONG_TERM,
             agent_id="agent1",
             importance=0.6,
-            tags=["database", "optimization"]
-        )
+            tags=["database", "optimization"],
+        ),
     ]
-    
+
     # Store memories
     memory_ids = []
     for memory in memories:
         memory_id = await vector_store.store(memory)
         memory_ids.append(memory_id)
-    
+
     # Search for programming-related content
     results = await vector_store.search(
-        query="software development and coding practices",
-        limit=2,
-        min_similarity=0.7
+        query="software development and coding practices", limit=2, min_similarity=0.7
     )
-    
+
     assert len(results) > 0
     assert any("Python" in r.memory.content for r in results)
     assert all(r.similarity >= 0.7 for r in results)
-    
+
     # Search for ML-related content
     results = await vector_store.search(
-        query="artificial intelligence and deep learning",
-        limit=2,
-        min_similarity=0.7
+        query="artificial intelligence and deep learning", limit=2, min_similarity=0.7
     )
-    
+
     assert len(results) > 0
     assert any("Machine learning" in r.memory.content for r in results)
     assert all(r.similarity >= 0.7 for r in results)
+
 
 @pytest.mark.asyncio
 async def test_vector_search_with_filters(vector_store):
@@ -165,7 +172,7 @@ async def test_vector_search_with_filters(vector_store):
             memory_type=MemoryType.LONG_TERM,
             agent_id="agent1",
             importance=0.9,
-            tags=["meeting", "technical"]
+            tags=["meeting", "technical"],
         ),
         MemoryEntry(
             id="",
@@ -173,7 +180,7 @@ async def test_vector_search_with_filters(vector_store):
             memory_type=MemoryType.SHORT_TERM,
             agent_id="agent1",
             importance=0.5,
-            tags=["meeting", "team"]
+            tags=["meeting", "team"],
         ),
         MemoryEntry(
             id="",
@@ -181,32 +188,29 @@ async def test_vector_search_with_filters(vector_store):
             memory_type=MemoryType.LONG_TERM,
             agent_id="agent1",
             importance=0.95,
-            tags=["technical", "architecture"]
-        )
+            tags=["technical", "architecture"],
+        ),
     ]
-    
+
     for memory in memories:
         await vector_store.store(memory)
-    
+
     # Search with type filter
     results = await vector_store.search(
-        query="meeting discussion",
-        memory_type=MemoryType.LONG_TERM,
-        min_similarity=0.7
+        query="meeting discussion", memory_type=MemoryType.LONG_TERM, min_similarity=0.7
     )
-    
+
     assert len(results) > 0
     assert all(r.memory.memory_type == MemoryType.LONG_TERM for r in results)
-    
+
     # Search with tag filter
     results = await vector_store.search(
-        query="technical discussion",
-        tags=["technical"],
-        min_similarity=0.7
+        query="technical discussion", tags=["technical"], min_similarity=0.7
     )
-    
+
     assert len(results) > 0
     assert all(any("technical" in t for t in r.memory.tags) for r in results)
+
 
 @pytest.mark.asyncio
 async def test_vector_search_performance(vector_store):
@@ -216,46 +220,47 @@ async def test_vector_search_performance(vector_store):
         "id": "",
         "agent_id": "agent1",
         "memory_type": MemoryType.LONG_TERM,
-        "importance": 0.7
+        "importance": 0.7,
     }
-    
+
     # Generate varied content
-    topics = ["programming", "database", "machine learning", "web development", "security"]
+    topics = [
+        "programming",
+        "database",
+        "machine learning",
+        "web development",
+        "security",
+    ]
     contents = [
         f"{topic} concept and implementation details {i}"
         for topic in topics
         for i in range(20)  # 100 total memories
     ]
-    
+
     memories = [
-        MemoryEntry(
-            **base_memory,
-            content=content,
-            tags=[content.split()[0]]
-        )
+        MemoryEntry(**base_memory, content=content, tags=[content.split()[0]])
         for content in contents
     ]
-    
+
     # Store memories in batches
     batch_size = 20
     for i in range(0, len(memories), batch_size):
-        batch = memories[i:i + batch_size]
+        batch = memories[i : i + batch_size]
         await asyncio.gather(*[vector_store.store(m) for m in batch])
-    
+
     # Measure search performance
     start_time = datetime.now()
-    
+
     results = await vector_store.search(
-        query="efficient database optimization techniques",
-        limit=10,
-        min_similarity=0.7
+        query="efficient database optimization techniques", limit=10, min_similarity=0.7
     )
-    
+
     duration = (datetime.now() - start_time).total_seconds()
-    
+
     assert len(results) > 0
     assert duration < 1.0  # Search should complete in under 1 second
     assert all(r.similarity >= 0.7 for r in results)
+
 
 @pytest.mark.asyncio
 async def test_vector_index_optimization(vector_store):
@@ -266,7 +271,7 @@ async def test_vector_index_optimization(vector_store):
             SELECT * FROM pg_indexes 
             WHERE indexname = 'memories_embedding_idx'
         """)
-        
+
         # Add test data
         memories = [
             MemoryEntry(
@@ -274,31 +279,34 @@ async def test_vector_index_optimization(vector_store):
                 content=f"Test memory {i}",
                 memory_type=MemoryType.LONG_TERM,
                 agent_id="agent1",
-                importance=0.7
+                importance=0.7,
             )
             for i in range(50)
         ]
-        
+
         for memory in memories:
             await vector_store.store(memory)
-        
+
         # Verify index is being used
-        query_plan = await conn.fetchval("""
+        query_plan = await conn.fetchval(
+            """
             EXPLAIN (FORMAT JSON)
             SELECT * FROM memories
             ORDER BY embedding <-> $1
             LIMIT 5
-        """, np.random.rand(1536).astype(np.float32).tolist())
-        
+        """,
+            np.random.rand(1536).astype(np.float32).tolist(),
+        )
+
         assert "Index Scan" in str(query_plan)
-        
+
         # Test index maintenance
         await vector_store.optimize_index()
-        
+
         # Verify index is still healthy
         final_stats = await conn.fetchrow("""
             SELECT * FROM pg_indexes 
             WHERE indexname = 'memories_embedding_idx'
         """)
-        
-        assert final_stats is not None 
+
+        assert final_stats is not None

@@ -19,7 +19,7 @@ def mock_file_info():
         "path": "/path/to/test.txt",
         "size": 100,
         "content_type": "text/plain",
-        "last_modified": "2025-04-06T12:00:00"
+        "last_modified": "2025-04-06T12:00:00",
     }
     return mock
 
@@ -37,17 +37,16 @@ def mock_file_surfer_plugin(mock_file_info):
 @pytest.fixture
 def file_surfer_agent(mock_file_surfer_plugin):
     """Create a FileSurferAgent with a mock plugin."""
-    with patch('agentic_kernel.agents.file_surfer_agent.FileSurferPlugin', 
-               return_value=mock_file_surfer_plugin):
+    with patch(
+        "agentic_kernel.agents.file_surfer_agent.FileSurferPlugin",
+        return_value=mock_file_surfer_plugin,
+    ):
         agent_config = AgentConfig(
             name="file_surfer",
             type="FileSurferAgent",
             description="File operations agent for testing",
-            llm_mapping=LLMMapping(
-                model="gpt-4o-mini",
-                endpoint="azure_openai"
-            ),
-            config={}
+            llm_mapping=LLMMapping(model="gpt-4o-mini", endpoint="azure_openai"),
+            config={},
         )
         agent = FileSurferAgent(config=agent_config)
         return agent
@@ -63,11 +62,11 @@ async def test_execute_list_files(file_surfer_agent):
         agent_type="file_surfer",
         parameters={},
         status="pending",
-        max_retries=3
+        max_retries=3,
     )
-    
+
     result = await file_surfer_agent.execute(task)
-    
+
     assert result["status"] == "success"
     assert "files_listed" in result["output"]
     assert len(result["output"]["files_listed"]) == 1
@@ -84,11 +83,11 @@ async def test_execute_read_file(file_surfer_agent):
         agent_type="file_surfer",
         parameters={},
         status="pending",
-        max_retries=3
+        max_retries=3,
     )
-    
+
     result = await file_surfer_agent.execute(task)
-    
+
     assert result["status"] == "success"
     assert "file_content" in result["output"]
     assert result["output"]["file_content"] == "This is the content of test.txt"
@@ -104,11 +103,11 @@ async def test_execute_search_files(file_surfer_agent):
         agent_type="file_surfer",
         parameters={},
         status="pending",
-        max_retries=3
+        max_retries=3,
     )
-    
+
     result = await file_surfer_agent.execute(task)
-    
+
     assert result["status"] == "success"
     assert "files_found" in result["output"]
     assert len(result["output"]["files_found"]) == 1
@@ -125,11 +124,11 @@ async def test_execute_unknown_action(file_surfer_agent):
         agent_type="file_surfer",
         parameters={},
         status="pending",
-        max_retries=3
+        max_retries=3,
     )
-    
+
     result = await file_surfer_agent.execute(task)
-    
+
     assert result["status"] == "failure"
     assert "error_message" in result
-    assert "Could not determine file action" in result["error_message"] 
+    assert "Could not determine file action" in result["error_message"]

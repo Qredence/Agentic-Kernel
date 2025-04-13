@@ -1,1 +1,1 @@
-"""Tests for the Agentic Kernel system.""" 
+"""Tests for the Agentic Kernel system."""

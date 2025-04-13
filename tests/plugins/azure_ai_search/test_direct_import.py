@@ -15,7 +15,10 @@ sys.path.insert(0, src_path)
 print("Trying direct imports...")
 
 try:
-    from agentic_kernel.plugins.azure_ai_search.azure_ai_search_plugin import AzureAISearchPlugin
+    from agentic_kernel.plugins.azure_ai_search.azure_ai_search_plugin import (
+        AzureAISearchPlugin,
+    )
+
     print(f"SUCCESS: AzureAISearchPlugin imported, type: {type(AzureAISearchPlugin)}")
 except ImportError as e:
     print(f"ERROR: Failed to import AzureAISearchPlugin: {e}")
@@ -23,11 +26,18 @@ except ImportError as e:
 # Also try importlib approach
 print("\nTrying importlib approach...")
 import importlib.util
+
 try:
-    plugin_path = os.path.join(src_path, "agentic_kernel", "plugins", "azure_ai_search", "azure_ai_search_plugin.py")
+    plugin_path = os.path.join(
+        src_path,
+        "agentic_kernel",
+        "plugins",
+        "azure_ai_search",
+        "azure_ai_search_plugin.py",
+    )
     print(f"Looking for: {plugin_path}")
     print(f"File exists: {os.path.exists(plugin_path)}")
-    
+
     spec = importlib.util.spec_from_file_location("azure_ai_search_plugin", plugin_path)
     if spec:
         module = importlib.util.module_from_spec(spec)
@@ -41,4 +51,4 @@ try:
 except Exception as e:
     print(f"ERROR during importlib approach: {e}")
 
-print("\nDone.") 
+print("\nDone.")

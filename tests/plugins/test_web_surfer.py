@@ -6,10 +6,12 @@ from pydantic import HttpUrl
 
 from agentic_kernel.plugins.web_surfer import WebSurferPlugin, WebSearchResult
 
+
 @pytest.fixture
 def web_surfer():
     """Create a WebSurfer plugin instance for testing."""
     return WebSurferPlugin()
+
 
 @pytest.fixture
 def mock_responses():
@@ -26,16 +28,16 @@ def mock_responses():
                 "RelatedTopics": [
                     {
                         "Text": "Test Topic 1 - Description",
-                        "FirstURL": "https://example.com/topic1"
+                        "FirstURL": "https://example.com/topic1",
                     },
                     {
                         "Text": "Test Topic 2 - Description",
-                        "FirstURL": "https://example.com/topic2"
-                    }
-                ]
-            }
+                        "FirstURL": "https://example.com/topic2",
+                    },
+                ],
+            },
         )
-        
+
         # Mock webpage content for summarization
         rsps.add(
             responses.GET,
@@ -50,9 +52,10 @@ def mock_responses():
                     <style>.test { color: red; }</style>
                 </body>
             </html>
-            """
+            """,
         )
         yield rsps
+
 
 def test_web_search_basic(web_surfer, mock_responses):
     """Test basic web search functionality."""
@@ -65,23 +68,22 @@ def test_web_search_basic(web_surfer, mock_responses):
     assert results[0].snippet == "Test abstract"
     assert results[0].source == "DuckDuckGo Abstract"
 
+
 def test_web_search_max_results(web_surfer, mock_responses):
     """Test web search with custom max_results."""
     max_results = 1
     results = web_surfer.web_search("test query", max_results=max_results)
     assert len(results) == max_results
 
+
 def test_web_search_error_handling(web_surfer, mock_responses):
     """Test web search error handling."""
     # Add a failing response
-    mock_responses.replace(
-        responses.GET,
-        "https://api.duckduckgo.com/",
-        status=500
-    )
+    mock_responses.replace(responses.GET, "https://api.duckduckgo.com/", status=500)
     results = web_surfer.web_search("test query")
     assert isinstance(results, list)
     assert len(results) == 0
+
 
 def test_summarize_webpage(web_surfer, mock_responses):
     """Test webpage summarization."""
@@ -95,21 +97,19 @@ def test_summarize_webpage(web_surfer, mock_responses):
     assert "alert('test')" not in summary
     assert ".test { color: red; }" not in summary
 
+
 def test_summarize_webpage_error_handling(web_surfer, mock_responses):
     """Test webpage summarization error handling."""
     # Add a failing response
-    mock_responses.replace(
-        responses.GET,
-        "https://example.com",
-        status=404
-    )
+    mock_responses.replace(responses.GET, "https://example.com", status=404)
     url = HttpUrl("https://example.com")
     summary = web_surfer.summarize_webpage(url)
     assert "Error summarizing webpage" in summary
+
 
 def test_web_surfer_with_api_key():
     """Test WebSurfer initialization with API key."""
     api_key = "test_key"
     plugin = WebSurferPlugin(api_key=api_key)
     assert plugin.api_key == api_key
-    assert "AgenticFleet" in plugin.session.headers['User-Agent'] 
+    assert "AgenticFleet" in plugin.session.headers["User-Agent"]

@@ -1,1 +1,1 @@
-"""Tests for AgenticFleet plugins.""" 
+"""Tests for AgenticFleet plugins."""

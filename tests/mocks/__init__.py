@@ -1,1 +1,1 @@
-"""Mock classes for testing.""" 
+"""Mock classes for testing."""

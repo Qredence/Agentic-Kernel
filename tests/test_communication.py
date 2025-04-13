@@ -23,7 +23,7 @@ from agentic_kernel.communication.message import (
     FeedbackMessage,
     CoordinationRequestMessage,
     CoordinationResponseMessage,
-    TaskDecompositionMessage
+    TaskDecompositionMessage,
 )
 from agentic_kernel.agents.base import BaseAgent
 from agentic_kernel.config import AgentConfig
@@ -76,7 +76,9 @@ class TestAgent(BaseAgent):
             if event := self.response_events.get(message.correlation_id):
                 event.set()
 
-    async def handle_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> Any:
+    async def handle_query(
+        self, query: str, context: Optional[Dict[str, Any]] = None
+    ) -> Any:
         await asyncio.sleep(0.01)
         if query == "test query":
             return {"result": "test_result_from_handler"}
@@ -87,16 +89,11 @@ class TestAgent(BaseAgent):
         await asyncio.sleep(0.01)
         return {
             "status": "completed",
-            "output": {"message": f"Task {task.description} executed"}
+            "output": {"message": f"Task {task.description} executed"},
         }
 
     def _get_supported_tasks(self) -> Dict[str, Any]:
-        return {
-            "test_task": {
-                "description": "Test task",
-                "parameters": ["param1"]
-            }
-        }
+        return {"test_task": {"description": "Test task", "parameters": ["param1"]}}
 
 
 @pytest.fixture
@@ -111,11 +108,7 @@ async def message_bus():
 @pytest.fixture
 def agent_config():
     """Create an agent configuration for testing."""
-    return AgentConfig(
-        name="test_agent",
-        description="Test agent",
-        parameters={}
-    )
+    return AgentConfig(name="test_agent", description="Test agent", parameters={})
 
 
 @pytest.fixture
@@ -145,7 +138,7 @@ async def test_protocol_message_handling(message_bus, test_agent):
         message_type=MessageType.TASK_REQUEST,
         content={"task_description": "test", "parameters": {}},
         sender="test_sender",
-        recipient=test_agent.agent_id
+        recipient=test_agent.agent_id,
     )
 
     await message_bus.publish(message)
@@ -176,8 +169,11 @@ async def test_task_request_response(message_bus, test_agent):
     await requester.protocol.send_message(
         recipient=test_agent.agent_id,
         message_type=MessageType.TASK_REQUEST,
-        content={"task_description": "Execute test task", "parameters": {"param1": "value1"}},
-        correlation_id=request_id
+        content={
+            "task_description": "Execute test task",
+            "parameters": {"param1": "value1"},
+        },
+        correlation_id=request_id,
     )
 
     # Wait for the response event to be set, with a timeout
@@ -192,7 +188,10 @@ async def test_task_request_response(message_bus, test_agent):
     assert isinstance(response_message, TaskResponse)
     assert response_message.message_type == MessageType.TASK_RESPONSE
     assert response_message.content["status"] == "completed"
-    assert "Task Execute test task executed" in response_message.content["output"]["message"]
+    assert (
+        "Task Execute test task executed"
+        in response_message.content["output"]["message"]
+    )
     assert response_message.sender == test_agent.agent_id
     assert response_message.recipient == requester.agent_id
 
@@ -201,7 +200,9 @@ async def test_task_request_response(message_bus, test_agent):
 async def test_query_response(message_bus, test_agent):
     """Test query and response flow, verifying response reception."""
     # Create another agent to send the query
-    requester_config = AgentConfig(name="query_requester", description="", parameters={})
+    requester_config = AgentConfig(
+        name="query_requester", description="", parameters={}
+    )
     requester = TestAgent(requester_config, message_bus)
 
     # Prepare to wait for the response
@@ -214,7 +215,7 @@ async def test_query_response(message_bus, test_agent):
         recipient_id=test_agent.agent_id,
         query="test query",
         context={"key": "value"},
-        correlation_id=query_id
+        correlation_id=query_id,
     )
 
     # Wait for the response event to be set, with a timeout
@@ -239,7 +240,9 @@ async def test_query_response(message_bus, test_agent):
 async def test_capability_request(message_bus, test_agent):
     """Test capability request and response."""
     # Create another agent to request capabilities
-    requester = TestAgent(AgentConfig(name="requester", description="", parameters={}), message_bus)
+    requester = TestAgent(
+        AgentConfig(name="requester", description="", parameters={}), message_bus
+    )
 
     # Create mock handler for capability response
     mock_handler = AsyncMock()
@@ -249,7 +252,7 @@ async def test_capability_request(message_bus, test_agent):
     await requester.protocol.send_message(
         recipient=test_agent.agent_id,
         message_type=MessageType.CAPABILITY_REQUEST,
-        content={}
+        content={},
     )
 
     # Wait for response
@@ -266,7 +269,9 @@ async def test_capability_request(message_bus, test_agent):
 async def test_status_updates(message_bus, test_agent):
     """Test sending and receiving status updates."""
     # Create another agent to receive updates
-    receiver = TestAgent(AgentConfig(name="receiver", description="", parameters={}), message_bus)
+    receiver = TestAgent(
+        AgentConfig(name="receiver", description="", parameters={}), message_bus
+    )
 
     # Create mock handler for status updates
     mock_handler = AsyncMock()
@@ -274,9 +279,7 @@ async def test_status_updates(message_bus, test_agent):
 
     # Send status update
     await test_agent.send_status_update(
-        recipient_id=receiver.agent_id,
-        status="test_status",
-        details={"key": "value"}
+        recipient_id=receiver.agent_id, status="test_status", details={"key": "value"}
     )
 
     # Wait for update processing
@@ -294,7 +297,9 @@ async def test_status_updates(message_bus, test_agent):
 async def test_error_handling(message_bus, test_agent):
     """Test error handling in communication."""
     # Create another agent to receive errors
-    receiver = TestAgent(AgentConfig(name="receiver", description="", parameters={}), message_bus)
+    receiver = TestAgent(
+        AgentConfig(name="receiver", description="", parameters={}), message_bus
+    )
 
     # Create mock handler for errors
     mock_handler = AsyncMock()
@@ -305,7 +310,7 @@ async def test_error_handling(message_bus, test_agent):
         request_id="invalid_id",
         recipient=receiver.agent_id,
         status="failed",
-        error="Test error"
+        error="Test error",
     )
 
     # Wait for error processing
@@ -327,7 +332,7 @@ async def test_message_priorities(message_bus, test_agent):
         content={"task_description": "high", "parameters": {}},
         sender="test_sender",
         recipient=test_agent.agent_id,
-        priority=MessagePriority.HIGH
+        priority=MessagePriority.HIGH,
     )
 
     low_priority = Message(
@@ -335,7 +340,7 @@ async def test_message_priorities(message_bus, test_agent):
         content={"task_description": "low", "parameters": {}},
         sender="test_sender",
         recipient=test_agent.agent_id,
-        priority=MessagePriority.LOW
+        priority=MessagePriority.LOW,
     )
 
     await message_bus.publish(low_priority)
@@ -343,10 +348,14 @@ async def test_message_priorities(message_bus, test_agent):
 
     await asyncio.sleep(0.2)
 
-    assert len(test_agent.processed_message_contents) >= 2, \
+    assert len(test_agent.processed_message_contents) >= 2, (
         f"Expected at least 2 messages processed, got {len(test_agent.processed_message_contents)}"
+    )
 
-    processed_descriptions = [msg_content.get("task_description") for msg_content in test_agent.processed_message_contents]
+    processed_descriptions = [
+        msg_content.get("task_description")
+        for msg_content in test_agent.processed_message_contents
+    ]
 
     try:
         high_index = processed_descriptions.index("high")
@@ -358,29 +367,34 @@ async def test_message_priorities(message_bus, test_agent):
     except ValueError:
         pytest.fail("Low priority message content not found in processed messages")
 
-    assert high_index < low_index, \
+    assert high_index < low_index, (
         f"High priority message (index {high_index}) was not processed before low priority message (index {low_index})\nProcessed order: {processed_descriptions}"
+    )
 
 
 @pytest.mark.asyncio
 async def test_message_routing(message_bus, test_agent):
     """Test message routing between multiple agents."""
     # Create additional test agents
-    agent2 = TestAgent(AgentConfig(name="agent2", description="", parameters={}), message_bus)
-    agent3 = TestAgent(AgentConfig(name="agent3", description="", parameters={}), message_bus)
+    agent2 = TestAgent(
+        AgentConfig(name="agent2", description="", parameters={}), message_bus
+    )
+    agent3 = TestAgent(
+        AgentConfig(name="agent3", description="", parameters={}), message_bus
+    )
 
     # Send messages between agents
     message1 = Message(
         message_type=MessageType.TASK_REQUEST,
         content={"task": "test1"},
         sender=test_agent.agent_id,
-        recipient=agent2.agent_id
+        recipient=agent2.agent_id,
     )
     message2 = Message(
         message_type=MessageType.TASK_REQUEST,
         content={"task": "test2"},
         sender=agent2.agent_id,
-        recipient=agent3.agent_id
+        recipient=agent3.agent_id,
     )
 
     await message_bus.publish(message1)
@@ -398,7 +412,9 @@ async def test_message_routing(message_bus, test_agent):
 async def test_message_filtering(message_bus, test_agent):
     """Test message filtering based on recipient and message type."""
     # Create a second agent
-    agent2 = TestAgent(AgentConfig(name="agent2", description="", parameters={}), message_bus)
+    agent2 = TestAgent(
+        AgentConfig(name="agent2", description="", parameters={}), message_bus
+    )
 
     # Register specific message type handler
     mock_handler = AsyncMock()
@@ -410,20 +426,20 @@ async def test_message_filtering(message_bus, test_agent):
             message_type=MessageType.TASK_REQUEST,
             content={"task": "test1"},
             sender=agent2.agent_id,
-            recipient=test_agent.agent_id
+            recipient=test_agent.agent_id,
         ),
         Message(
             message_type=MessageType.QUERY_REQUEST,
             content={"query": "test2"},
             sender=agent2.agent_id,
-            recipient=test_agent.agent_id
+            recipient=test_agent.agent_id,
         ),
         Message(
             message_type=MessageType.QUERY_REQUEST,
             content={"query": "test3"},
             sender=agent2.agent_id,
-            recipient=agent2.agent_id  # Different recipient
-        )
+            recipient=agent2.agent_id,  # Different recipient
+        ),
     ]
 
     for message in messages:
@@ -445,16 +461,16 @@ async def test_agent_discovery(message_bus, test_agent):
         AgentConfig(
             name="specialized_agent",
             description="Agent with specific capabilities",
-            parameters={"capabilities": ["special_task"]}
+            parameters={"capabilities": ["special_task"]},
         ),
-        message_bus
+        message_bus,
     )
 
     # Send discovery request
     discovery_msg = AgentDiscoveryMessage(
         sender=test_agent.agent_id,
         recipient="broadcast",
-        content={"required_capabilities": ["special_task"]}
+        content={"required_capabilities": ["special_task"]},
     )
 
     # Prepare to collect responses
@@ -464,10 +480,7 @@ async def test_agent_discovery(message_bus, test_agent):
         if isinstance(msg, AgentDiscoveryMessage) and msg.sender != test_agent.agent_id:
             discovery_responses.append(msg)
 
-    test_agent.protocol.register_handler(
-        MessageType.AGENT_DISCOVERY,
-        collect_response
-    )
+    test_agent.protocol.register_handler(MessageType.AGENT_DISCOVERY, collect_response)
 
     await message_bus.publish(discovery_msg)
     await asyncio.sleep(0.1)
@@ -488,7 +501,7 @@ async def test_priority_based_routing(message_bus, test_agent):
         content={"task": "low_priority"},
         sender="sender",
         recipient=test_agent.agent_id,
-        priority=MessagePriority.LOW
+        priority=MessagePriority.LOW,
     )
 
     high_priority = Message(
@@ -496,7 +509,7 @@ async def test_priority_based_routing(message_bus, test_agent):
         content={"task": "high_priority"},
         sender="sender",
         recipient=test_agent.agent_id,
-        priority=MessagePriority.HIGH
+        priority=MessagePriority.HIGH,
     )
 
     # Send low priority first, then high priority
@@ -508,16 +521,22 @@ async def test_priority_based_routing(message_bus, test_agent):
     # Verify processing order
     assert len(test_agent.processed_message_contents) == 2
     assert test_agent.processed_message_contents[0]["task"] == "high_priority"
-    assert test_agent.processed_message_contents[1]["task"] == "low_priority" 
+    assert test_agent.processed_message_contents[1]["task"] == "low_priority"
 
 
 @pytest.mark.asyncio
 async def test_consensus_building(message_bus, test_agent):
     """Test consensus building process with request, vote, and result."""
     # Create multiple agents to participate in consensus
-    agent1 = TestAgent(AgentConfig(name="agent1", description="", parameters={}), message_bus)
-    agent2 = TestAgent(AgentConfig(name="agent2", description="", parameters={}), message_bus)
-    agent3 = TestAgent(AgentConfig(name="agent3", description="", parameters={}), message_bus)
+    agent1 = TestAgent(
+        AgentConfig(name="agent1", description="", parameters={}), message_bus
+    )
+    agent2 = TestAgent(
+        AgentConfig(name="agent2", description="", parameters={}), message_bus
+    )
+    agent3 = TestAgent(
+        AgentConfig(name="agent3", description="", parameters={}), message_bus
+    )
 
     # Create mock handlers for consensus messages
     consensus_request_handler = AsyncMock()
@@ -526,9 +545,15 @@ async def test_consensus_building(message_bus, test_agent):
 
     # Register handlers for all agents
     for agent in [agent1, agent2, agent3]:
-        agent.protocol.register_handler(MessageType.CONSENSUS_REQUEST, consensus_request_handler)
-        agent.protocol.register_handler(MessageType.CONSENSUS_VOTE, consensus_vote_handler)
-        agent.protocol.register_handler(MessageType.CONSENSUS_RESULT, consensus_result_handler)
+        agent.protocol.register_handler(
+            MessageType.CONSENSUS_REQUEST, consensus_request_handler
+        )
+        agent.protocol.register_handler(
+            MessageType.CONSENSUS_VOTE, consensus_vote_handler
+        )
+        agent.protocol.register_handler(
+            MessageType.CONSENSUS_RESULT, consensus_result_handler
+        )
 
     # Request consensus
     recipients = [agent1.agent_id, agent2.agent_id, agent3.agent_id]
@@ -541,7 +566,7 @@ async def test_consensus_building(message_bus, test_agent):
         topic=topic,
         options=options,
         context=context,
-        voting_mechanism="majority"
+        voting_mechanism="majority",
     )
 
     # Wait for request processing
@@ -559,14 +584,16 @@ async def test_consensus_building(message_bus, test_agent):
 
     # Send votes from each agent
     consensus_id = "test_consensus_id"
-    for agent, option in zip([agent1, agent2, agent3], ["option1", "option2", "option1"]):
+    for agent, option in zip(
+        [agent1, agent2, agent3], ["option1", "option2", "option1"]
+    ):
         await agent.protocol.send_consensus_vote(
             request_id=message_ids[agent.agent_id],
             recipient=test_agent.agent_id,
             consensus_id=consensus_id,
             vote=option,
             confidence=0.8,
-            rationale="Test rationale"
+            rationale="Test rationale",
         )
 
     # Wait for vote processing
@@ -583,11 +610,7 @@ async def test_consensus_building(message_bus, test_agent):
         assert message.content["rationale"] == "Test rationale"
 
     # Send consensus result
-    vote_distribution = {
-        "option1": 2,
-        "option2": 1,
-        "option3": 0
-    }
+    vote_distribution = {"option1": 2, "option2": 1, "option3": 0}
 
     await test_agent.protocol.send_consensus_result(
         recipients=recipients,
@@ -595,7 +618,7 @@ async def test_consensus_building(message_bus, test_agent):
         result="option1",
         vote_distribution=vote_distribution,
         confidence=0.9,
-        next_steps=["proceed with option1"]
+        next_steps=["proceed with option1"],
     )
 
     # Wait for result processing
@@ -617,8 +640,12 @@ async def test_consensus_building(message_bus, test_agent):
 async def test_conflict_resolution(message_bus, test_agent):
     """Test conflict notification and resolution process."""
     # Create multiple agents to participate in conflict resolution
-    agent1 = TestAgent(AgentConfig(name="agent1", description="", parameters={}), message_bus)
-    agent2 = TestAgent(AgentConfig(name="agent2", description="", parameters={}), message_bus)
+    agent1 = TestAgent(
+        AgentConfig(name="agent1", description="", parameters={}), message_bus
+    )
+    agent2 = TestAgent(
+        AgentConfig(name="agent2", description="", parameters={}), message_bus
+    )
 
     # Create mock handlers for conflict messages
     conflict_notification_handler = AsyncMock()
@@ -626,8 +653,12 @@ async def test_conflict_resolution(message_bus, test_agent):
 
     # Register handlers for all agents
     for agent in [agent1, agent2]:
-        agent.protocol.register_handler(MessageType.CONFLICT_NOTIFICATION, conflict_notification_handler)
-        agent.protocol.register_handler(MessageType.CONFLICT_RESOLUTION, conflict_resolution_handler)
+        agent.protocol.register_handler(
+            MessageType.CONFLICT_NOTIFICATION, conflict_notification_handler
+        )
+        agent.protocol.register_handler(
+            MessageType.CONFLICT_RESOLUTION, conflict_resolution_handler
+        )
 
     # Notify about a conflict
     recipients = [agent1.agent_id, agent2.agent_id]
@@ -641,7 +672,7 @@ async def test_conflict_resolution(message_bus, test_agent):
         conflict_type=conflict_type,
         description=description,
         parties=parties,
-        impact=impact
+        impact=impact,
     )
 
     # Wait for notification processing
@@ -663,7 +694,7 @@ async def test_conflict_resolution(message_bus, test_agent):
     rationale = "Allocate resources in alternating time slots"
     required_actions = {
         agent1.agent_id: ["adjust schedule", "reduce resource usage"],
-        agent2.agent_id: ["delay start", "use alternative resource"]
+        agent2.agent_id: ["delay start", "use alternative resource"],
     }
     verification_method = "monitor resource usage"
 
@@ -673,7 +704,7 @@ async def test_conflict_resolution(message_bus, test_agent):
         resolution=resolution,
         rationale=rationale,
         required_actions=required_actions,
-        verification_method=verification_method
+        verification_method=verification_method,
     )
 
     # Wait for resolution processing
@@ -695,7 +726,9 @@ async def test_conflict_resolution(message_bus, test_agent):
 async def test_feedback(message_bus, test_agent):
     """Test sending and receiving feedback."""
     # Create an agent to receive feedback
-    receiver = TestAgent(AgentConfig(name="receiver", description="", parameters={}), message_bus)
+    receiver = TestAgent(
+        AgentConfig(name="receiver", description="", parameters={}), message_bus
+    )
 
     # Create mock handler for feedback
     feedback_handler = AsyncMock()
@@ -705,7 +738,10 @@ async def test_feedback(message_bus, test_agent):
     feedback_type = "performance"
     rating = 4.5
     description = "Good performance on task execution"
-    improvement_suggestions = ["Improve response time", "Add more detailed explanations"]
+    improvement_suggestions = [
+        "Improve response time",
+        "Add more detailed explanations",
+    ]
     context = {"task_id": "task123", "domain": "data_processing"}
 
     await test_agent.protocol.send_feedback(
@@ -714,7 +750,7 @@ async def test_feedback(message_bus, test_agent):
         rating=rating,
         description=description,
         improvement_suggestions=improvement_suggestions,
-        context=context
+        context=context,
     )
 
     # Wait for feedback processing
@@ -735,21 +771,27 @@ async def test_feedback(message_bus, test_agent):
 async def test_coordination(message_bus, test_agent):
     """Test coordination request and response flow."""
     # Create an agent to coordinate with
-    coordinator = TestAgent(AgentConfig(name="coordinator", description="", parameters={}), message_bus)
+    coordinator = TestAgent(
+        AgentConfig(name="coordinator", description="", parameters={}), message_bus
+    )
 
     # Create mock handlers for coordination messages
     coordination_request_handler = AsyncMock()
     coordination_response_handler = AsyncMock()
 
     # Register handlers
-    coordinator.protocol.register_handler(MessageType.COORDINATION_REQUEST, coordination_request_handler)
-    test_agent.protocol.register_handler(MessageType.COORDINATION_RESPONSE, coordination_response_handler)
+    coordinator.protocol.register_handler(
+        MessageType.COORDINATION_REQUEST, coordination_request_handler
+    )
+    test_agent.protocol.register_handler(
+        MessageType.COORDINATION_RESPONSE, coordination_response_handler
+    )
 
     # Prepare coordination request
     coordination_type = "resource_scheduling"
     activities = [
         {"id": "activity1", "name": "Data processing", "duration": 30},
-        {"id": "activity2", "name": "Model training", "duration": 60}
+        {"id": "activity2", "name": "Model training", "duration": 60},
     ]
     constraints = {"max_duration": 120, "priority": "high"}
     dependencies = {"activity2": ["activity1"]}
@@ -761,7 +803,7 @@ async def test_coordination(message_bus, test_agent):
         activities=activities,
         constraints=constraints,
         dependencies=dependencies,
-        priority=MessagePriority.HIGH
+        priority=MessagePriority.HIGH,
     )
 
     # Wait for request processing
@@ -780,11 +822,14 @@ async def test_coordination(message_bus, test_agent):
     # Send coordination response
     coordination_id = "coord123"
     response = "accept"
-    availability = {"start_time": "2023-01-01T10:00:00Z", "end_time": "2023-01-01T14:00:00Z"}
+    availability = {
+        "start_time": "2023-01-01T10:00:00Z",
+        "end_time": "2023-01-01T14:00:00Z",
+    }
     conditions = {"resource_limit": 80}
     proposed_schedule = {
         "activity1": {"start": "2023-01-01T10:00:00Z", "end": "2023-01-01T10:30:00Z"},
-        "activity2": {"start": "2023-01-01T10:30:00Z", "end": "2023-01-01T11:30:00Z"}
+        "activity2": {"start": "2023-01-01T10:30:00Z", "end": "2023-01-01T11:30:00Z"},
     }
 
     await coordinator.protocol.send_coordination_response(
@@ -794,7 +839,7 @@ async def test_coordination(message_bus, test_agent):
         response=response,
         availability=availability,
         conditions=conditions,
-        proposed_schedule=proposed_schedule
+        proposed_schedule=proposed_schedule,
     )
 
     # Wait for response processing
@@ -816,11 +861,15 @@ async def test_coordination(message_bus, test_agent):
 async def test_task_decomposition(message_bus, test_agent):
     """Test sending and receiving task decomposition."""
     # Create an agent to receive task decomposition
-    receiver = TestAgent(AgentConfig(name="receiver", description="", parameters={}), message_bus)
+    receiver = TestAgent(
+        AgentConfig(name="receiver", description="", parameters={}), message_bus
+    )
 
     # Create mock handler for task decomposition
     task_decomposition_handler = AsyncMock()
-    receiver.protocol.register_handler(MessageType.TASK_DECOMPOSITION, task_decomposition_handler)
+    receiver.protocol.register_handler(
+        MessageType.TASK_DECOMPOSITION, task_decomposition_handler
+    )
 
     # Prepare task decomposition data
     parent_task_id = "parent_task_123"
@@ -830,37 +879,30 @@ async def test_task_decomposition(message_bus, test_agent):
             "name": "Data collection",
             "description": "Collect data from sources",
             "agent_type": "data_collector",
-            "parameters": {"source": "database"}
+            "parameters": {"source": "database"},
         },
         {
             "id": "subtask2",
             "name": "Data processing",
             "description": "Process collected data",
             "agent_type": "data_processor",
-            "parameters": {"format": "json"}
+            "parameters": {"format": "json"},
         },
         {
             "id": "subtask3",
             "name": "Report generation",
             "description": "Generate report from processed data",
             "agent_type": "report_generator",
-            "parameters": {"template": "standard"}
-        }
+            "parameters": {"template": "standard"},
+        },
     ]
-    dependencies = {
-        "subtask2": ["subtask1"],
-        "subtask3": ["subtask2"]
-    }
+    dependencies = {"subtask2": ["subtask1"], "subtask3": ["subtask2"]}
     allocation_suggestions = {
         "data_collector_agent": ["subtask1"],
         "data_processor_agent": ["subtask2"],
-        "report_generator_agent": ["subtask3"]
+        "report_generator_agent": ["subtask3"],
     }
-    estimated_complexity = {
-        "subtask1": 0.3,
-        "subtask2": 0.5,
-        "subtask3": 0.2
-    }
+    estimated_complexity = {"subtask1": 0.3, "subtask2": 0.5, "subtask3": 0.2}
 
     # Send task decomposition
     await test_agent.protocol.send_task_decomposition(
@@ -869,7 +911,7 @@ async def test_task_decomposition(message_bus, test_agent):
         subtasks=subtasks,
         dependencies=dependencies,
         allocation_suggestions=allocation_suggestions,
-        estimated_complexity=estimated_complexity
+        estimated_complexity=estimated_complexity,
     )
 
     # Wait for decomposition processing
