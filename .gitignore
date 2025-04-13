@@ -1,7 +1,11 @@
 # windsurf rules
 .windsurfrules
+
+# Cursor
 .cursor*
 .cursor/
+.cursor/rules/
+.cursor/memory_bank/
 
 # Environment variables
 .env
@@ -53,7 +57,7 @@ htmlcov/
 .pytest_cache/
 
 # IDE
-/.cursor
+/.cursor/
 
 # Logs
 *.log
