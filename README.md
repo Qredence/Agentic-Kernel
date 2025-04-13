@@ -14,10 +14,14 @@
 
 **Build, orchestrate, and manage sophisticated multi-agent systems with ease.**
 
-Agentic Kernel provides a robust and flexible foundation for creating autonomous AI agents that can collaborate, reason,
-and execute complex tasks. Inspired by frameworks like Semantic Kernel and Autogen, it offers a modular architecture,
-dynamic workflow management, and seamless integration capabilities.
-
+Agentic Kernel provides a robust and flexible foundation for creating A2A-compatible autonomous AI agents that can
+collaborate, reason, and execute complex tasks through standardized agent-to-agent communication protocols. Built with
+Google's A2A standard
+at its core, and leveraging the ADK (Agent Development Kit) framework, it implements key interoperability features like
+capability
+discovery,
+consensus building, and collaborative memory while offering a modular architecture, dynamic workflow management, and
+seamless integration capabilities.
 ---
 
 ## ✨ Key Features
@@ -175,6 +179,12 @@ Explore the capabilities of Agentic Kernel through practical examples:
 * **Multi-Agent System (`examples/adk_multi_agent/`)**: A complete example showcasing collaboration between multiple
   agents (Task Manager, Worker, Validator).
     * See the [Multi-Agent Example README](examples/adk_multi_agent/README.md) for setup and execution instructions.
+
+* **ADK A2A Chat System (`examples/adk_a2a_chat/`)**: A multi-agent chat system using Google's Agent Development Kit (
+  ADK) and Agent-to-Agent (A2A) communication protocol.
+    * Features specialized agents (Orchestrator, Research, Creative, Reasoning) that communicate using the A2A protocol
+    * Includes both a command-line interface and a web-based UI using Mesop
+    * See the [ADK A2A Chat README](examples/adk_a2a_chat/README.md) for setup and execution instructions
 
 ## 🤝 Contributing
 

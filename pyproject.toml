@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.2.10"
+version = "0.2.20"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"}
@@ -42,7 +42,8 @@ dependencies = [
     "azure-storage-blob>=12.19.0,<13.0.0",
     "azure-ai-projects>=1.0.0b6,<2.0.0",
     "azure-ai-inference>=1.0.0b1,<2.0.0",
-    "azure-ai-evaluation>=1.5.0,<1.6.0",
+    # Temporarily commented out due to dependency conflicts
+    # "azure-ai-evaluation>=1.5.0,<1.6.0",
     "azure-search-documents>=11.6.0b10,<12.0.0",
     "azure-ai-documentintelligence>=1.0.2,<1.1.0",
     # AI/ML dependencies
@@ -50,8 +51,10 @@ dependencies = [
     "openai>=1.72.0,<1.73.0",
     "langchain>=0.0.309,<1.0.0",
     "mem0ai>=0.1.90,<0.2.0",
+    "google-generativeai>=0.5.0,<0.6.0",
     # UI/Interaction dependencies
-    "chainlit>=2.4.400,<3.0.0",
+    # Temporarily commented out due to dependency conflicts with google-generativeai
+    # "chainlit>=2.4.400,<3.0.0",
     "playwright>=1.51.0,<2.0.0",
     "pyautogui>=0.9.54,<1.0.0",
     "fastapi>=0.115.12,<0.116.0",
@@ -59,6 +62,9 @@ dependencies = [
     "rich>=14.0.0,<15.0.0",
     "tabulate>=0.9.0,<0.10.0",
     "markitdown>=0.1.1,<0.2.0",
+    "prompt_toolkit>=3.0.43,<4.0.0",
+    "mesop>=0.0.1,<0.1.0",
+    "uvicorn>=0.34.0,<0.35.0",
     # Database/Storage
     "asyncpg>=0.29.0,<1.0.0",
     "beautifulsoup4>=4.13.3,<4.14.0",
