@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Input validation and schema definitions
   - Synchronous and asynchronous execution
   - Example tool implementations
+- Robust orchestration system for multi-agent workflows:
+  - Integration with dynamic agent discovery and capability advertisement
+  - Workflow template system for reusable workflow patterns
+  - Enhanced workflow persistence and resumption for long-running workflows
+  - Parallel execution support for independent workflow steps
+  - Advanced error handling and recovery mechanisms
+  - Intelligent workflow replanning for handling failures
+  - Dependency tracking and validation for complex workflows
 
 ### Changed
 - Updated task tracking in `tasks.md` with current project status
