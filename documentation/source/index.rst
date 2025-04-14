@@ -14,9 +14,6 @@ of the Agentic Kernel library.
    :caption: Contents:
 
    api/agentic_kernel
-   api/agentic_kernel.a2a
-   api/agentic_kernel.adk_chat
-   api/agentic_kernel.communication
 
 
 Indices and tables
