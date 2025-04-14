@@ -23,11 +23,11 @@ class BasePlugin:
     """
 
     def __init__(
-        self, 
-        name: str, 
-        description: str, 
+        self,
+        name: str,
+        description: str,
         config: Optional[Dict[str, Any]] = None,
-        version: str = "1.0.0"
+        version: str = "1.0.0",
     ):
         """Initialize the base plugin.
 

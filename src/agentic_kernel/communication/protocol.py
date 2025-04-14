@@ -148,25 +148,26 @@ class MessageBus:
                                     "sender": message.sender,
                                     "recipient": message.recipient,
                                     "message_type": message.message_type.value,
-                                    "original_error": str(e)
+                                    "original_error": str(e),
                                 },
-                                retry_possible=True
+                                retry_possible=True,
                             )
                         else:
                             error = e
 
                         # Log the error with context
-                        self.error_handler.log_error(error, {
-                            "message_id": message.message_id,
-                            "sender": message.sender,
-                            "recipient": message.recipient
-                        })
+                        self.error_handler.log_error(
+                            error,
+                            {
+                                "message_id": message.message_id,
+                                "sender": message.sender,
+                                "recipient": message.recipient,
+                            },
+                        )
 
                         # Create error message for sender with standardized format
                         error_content = self.error_handler.format_error_message(
-                            error, 
-                            include_recovery=True,
-                            include_stack_trace=False
+                            error, include_recovery=True, include_stack_trace=False
                         )
 
                         error_msg = ErrorMessage(
@@ -186,14 +187,14 @@ class MessageBus:
                             "message_id": message.message_id,
                             "sender": message.sender,
                             "recipient": message.recipient,
-                            "message_type": message.message_type.value
+                            "message_type": message.message_type.value,
                         },
                         recovery_hints=[
                             "Verify that the recipient agent ID is correct",
                             "Check if the recipient agent is registered with the message bus",
-                            "Ensure the recipient agent is active and running"
+                            "Ensure the recipient agent is active and running",
                         ],
-                        retry_possible=False
+                        retry_possible=False,
                     )
 
                     self.error_handler.log_error(error)
@@ -219,7 +220,7 @@ class MessageBus:
                     message=f"Error processing message: {str(e)}",
                     code="MESSAGE_PROCESSING_ERROR",
                     details={"original_error": str(e)},
-                    retry_possible=False
+                    retry_possible=False,
                 )
                 self.error_handler.log_error(error)
 
@@ -253,16 +254,24 @@ class CommunicationProtocol:
 
         # Message tracking for reliability guarantees
         self.sent_messages: Dict[str, Message] = {}  # Messages sent by this agent
-        self.received_messages: Dict[str, Message] = {}  # Messages received by this agent
-        self.pending_acknowledgments: Dict[str, Message] = {}  # Messages waiting for acknowledgment
-        self.pending_confirmations: Dict[str, Message] = {}  # Messages waiting for delivery confirmation
+        self.received_messages: Dict[
+            str, Message
+        ] = {}  # Messages received by this agent
+        self.pending_acknowledgments: Dict[
+            str, Message
+        ] = {}  # Messages waiting for acknowledgment
+        self.pending_confirmations: Dict[
+            str, Message
+        ] = {}  # Messages waiting for delivery confirmation
 
         # Register with message bus
         self.message_bus.subscribe(agent_id, self._handle_message)
 
         # Register handlers for reliability-related message types
         self.register_handler(MessageType.MESSAGE_ACK, self._handle_message_ack)
-        self.register_handler(MessageType.DELIVERY_CONFIRMATION, self._handle_delivery_confirmation)
+        self.register_handler(
+            MessageType.DELIVERY_CONFIRMATION, self._handle_delivery_confirmation
+        )
         self.register_handler(MessageType.MESSAGE_RETRY, self._handle_message_retry)
 
     async def send_message(
@@ -321,11 +330,14 @@ class CommunicationProtocol:
             try:
                 self._validate_message(message)
             except MessageValidationError as e:
-                self.error_handler.log_error(e, {
-                    "message_type": message_type.value,
-                    "recipient": recipient,
-                    "sender": self.agent_id
-                })
+                self.error_handler.log_error(
+                    e,
+                    {
+                        "message_type": message_type.value,
+                        "recipient": recipient,
+                        "sender": self.agent_id,
+                    },
+                )
                 raise
 
         # Track the message for reliability guarantees
@@ -350,8 +362,8 @@ class CommunicationProtocol:
                     "message_id": message_id,
                     "message_type": message_type.value,
                     "recipient": recipient,
-                    "sender": self.agent_id
-                }
+                    "sender": self.agent_id,
+                },
             )
 
             # Increment delivery attempts
@@ -371,9 +383,9 @@ class CommunicationProtocol:
                         "message_type": message_type.value,
                         "recipient": recipient,
                         "sender": self.agent_id,
-                        "original_error": str(e)
+                        "original_error": str(e),
                     },
-                    retry_possible=True
+                    retry_possible=True,
                 )
                 self.error_handler.log_error(error)
                 raise error
@@ -472,8 +484,12 @@ class CommunicationProtocol:
         content = {
             "original_message_id": original_message_id,
             "reason": reason,
-            "retry_count": original_message.delivery_attempts if original_message else 0,
-            "max_retries": original_message.max_delivery_attempts if original_message else 3,
+            "retry_count": original_message.delivery_attempts
+            if original_message
+            else 0,
+            "max_retries": original_message.max_delivery_attempts
+            if original_message
+            else 3,
             "retry_delay": retry_delay or self.error_handler.retry_delay,
         }
 
@@ -496,7 +512,9 @@ class CommunicationProtocol:
         """
         # In a real implementation, this would write to a database or other persistent store
         # For now, we'll just log that we would persist the message
-        logger.info(f"Would persist message {message.message_id} (type: {message.message_type.value})")
+        logger.info(
+            f"Would persist message {message.message_id} (type: {message.message_type.value})"
+        )
 
         # In a real implementation, we might do something like:
         # await self.message_store.save(message.dict())
@@ -525,7 +543,9 @@ class CommunicationProtocol:
                         reason="Acknowledgment timeout",
                     )
                 else:
-                    logger.error(f"Max delivery attempts exceeded for message {message_id}")
+                    logger.error(
+                        f"Max delivery attempts exceeded for message {message_id}"
+                    )
                     # Remove from pending acknowledgments
                     del self.pending_acknowledgments[message_id]
 
@@ -533,7 +553,9 @@ class CommunicationProtocol:
         for message_id, message in list(self.pending_confirmations.items()):
             # Check if the message has a delivery deadline
             if message.delivery_deadline and current_time > message.delivery_deadline:
-                logger.warning(f"Message {message_id} delivery confirmation deadline exceeded")
+                logger.warning(
+                    f"Message {message_id} delivery confirmation deadline exceeded"
+                )
 
                 # Request retry if max attempts not exceeded
                 max_attempts = message.max_delivery_attempts or 3
@@ -544,7 +566,9 @@ class CommunicationProtocol:
                         reason="Delivery confirmation timeout",
                     )
                 else:
-                    logger.error(f"Max delivery attempts exceeded for message {message_id}")
+                    logger.error(
+                        f"Max delivery attempts exceeded for message {message_id}"
+                    )
                     # Remove from pending confirmations
                     del self.pending_confirmations[message_id]
 
@@ -563,7 +587,10 @@ class CommunicationProtocol:
         # Clean up sent messages
         for message_id, message in list(self.sent_messages.items()):
             # Keep messages that are still pending acknowledgment or confirmation
-            if message_id in self.pending_acknowledgments or message_id in self.pending_confirmations:
+            if (
+                message_id in self.pending_acknowledgments
+                or message_id in self.pending_confirmations
+            ):
                 continue
 
             # Remove messages older than the cutoff time
@@ -578,7 +605,9 @@ class CommunicationProtocol:
                 del self.received_messages[message_id]
                 logger.debug(f"Cleaned up old received message {message_id}")
 
-    async def start_reliability_monitor(self, check_interval: float = 60.0) -> asyncio.Task:
+    async def start_reliability_monitor(
+        self, check_interval: float = 60.0
+    ) -> asyncio.Task:
         """Start a background task to monitor message reliability.
 
         This method starts a background task that periodically checks pending
@@ -590,6 +619,7 @@ class CommunicationProtocol:
         Returns:
             The asyncio task for the monitor
         """
+
         async def monitor_task():
             while True:
                 try:
@@ -609,7 +639,9 @@ class CommunicationProtocol:
 
         # Start the monitor task
         task = asyncio.create_task(monitor_task())
-        logger.info(f"Started reliability monitor with check interval {check_interval} seconds")
+        logger.info(
+            f"Started reliability monitor with check interval {check_interval} seconds"
+        )
         return task
 
     def register_handler(
@@ -634,11 +666,14 @@ class CommunicationProtocol:
         self.received_messages[message.message_id] = message
 
         # Send acknowledgment if required
-        if message.requires_acknowledgment and message.message_type != MessageType.MESSAGE_ACK:
+        if (
+            message.requires_acknowledgment
+            and message.message_type != MessageType.MESSAGE_ACK
+        ):
             await self.send_acknowledgment(
                 recipient=message.sender,
                 original_message_id=message.message_id,
-                status="received"
+                status="received",
             )
 
         if message.message_type in self.message_handlers:
@@ -650,7 +685,7 @@ class CommunicationProtocol:
                     await self.send_delivery_confirmation(
                         recipient="message_bus",
                         original_message_id=message.message_id,
-                        status="delivered"
+                        status="delivered",
                     )
             except Exception as e:
                 # Convert to appropriate error type if it's not already an AgenticKernelError
@@ -662,18 +697,21 @@ class CommunicationProtocol:
                             "message_type": message.message_type.value,
                             "sender": message.sender,
                             "recipient": message.recipient,
-                            "original_error": str(e)
+                            "original_error": str(e),
                         },
-                        retry_possible=False
+                        retry_possible=False,
                     )
                 else:
                     error = e
 
-                self.error_handler.log_error(error, {
-                    "message_id": message.message_id,
-                    "message_type": message.message_type.value,
-                    "sender": message.sender
-                })
+                self.error_handler.log_error(
+                    error,
+                    {
+                        "message_id": message.message_id,
+                        "message_type": message.message_type.value,
+                        "sender": message.sender,
+                    },
+                )
 
                 # Send error message back to sender
                 await self.send_error(
@@ -682,7 +720,7 @@ class CommunicationProtocol:
                     description=str(error),
                     details=getattr(error, "details", {}),
                     recovery_hints=self.error_handler.generate_recovery_hints(error),
-                    correlation_id=message.message_id
+                    correlation_id=message.message_id,
                 )
         else:
             error = ProtocolError(
@@ -692,14 +730,14 @@ class CommunicationProtocol:
                     "message_id": message.message_id,
                     "message_type": message.message_type.value,
                     "sender": message.sender,
-                    "recipient": self.agent_id
+                    "recipient": self.agent_id,
                 },
                 recovery_hints=[
                     f"Register a handler for message type {message.message_type.value}",
                     "Update the agent to support this message type",
-                    "Check if the message type is correct"
+                    "Check if the message type is correct",
                 ],
-                retry_possible=False
+                retry_possible=False,
             )
 
             self.error_handler.log_error(error)
@@ -711,7 +749,7 @@ class CommunicationProtocol:
                 description=f"No handler registered for message type {message.message_type.value}",
                 details={"message_type": message.message_type.value},
                 recovery_hints=error.recovery_hints,
-                correlation_id=message.message_id
+                correlation_id=message.message_id,
             )
 
     async def _handle_message_ack(self, message: MessageAckMessage):
@@ -722,7 +760,9 @@ class CommunicationProtocol:
         """
         original_message_id = message.content.get("original_message_id")
         if not original_message_id:
-            logger.warning(f"Received acknowledgment without original_message_id: {message.message_id}")
+            logger.warning(
+                f"Received acknowledgment without original_message_id: {message.message_id}"
+            )
             return
 
         # Update the original message's acknowledgment status
@@ -735,7 +775,9 @@ class CommunicationProtocol:
             if original_message_id in self.pending_acknowledgments:
                 del self.pending_acknowledgments[original_message_id]
         else:
-            logger.warning(f"Received acknowledgment for unknown message: {original_message_id}")
+            logger.warning(
+                f"Received acknowledgment for unknown message: {original_message_id}"
+            )
 
     async def _handle_delivery_confirmation(self, message: DeliveryConfirmationMessage):
         """Handle a delivery confirmation message.
@@ -745,7 +787,9 @@ class CommunicationProtocol:
         """
         original_message_id = message.content.get("original_message_id")
         if not original_message_id:
-            logger.warning(f"Received delivery confirmation without original_message_id: {message.message_id}")
+            logger.warning(
+                f"Received delivery confirmation without original_message_id: {message.message_id}"
+            )
             return
 
         # Update the original message's delivery status
@@ -758,7 +802,9 @@ class CommunicationProtocol:
             if original_message_id in self.pending_confirmations:
                 del self.pending_confirmations[original_message_id]
         else:
-            logger.warning(f"Received delivery confirmation for unknown message: {original_message_id}")
+            logger.warning(
+                f"Received delivery confirmation for unknown message: {original_message_id}"
+            )
 
     async def _handle_message_retry(self, message: MessageRetryMessage):
         """Handle a message retry request.
@@ -768,7 +814,9 @@ class CommunicationProtocol:
         """
         original_message_id = message.content.get("original_message_id")
         if not original_message_id:
-            logger.warning(f"Received retry request without original_message_id: {message.message_id}")
+            logger.warning(
+                f"Received retry request without original_message_id: {message.message_id}"
+            )
             return
 
         # Check if we have the original message
@@ -781,14 +829,20 @@ class CommunicationProtocol:
             # Check if we've exceeded max delivery attempts
             max_attempts = original_message.max_delivery_attempts or 3
             if original_message.delivery_attempts > max_attempts:
-                logger.warning(f"Max delivery attempts exceeded for message {original_message_id}")
+                logger.warning(
+                    f"Max delivery attempts exceeded for message {original_message_id}"
+                )
                 return
 
             # Retry sending the message
-            logger.info(f"Retrying message {original_message_id}, attempt {original_message.delivery_attempts}")
+            logger.info(
+                f"Retrying message {original_message_id}, attempt {original_message.delivery_attempts}"
+            )
             await self.message_bus.publish(original_message)
         else:
-            logger.warning(f"Received retry request for unknown message: {original_message_id}")
+            logger.warning(
+                f"Received retry request for unknown message: {original_message_id}"
+            )
 
     def _validate_message(self, message: Message) -> None:
         """Validate a message before sending.
@@ -800,7 +854,13 @@ class CommunicationProtocol:
             MessageValidationError: If validation fails
         """
         # Basic validation for all messages
-        required_fields = ["message_id", "message_type", "sender", "recipient", "content"]
+        required_fields = [
+            "message_id",
+            "message_type",
+            "sender",
+            "recipient",
+            "content",
+        ]
         message_dict = {
             "message_id": message.message_id,
             "message_type": message.message_type,
@@ -809,18 +869,18 @@ class CommunicationProtocol:
             "content": message.content,
             "priority": message.priority,
             "correlation_id": message.correlation_id,
-            "timestamp": message.timestamp
+            "timestamp": message.timestamp,
         }
 
         self.error_handler.validate_message(
-            message_dict, 
+            message_dict,
             required_fields,
             field_types={
                 "message_id": str,
                 "sender": str,
                 "recipient": str,
-                "content": dict
-            }
+                "content": dict,
+            },
         )
 
         # Additional validation based on message type
@@ -828,16 +888,11 @@ class CommunicationProtocol:
             self.error_handler.validate_message(
                 message.content,
                 ["task_description", "parameters"],
-                field_types={
-                    "task_description": str,
-                    "parameters": dict
-                }
+                field_types={"task_description": str, "parameters": dict},
             )
         elif message.message_type == MessageType.QUERY:
             self.error_handler.validate_message(
-                message.content,
-                ["query"],
-                field_types={"query": str}
+                message.content, ["query"], field_types={"query": str}
             )
 
     async def request_task(
@@ -1038,9 +1093,9 @@ class CommunicationProtocol:
                 code=error_type,
                 details=details,
                 recovery_hints=recovery_hints,
-                severity=ErrorSeverity.INFO  # This is just informational since we're sending, not receiving
+                severity=ErrorSeverity.INFO,  # This is just informational since we're sending, not receiving
             ),
-            {"recipient": recipient, "correlation_id": correlation_id}
+            {"recipient": recipient, "correlation_id": correlation_id},
         )
 
         # Send the error message with high priority
@@ -1050,7 +1105,7 @@ class CommunicationProtocol:
             content=content,
             priority=MessagePriority.HIGH,
             correlation_id=correlation_id,
-            validate=True  # Ensure the error message itself is valid
+            validate=True,  # Ensure the error message itself is valid
         )
 
     # A2A-specific methods

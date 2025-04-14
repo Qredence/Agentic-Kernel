@@ -446,7 +446,9 @@ class TestTaskDecomposer(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(task.subtasks), 3)
 
         # Check that the subtasks were added to the task manager
-        self.assertEqual(self.task_ledger.add_task.call_count, 4)  # 1 for task + 3 for subtasks
+        self.assertEqual(
+            self.task_ledger.add_task.call_count, 4
+        )  # 1 for task + 3 for subtasks
         for subtask in subtasks:
             self.assertIn(subtask.id, self.task_manager.active_tasks)
             self.assertEqual(self.task_manager.active_tasks[subtask.id], subtask)
@@ -475,7 +477,9 @@ class TestTaskDecomposer(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(is_complete)
 
         # Check that the first subtask was marked as running
-        self.task_manager.update_task_status.assert_called_once_with(subtasks[0].id, "running")
+        self.task_manager.update_task_status.assert_called_once_with(
+            subtasks[0].id, "running"
+        )
 
         # Mark the first subtask as completed
         subtasks[0].status = "completed"
@@ -486,7 +490,9 @@ class TestTaskDecomposer(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(is_complete)
 
         # Check that the second subtask was marked as running
-        self.task_manager.update_task_status.assert_called_once_with(subtasks[1].id, "running")
+        self.task_manager.update_task_status.assert_called_once_with(
+            subtasks[1].id, "running"
+        )
 
         # Mark the second subtask as completed
         subtasks[1].status = "completed"
@@ -497,7 +503,9 @@ class TestTaskDecomposer(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(is_complete)
 
         # Check that the third subtask was marked as running
-        self.task_manager.update_task_status.assert_called_once_with(subtasks[2].id, "running")
+        self.task_manager.update_task_status.assert_called_once_with(
+            subtasks[2].id, "running"
+        )
 
         # Mark the third subtask as completed
         subtasks[2].status = "completed"
@@ -759,9 +767,11 @@ class TestHierarchicalDecompositionStrategy(unittest.TestCase):
                                     "name": "grandchild1",
                                     "description": "Grandchild task 1",
                                     "agent_type": "grandchild_agent",
-                                    "parameters": {"grandchild_param": "grandchild1_value"},
+                                    "parameters": {
+                                        "grandchild_param": "grandchild1_value"
+                                    },
                                 }
-                            ]
+                            ],
                         },
                         {
                             "name": "child2",
@@ -774,11 +784,13 @@ class TestHierarchicalDecompositionStrategy(unittest.TestCase):
                                     "name": "grandchild2",
                                     "description": "Grandchild task 2",
                                     "agent_type": "grandchild_agent",
-                                    "parameters": {"grandchild_param": "grandchild2_value"},
+                                    "parameters": {
+                                        "grandchild_param": "grandchild2_value"
+                                    },
                                 }
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
                 }
             },
         )
@@ -824,14 +836,18 @@ class TestHierarchicalDecompositionStrategy(unittest.TestCase):
         # Check grandchild1 properties
         self.assertEqual(grandchild1.description, "Grandchild task 1")
         self.assertEqual(grandchild1.agent_type, "grandchild_agent")
-        self.assertEqual(grandchild1.parameters, {"grandchild_param": "grandchild1_value"})
+        self.assertEqual(
+            grandchild1.parameters, {"grandchild_param": "grandchild1_value"}
+        )
         self.assertEqual(grandchild1.parent_task_id, task.id)
         self.assertEqual(grandchild1.dependencies, [child1.id])
 
         # Check grandchild2 properties
         self.assertEqual(grandchild2.description, "Grandchild task 2")
         self.assertEqual(grandchild2.agent_type, "grandchild_agent")
-        self.assertEqual(grandchild2.parameters, {"grandchild_param": "grandchild2_value"})
+        self.assertEqual(
+            grandchild2.parameters, {"grandchild_param": "grandchild2_value"}
+        )
         self.assertEqual(grandchild2.parent_task_id, task.id)
         self.assertEqual(grandchild2.dependencies, [child2.id])
 
@@ -844,9 +860,7 @@ class TestHierarchicalDecompositionStrategy(unittest.TestCase):
             name="test_task",
             description="A test task",
             agent_type="test_agent",
-            parameters={
-                "hierarchy": {}
-            },
+            parameters={"hierarchy": {}},
         )
 
         # Decompose the task
@@ -887,7 +901,9 @@ class TestSoftwareDevelopmentDecompositionStrategy(unittest.TestCase):
         self.assertTrue(subtasks[0].is_critical)
 
         self.assertEqual(subtasks[1].name, "build_app_design")
-        self.assertEqual(subtasks[1].description, "Create software design and architecture")
+        self.assertEqual(
+            subtasks[1].description, "Create software design and architecture"
+        )
         self.assertEqual(subtasks[1].agent_type, "software_architect")
         self.assertEqual(subtasks[1].parent_task_id, task.id)
         self.assertEqual(subtasks[1].dependencies, [subtasks[0].id])
@@ -895,7 +911,9 @@ class TestSoftwareDevelopmentDecompositionStrategy(unittest.TestCase):
         self.assertTrue(subtasks[1].is_critical)
 
         self.assertEqual(subtasks[2].name, "build_app_implementation")
-        self.assertEqual(subtasks[2].description, "Implement the software according to design")
+        self.assertEqual(
+            subtasks[2].description, "Implement the software according to design"
+        )
         self.assertEqual(subtasks[2].agent_type, "developer")
         self.assertEqual(subtasks[2].parent_task_id, task.id)
         self.assertEqual(subtasks[2].dependencies, [subtasks[1].id])
@@ -1015,7 +1033,9 @@ class TestDataAnalysisDecompositionStrategy(unittest.TestCase):
 
         # Check that the subtasks have the correct properties
         self.assertEqual(subtasks[0].name, "analyze_sales_data_collection")
-        self.assertEqual(subtasks[0].description, "Collect and gather data from various sources")
+        self.assertEqual(
+            subtasks[0].description, "Collect and gather data from various sources"
+        )
         self.assertEqual(subtasks[0].agent_type, "data_collector")
         self.assertEqual(subtasks[0].parent_task_id, task.id)
         self.assertEqual(subtasks[0].dependencies, [])
@@ -1023,7 +1043,9 @@ class TestDataAnalysisDecompositionStrategy(unittest.TestCase):
         self.assertTrue(subtasks[0].is_critical)
 
         self.assertEqual(subtasks[1].name, "analyze_sales_data_cleaning")
-        self.assertEqual(subtasks[1].description, "Clean and preprocess the collected data")
+        self.assertEqual(
+            subtasks[1].description, "Clean and preprocess the collected data"
+        )
         self.assertEqual(subtasks[1].agent_type, "data_engineer")
         self.assertEqual(subtasks[1].parent_task_id, task.id)
         self.assertEqual(subtasks[1].dependencies, [subtasks[0].id])
@@ -1047,7 +1069,9 @@ class TestDataAnalysisDecompositionStrategy(unittest.TestCase):
         self.assertTrue(subtasks[3].is_critical)
 
         self.assertEqual(subtasks[4].name, "analyze_sales_reporting")
-        self.assertEqual(subtasks[4].description, "Create reports and visualizations of findings")
+        self.assertEqual(
+            subtasks[4].description, "Create reports and visualizations of findings"
+        )
         self.assertEqual(subtasks[4].agent_type, "data_visualizer")
         self.assertEqual(subtasks[4].parent_task_id, task.id)
         self.assertEqual(subtasks[4].dependencies, [subtasks[3].id])
@@ -1101,7 +1125,9 @@ class TestDataAnalysisDecompositionStrategy(unittest.TestCase):
 
         # Check that the subtasks have the correct properties
         self.assertEqual(subtasks[0].name, "analyze_sales_data_extraction")
-        self.assertEqual(subtasks[0].description, "Extract data from the data warehouse")
+        self.assertEqual(
+            subtasks[0].description, "Extract data from the data warehouse"
+        )
         self.assertEqual(subtasks[0].agent_type, "data_extractor")
         self.assertEqual(subtasks[0].parameters, {"source": "data_warehouse"})
         self.assertEqual(subtasks[0].parent_task_id, task.id)
@@ -1110,7 +1136,9 @@ class TestDataAnalysisDecompositionStrategy(unittest.TestCase):
         self.assertTrue(subtasks[0].is_critical)
 
         self.assertEqual(subtasks[1].name, "analyze_sales_statistical_analysis")
-        self.assertEqual(subtasks[1].description, "Perform statistical analysis on the data")
+        self.assertEqual(
+            subtasks[1].description, "Perform statistical analysis on the data"
+        )
         self.assertEqual(subtasks[1].agent_type, "statistician")
         self.assertEqual(subtasks[1].parameters, {"methods": ["regression", "anova"]})
         self.assertEqual(subtasks[1].parent_task_id, task.id)

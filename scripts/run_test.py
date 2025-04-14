@@ -22,20 +22,16 @@ print(f"Using Python: {python_path}")
 print(f"Project root: {project_root}")
 
 # Run the tests
-tests = [
-    "tests/test_task_manager.py",
-    "tests/test_tasklist_sync.py"
-]
+tests = ["tests/test_task_manager.py", "tests/test_tasklist_sync.py"]
 
 for test_file in tests:
     print(f"\n\n==== Running {test_file} ====\n")
     test_path = os.path.join(project_root, test_file)
     result = subprocess.run(
-        [python_path, "-m", "pytest", test_path, "-v"],
-        env={"PYTHONPATH": project_root}
+        [python_path, "-m", "pytest", test_path, "-v"], env={"PYTHONPATH": project_root}
     )
     if result.returncode != 0:
         print(f"Test failed: {test_file}")
         sys.exit(1)
 
-print("\n\nAll tests passed!") 
+print("\n\nAll tests passed!")

@@ -30,39 +30,43 @@ from ..exceptions import (
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')  # Return type for functions
+T = TypeVar("T")  # Return type for functions
 
 
 class ErrorHandler:
     """Utility class for standardized error handling in agent communication.
-    
+
     This class provides methods for handling different types of errors,
     logging them appropriately, and generating error messages.
-    
+
     Attributes:
         max_retries: Default maximum number of retries for operations
         retry_delay: Default delay between retries in seconds
     """
-    
+
     def __init__(self, max_retries: int = 3, retry_delay: float = 1.0):
         """Initialize the error handler.
-        
+
         Args:
             max_retries: Default maximum number of retries for operations
             retry_delay: Default delay between retries in seconds
         """
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-    
-    def log_error(self, error: AgenticKernelError | Exception, context: dict[str, Any] | None = None):
+
+    def log_error(
+        self,
+        error: AgenticKernelError | Exception,
+        context: dict[str, Any] | None = None,
+    ):
         """Log an error with the appropriate severity level.
-        
+
         Args:
             error: The error to log
             context: Optional context information about the error
         """
         context_str = f" Context: {context}" if context else ""
-        
+
         if isinstance(error, AgenticKernelError):
             # Use the severity level from the error
             if error.severity == ErrorSeverity.DEBUG:
@@ -79,34 +83,34 @@ class ErrorHandler:
             # Default to error level for standard exceptions
             logger.error(f"{str(error)}{context_str}")
             logger.debug(f"Stack trace: {traceback.format_exc()}")
-    
+
     def format_error_message(
-        self, 
-        error: AgenticKernelError | Exception, 
+        self,
+        error: AgenticKernelError | Exception,
         include_recovery: bool = True,
         include_stack_trace: bool = False,
     ) -> dict[str, Any]:
         """Format an error as a message for agent communication.
-        
+
         Args:
             error: The error to format
             include_recovery: Whether to include recovery hints
             include_stack_trace: Whether to include the stack trace
-            
+
         Returns:
             Dictionary containing formatted error information
         """
         if isinstance(error, AgenticKernelError):
             error_dict = error.to_dict()
-            
+
             # Add stack trace if requested
             if include_stack_trace:
                 error_dict["stack_trace"] = traceback.format_exc()
-                
+
             # Remove recovery hints if not requested
             if not include_recovery:
                 error_dict.pop("recovery_hints", None)
-                
+
             return error_dict
         # Format standard exceptions
         error_dict = {
@@ -121,19 +125,21 @@ class ErrorHandler:
             error_dict["stack_trace"] = traceback.format_exc()
 
         return error_dict
-    
-    def generate_recovery_hints(self, error: AgenticKernelError | Exception) -> list[str]:
+
+    def generate_recovery_hints(
+        self, error: AgenticKernelError | Exception
+    ) -> list[str]:
         """Generate recovery hints for an error.
-        
+
         Args:
             error: The error to generate recovery hints for
-            
+
         Returns:
             List of recovery hint strings
         """
         if isinstance(error, AgenticKernelError) and error.recovery_hints:
             return error.recovery_hints
-        
+
         # Generate generic recovery hints based on error type
         if isinstance(error, MessageDeliveryError):
             return [
@@ -170,7 +176,7 @@ class ErrorHandler:
             "Verify system configuration",
             "Contact system administrator if the issue persists",
         ]
-    
+
     async def with_retries(
         self,
         operation: Callable[[], Any],
@@ -180,27 +186,27 @@ class ErrorHandler:
         context: dict[str, Any] | None = None,
     ) -> Any:
         """Execute an operation with automatic retries on failure.
-        
+
         Args:
             operation: The operation to execute
             max_retries: Maximum number of retries (defaults to self.max_retries)
             retry_delay: Delay between retries in seconds (defaults to self.retry_delay)
             retry_exceptions: List of exception types to retry on (defaults to CommunicationError)
             context: Optional context information for error logging
-            
+
         Returns:
             The result of the operation
-            
+
         Raises:
             The last exception encountered if all retries fail
         """
         max_retries = max_retries if max_retries is not None else self.max_retries
         retry_delay = retry_delay if retry_delay is not None else self.retry_delay
         retry_exceptions = retry_exceptions or [CommunicationError]
-        
+
         retries = 0
         last_error = None
-        
+
         while retries <= max_retries:
             try:
                 if asyncio.iscoroutinefunction(operation):
@@ -208,49 +214,53 @@ class ErrorHandler:
                 return operation()
             except tuple(retry_exceptions) as e:
                 last_error = e
-                
+
                 # Check if retry is possible for this error
                 retry_possible = True
                 if isinstance(e, AgenticKernelError):
                     retry_possible = e.retry_possible
-                
+
                 if not retry_possible or retries >= max_retries:
                     self.log_error(e, context)
                     raise
-                
+
                 retries += 1
                 wait_time = retry_delay * (2 ** (retries - 1))  # Exponential backoff
-                
+
                 self.log_error(
-                    e, 
-                    {**(context or {}), "retry_count": retries, "next_retry_in": wait_time},
+                    e,
+                    {
+                        **(context or {}),
+                        "retry_count": retries,
+                        "next_retry_in": wait_time,
+                    },
                 )
-                
+
                 await asyncio.sleep(wait_time)
             except Exception as e:
                 # Don't retry other exceptions
                 self.log_error(e, context)
                 raise
-        
+
         # This should never happen, but just in case
         if last_error:
             raise last_error
-        
+
         raise RuntimeError("Retry loop exited without result or exception")
-    
+
     def validate_message(
-        self, 
-        message: dict[str, Any], 
+        self,
+        message: dict[str, Any],
         required_fields: list[str],
         field_types: dict[str, type] | None = None,
     ) -> None:
         """Validate a message against required fields and types.
-        
+
         Args:
             message: The message to validate
             required_fields: List of required field names
             field_types: Optional mapping of field names to expected types
-            
+
         Raises:
             MessageValidationError: If validation fails
         """
@@ -265,7 +275,7 @@ class ErrorHandler:
                     "Check the message format specification",
                 ],
             )
-        
+
         # Check field types if provided
         if field_types:
             type_errors = []
@@ -274,7 +284,7 @@ class ErrorHandler:
                     type_errors.append(
                         f"{field} (expected {expected_type.__name__}, got {type(message[field]).__name__})",
                     )
-            
+
             if type_errors:
                 raise MessageValidationError(
                     f"Message contains fields with incorrect types: {', '.join(type_errors)}",

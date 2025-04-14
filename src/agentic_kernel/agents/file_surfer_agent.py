@@ -22,7 +22,7 @@ Example:
         }
     )
     agent = FileSurferAgent(config)
-    
+
     # List files in a directory
     task = Task(
         description="List all Python files recursively",

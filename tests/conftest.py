@@ -27,8 +27,16 @@ for p in sys.path:
 print("\nCHECKING MODULE FILES:")
 module_paths = [
     os.path.join(src_path, "agentic_kernel", "plugins", "__init__.py"),
-    os.path.join(src_path, "agentic_kernel", "plugins", "azure_ai_search", "__init__.py"),
-    os.path.join(src_path, "agentic_kernel", "plugins", "azure_ai_search", "azure_ai_search_plugin.py"),
+    os.path.join(
+        src_path, "agentic_kernel", "plugins", "azure_ai_search", "__init__.py"
+    ),
+    os.path.join(
+        src_path,
+        "agentic_kernel",
+        "plugins",
+        "azure_ai_search",
+        "azure_ai_search_plugin.py",
+    ),
 ]
 for path in module_paths:
     exists = os.path.exists(path)
@@ -37,14 +45,18 @@ for path in module_paths:
 # Try importing the module directly
 print("\nTRYING IMPORT:")
 try:
-    from agentic_kernel.plugins.azure_ai_search.azure_ai_search_plugin import AzureAISearchPlugin
+    from agentic_kernel.plugins.azure_ai_search.azure_ai_search_plugin import (
+        AzureAISearchPlugin,
+    )
+
     print(f"  ✓ Successfully imported AzureAISearchPlugin")
 except ImportError as e:
     print(f"  ✗ Import failed: {e}")
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_path():
     """Setup fixture to add the src directory to the Python path."""
     # This is intentionally empty as we already added the path above,
     # but we want to make it clear in the pytest setup that we're modifying the path
-    pass 
+    pass

@@ -22,12 +22,12 @@ from typing import Any, Dict, List, Optional, Tuple, TypeVar, Generic, Set
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')  # Type variable for vote options
+T = TypeVar("T")  # Type variable for vote options
 
 
 class VotingMechanism(Enum):
     """Supported voting mechanisms for consensus building."""
-    
+
     MAJORITY = "majority"  # Simple majority vote (>50%)
     WEIGHTED = "weighted"  # Weighted by voter confidence
     UNANIMOUS = "unanimous"  # Requires all votes to agree
@@ -38,7 +38,7 @@ class VotingMechanism(Enum):
 
 class ConsensusVote(Generic[T]):
     """Represents a single vote in a consensus process.
-    
+
     Attributes:
         agent_id: ID of the voting agent
         option: The selected option
@@ -46,16 +46,16 @@ class ConsensusVote(Generic[T]):
         rationale: Explanation for the vote
         timestamp: When the vote was cast
     """
-    
+
     def __init__(
         self,
         agent_id: str,
         option: T,
         confidence: float = 1.0,
-        rationale: Optional[str] = None
+        rationale: Optional[str] = None,
     ):
         """Initialize a consensus vote.
-        
+
         Args:
             agent_id: ID of the voting agent
             option: The selected option
@@ -71,7 +71,7 @@ class ConsensusVote(Generic[T]):
 
 class ConsensusResult(Generic[T]):
     """Represents the result of a consensus process.
-    
+
     Attributes:
         consensus_id: ID of the consensus process
         result: The winning option
@@ -80,7 +80,7 @@ class ConsensusResult(Generic[T]):
         participant_count: Number of agents that participated
         next_steps: Suggested next steps based on the result
     """
-    
+
     def __init__(
         self,
         consensus_id: str,
@@ -88,10 +88,10 @@ class ConsensusResult(Generic[T]):
         vote_distribution: Dict[T, int],
         confidence: float,
         participant_count: int,
-        next_steps: Optional[List[str]] = None
+        next_steps: Optional[List[str]] = None,
     ):
         """Initialize a consensus result.
-        
+
         Args:
             consensus_id: ID of the consensus process
             result: The winning option
@@ -110,20 +110,20 @@ class ConsensusResult(Generic[T]):
 
 class VotingStrategy(ABC, Generic[T]):
     """Abstract base class for voting strategies.
-    
+
     This class defines the interface for different voting mechanisms.
     Subclasses implement specific voting algorithms.
     """
-    
+
     @abstractmethod
     def calculate_result(
         self, votes: List[ConsensusVote[T]]
     ) -> Tuple[Optional[T], Dict[T, int], float]:
         """Calculate the consensus result from a list of votes.
-        
+
         Args:
             votes: List of votes cast by agents
-            
+
         Returns:
             Tuple containing:
             - The winning option (or None if no consensus)
@@ -135,18 +135,18 @@ class VotingStrategy(ABC, Generic[T]):
 
 class MajorityVoting(VotingStrategy[T]):
     """Implements majority voting strategy.
-    
+
     An option wins if it receives more than 50% of the votes.
     """
-    
+
     def calculate_result(
         self, votes: List[ConsensusVote[T]]
     ) -> Tuple[Optional[T], Dict[T, int], float]:
         """Calculate result using majority voting.
-        
+
         Args:
             votes: List of votes cast by agents
-            
+
         Returns:
             Tuple containing:
             - The winning option (or None if no majority)
@@ -155,25 +155,25 @@ class MajorityVoting(VotingStrategy[T]):
         """
         if not votes:
             return None, {}, 0.0
-        
+
         # Count votes for each option
         vote_counts: Dict[T, int] = defaultdict(int)
         for vote in votes:
             vote_counts[vote.option] += 1
-        
+
         # Convert to regular dict for return value
         vote_distribution = dict(vote_counts)
-        
+
         # Find the option with the most votes
         total_votes = len(votes)
         max_votes = 0
         winner = None
-        
+
         for option, count in vote_counts.items():
             if count > max_votes:
                 max_votes = count
                 winner = option
-        
+
         # Check if winner has majority
         if max_votes > total_votes / 2:
             # Calculate confidence based on the margin of victory
@@ -186,18 +186,18 @@ class MajorityVoting(VotingStrategy[T]):
 
 class WeightedVoting(VotingStrategy[T]):
     """Implements weighted voting strategy.
-    
+
     Votes are weighted by the confidence level of each voter.
     """
-    
+
     def calculate_result(
         self, votes: List[ConsensusVote[T]]
     ) -> Tuple[Optional[T], Dict[T, int], float]:
         """Calculate result using weighted voting.
-        
+
         Args:
             votes: List of votes cast by agents
-            
+
         Returns:
             Tuple containing:
             - The winning option (or None if no votes)
@@ -206,52 +206,52 @@ class WeightedVoting(VotingStrategy[T]):
         """
         if not votes:
             return None, {}, 0.0
-        
+
         # Count raw votes for distribution
         vote_counts: Dict[T, int] = defaultdict(int)
         for vote in votes:
             vote_counts[vote.option] += 1
-        
+
         # Convert to regular dict for return value
         vote_distribution = dict(vote_counts)
-        
+
         # Calculate weighted votes
         weighted_votes: Dict[T, float] = defaultdict(float)
         total_weight = 0.0
-        
+
         for vote in votes:
             weighted_votes[vote.option] += vote.confidence
             total_weight += vote.confidence
-        
+
         # Find the option with the highest weighted vote
         max_weighted_votes = 0.0
         winner = None
-        
+
         for option, weight in weighted_votes.items():
             if weight > max_weighted_votes:
                 max_weighted_votes = weight
                 winner = option
-        
+
         # Calculate confidence based on the proportion of total weight
         confidence = max_weighted_votes / total_weight if total_weight > 0 else 0.0
-        
+
         return winner, vote_distribution, confidence
 
 
 class UnanimousVoting(VotingStrategy[T]):
     """Implements unanimous voting strategy.
-    
+
     All votes must agree for a decision to be reached.
     """
-    
+
     def calculate_result(
         self, votes: List[ConsensusVote[T]]
     ) -> Tuple[Optional[T], Dict[T, int], float]:
         """Calculate result using unanimous voting.
-        
+
         Args:
             votes: List of votes cast by agents
-            
+
         Returns:
             Tuple containing:
             - The unanimous option (or None if no unanimity)
@@ -260,22 +260,22 @@ class UnanimousVoting(VotingStrategy[T]):
         """
         if not votes:
             return None, {}, 0.0
-        
+
         # Count votes for each option
         vote_counts: Dict[T, int] = defaultdict(int)
         for vote in votes:
             vote_counts[vote.option] += 1
-        
+
         # Convert to regular dict for return value
         vote_distribution = dict(vote_counts)
-        
+
         # Check if all votes are for the same option
         if len(vote_counts) == 1:
             option = next(iter(vote_counts.keys()))
-            
+
             # Calculate average confidence
             avg_confidence = sum(vote.confidence for vote in votes) / len(votes)
-            
+
             return option, vote_distribution, avg_confidence
         else:
             # No unanimity
@@ -284,18 +284,18 @@ class UnanimousVoting(VotingStrategy[T]):
 
 class PluralityVoting(VotingStrategy[T]):
     """Implements plurality voting strategy.
-    
+
     The option with the most votes wins, even if not a majority.
     """
-    
+
     def calculate_result(
         self, votes: List[ConsensusVote[T]]
     ) -> Tuple[Optional[T], Dict[T, int], float]:
         """Calculate result using plurality voting.
-        
+
         Args:
             votes: List of votes cast by agents
-            
+
         Returns:
             Tuple containing:
             - The winning option (or None if no votes)
@@ -304,42 +304,42 @@ class PluralityVoting(VotingStrategy[T]):
         """
         if not votes:
             return None, {}, 0.0
-        
+
         # Count votes for each option
         vote_counts: Dict[T, int] = defaultdict(int)
         for vote in votes:
             vote_counts[vote.option] += 1
-        
+
         # Convert to regular dict for return value
         vote_distribution = dict(vote_counts)
-        
+
         # Find the option with the most votes
         total_votes = len(votes)
         max_votes = 0
         winner = None
-        
+
         for option, count in vote_counts.items():
             if count > max_votes:
                 max_votes = count
                 winner = option
-        
+
         # Calculate confidence based on the proportion of total votes
         confidence = max_votes / total_votes if total_votes > 0 else 0.0
-        
+
         return winner, vote_distribution, confidence
 
 
 class ConsensusManager(Generic[T]):
     """Manages the consensus process for multi-agent decision making.
-    
+
     This class tracks consensus requests, collects votes, and calculates
     results using the specified voting mechanism.
-    
+
     Attributes:
         active_consensus: Dictionary of active consensus processes
         voting_strategies: Available voting strategies
     """
-    
+
     def __init__(self):
         """Initialize the consensus manager."""
         self.active_consensus: Dict[str, Dict[str, Any]] = {}
@@ -349,7 +349,7 @@ class ConsensusManager(Generic[T]):
             VotingMechanism.UNANIMOUS: UnanimousVoting(),
             VotingMechanism.PLURALITY: PluralityVoting(),
         }
-    
+
     def create_consensus(
         self,
         topic: str,
@@ -361,7 +361,7 @@ class ConsensusManager(Generic[T]):
         deadline: Optional[datetime] = None,
     ) -> str:
         """Create a new consensus process.
-        
+
         Args:
             topic: The topic requiring consensus
             options: Available options to choose from
@@ -370,10 +370,10 @@ class ConsensusManager(Generic[T]):
             min_participants: Minimum number of participants required
             context: Additional context for the decision
             deadline: Optional deadline for voting
-            
+
         Returns:
             ID of the created consensus process
-        
+
         Raises:
             ValueError: If the voting mechanism is not supported
         """
@@ -382,10 +382,10 @@ class ConsensusManager(Generic[T]):
             mechanism = VotingMechanism(voting_mechanism)
         except ValueError:
             raise ValueError(f"Unsupported voting mechanism: {voting_mechanism}")
-        
+
         # Generate consensus ID
         consensus_id = str(uuid.uuid4())
-        
+
         # Create consensus record
         self.active_consensus[consensus_id] = {
             "topic": topic,
@@ -399,10 +399,10 @@ class ConsensusManager(Generic[T]):
             "voted_agents": set(),
             "created_at": datetime.utcnow(),
         }
-        
+
         logger.info(f"Created consensus process {consensus_id} on topic '{topic}'")
         return consensus_id
-    
+
     def record_vote(
         self,
         consensus_id: str,
@@ -412,38 +412,42 @@ class ConsensusManager(Generic[T]):
         rationale: Optional[str] = None,
     ) -> bool:
         """Record a vote in a consensus process.
-        
+
         Args:
             consensus_id: ID of the consensus process
             agent_id: ID of the voting agent
             vote: The agent's vote
             confidence: Confidence level in the vote (0.0-1.0)
             rationale: Explanation for the vote
-            
+
         Returns:
             True if the vote was recorded, False otherwise
-            
+
         Raises:
             ValueError: If the consensus ID is invalid or the agent has already voted
         """
         if consensus_id not in self.active_consensus:
             raise ValueError(f"Invalid consensus ID: {consensus_id}")
-        
+
         consensus = self.active_consensus[consensus_id]
-        
+
         # Check if agent is a participant
         if agent_id not in consensus["participants"]:
-            logger.warning(f"Agent {agent_id} is not a participant in consensus {consensus_id}")
+            logger.warning(
+                f"Agent {agent_id} is not a participant in consensus {consensus_id}"
+            )
             return False
-        
+
         # Check if agent has already voted
         if agent_id in consensus["voted_agents"]:
-            raise ValueError(f"Agent {agent_id} has already voted in consensus {consensus_id}")
-        
+            raise ValueError(
+                f"Agent {agent_id} has already voted in consensus {consensus_id}"
+            )
+
         # Check if vote is valid
         if vote not in consensus["options"]:
             raise ValueError(f"Invalid vote option: {vote}")
-        
+
         # Record the vote
         consensus_vote = ConsensusVote(
             agent_id=agent_id,
@@ -451,39 +455,39 @@ class ConsensusManager(Generic[T]):
             confidence=confidence,
             rationale=rationale,
         )
-        
+
         consensus["votes"].append(consensus_vote)
         consensus["voted_agents"].add(agent_id)
-        
+
         logger.info(f"Recorded vote from agent {agent_id} in consensus {consensus_id}")
         return True
-    
+
     def check_consensus_status(
         self, consensus_id: str
     ) -> Tuple[bool, Optional[ConsensusResult[T]]]:
         """Check if consensus has been reached.
-        
+
         Args:
             consensus_id: ID of the consensus process
-            
+
         Returns:
             Tuple containing:
             - Boolean indicating if consensus is complete
             - ConsensusResult if complete, None otherwise
-            
+
         Raises:
             ValueError: If the consensus ID is invalid
         """
         if consensus_id not in self.active_consensus:
             raise ValueError(f"Invalid consensus ID: {consensus_id}")
-        
+
         consensus = self.active_consensus[consensus_id]
         votes = consensus["votes"]
-        
+
         # Check if minimum participation requirement is met
         if len(votes) < consensus["min_participants"]:
             return False, None
-        
+
         # Check if all participants have voted
         if len(votes) < len(consensus["participants"]):
             # Not everyone has voted yet
@@ -494,17 +498,17 @@ class ConsensusManager(Generic[T]):
             else:
                 # Still waiting for votes
                 return False, None
-        
+
         # Calculate result using the specified voting mechanism
         mechanism = consensus["voting_mechanism"]
         strategy = self.voting_strategies[mechanism]
-        
+
         result, vote_distribution, confidence = strategy.calculate_result(votes)
-        
+
         # Check if a result was determined
         if result is None:
             return False, None
-        
+
         # Create consensus result
         consensus_result = ConsensusResult(
             consensus_id=consensus_id,
@@ -513,31 +517,33 @@ class ConsensusManager(Generic[T]):
             confidence=confidence,
             participant_count=len(consensus["voted_agents"]),
         )
-        
+
         # Mark consensus as complete
         consensus["completed"] = True
         consensus["result"] = consensus_result
-        
-        logger.info(f"Consensus reached in process {consensus_id} with result: {result}")
+
+        logger.info(
+            f"Consensus reached in process {consensus_id} with result: {result}"
+        )
         return True, consensus_result
-    
+
     def get_consensus_info(self, consensus_id: str) -> Dict[str, Any]:
         """Get information about a consensus process.
-        
+
         Args:
             consensus_id: ID of the consensus process
-            
+
         Returns:
             Dictionary with consensus information
-            
+
         Raises:
             ValueError: If the consensus ID is invalid
         """
         if consensus_id not in self.active_consensus:
             raise ValueError(f"Invalid consensus ID: {consensus_id}")
-        
+
         consensus = self.active_consensus[consensus_id]
-        
+
         # Create a copy with serializable types
         info = {
             "topic": consensus["topic"],
@@ -546,12 +552,14 @@ class ConsensusManager(Generic[T]):
             "voting_mechanism": consensus["voting_mechanism"].value,
             "min_participants": consensus["min_participants"],
             "context": consensus["context"],
-            "deadline": consensus["deadline"].isoformat() if consensus["deadline"] else None,
+            "deadline": consensus["deadline"].isoformat()
+            if consensus["deadline"]
+            else None,
             "created_at": consensus["created_at"].isoformat(),
             "vote_count": len(consensus["votes"]),
             "voted_agents": list(consensus["voted_agents"]),
         }
-        
+
         # Add result if available
         if "completed" in consensus and consensus["completed"]:
             result = consensus["result"]
@@ -561,20 +569,20 @@ class ConsensusManager(Generic[T]):
             info["confidence"] = result.confidence
         else:
             info["completed"] = False
-        
+
         return info
-    
+
     def close_consensus(self, consensus_id: str) -> None:
         """Close a consensus process and remove it from active tracking.
-        
+
         Args:
             consensus_id: ID of the consensus process to close
-            
+
         Raises:
             ValueError: If the consensus ID is invalid
         """
         if consensus_id not in self.active_consensus:
             raise ValueError(f"Invalid consensus ID: {consensus_id}")
-        
+
         del self.active_consensus[consensus_id]
         logger.info(f"Closed consensus process {consensus_id}")

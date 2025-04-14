@@ -14,7 +14,7 @@ def test_agent_config_validation():
     valid_config = AgentConfig(name="test_agent", model="gpt-4")
     assert valid_config.name == "test_agent"
     assert valid_config.model == "gpt-4"
-    
+
     # Test invalid config (missing required fields)
     with pytest.raises(ValidationError):
         AgentConfig()
@@ -33,7 +33,7 @@ async def test_base_agent_handle_message():
     """Test base agent handle_message raises NotImplementedError."""
     config = AgentConfig(name="test_agent", model="gpt-4")
     agent = BaseAgent(config=config)
-    
+
     # Base agent's handle_message should raise NotImplementedError
     with pytest.raises(NotImplementedError):
         agent.handle_message("test message")

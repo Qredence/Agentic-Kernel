@@ -16,12 +16,13 @@ from agentic_kernel.types import Task, WorkflowStep
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
 
 def main():
     """Main debug function to validate components."""
@@ -52,5 +53,6 @@ def main():
         logger.error(f"Debug validation failed: {e}", exc_info=True)
         return 1
 
+
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

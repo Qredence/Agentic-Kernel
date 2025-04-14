@@ -20,7 +20,7 @@ Example:
             config={"supported_languages": ["python", "typescript"]}
         )
         agent = CoderAgent(config, llm=code_llm)
-        
+
         # Generate code
         task = Task(
             description="Create a function to calculate Fibonacci numbers",

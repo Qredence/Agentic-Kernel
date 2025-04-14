@@ -538,7 +538,9 @@ class CollaborativeProtocol:
             return
 
         # Check if consensus has been reached
-        consensus_complete, consensus_result = await self.check_consensus_status(consensus_id)
+        consensus_complete, consensus_result = await self.check_consensus_status(
+            consensus_id
+        )
 
         if consensus_complete and consensus_result:
             # Get consensus info to find all participants

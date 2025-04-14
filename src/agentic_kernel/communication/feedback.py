@@ -121,7 +121,9 @@ class FeedbackStore:
             self.agent_feedback[feedback.agent_id] = set()
         self.agent_feedback[feedback.agent_id].add(feedback.feedback_id)
 
-        logger.info(f"Added feedback {feedback.feedback_id} for agent {feedback.agent_id}")
+        logger.info(
+            f"Added feedback {feedback.feedback_id} for agent {feedback.agent_id}"
+        )
         return feedback.feedback_id
 
     def get_feedback(self, feedback_id: str) -> Optional[FeedbackEntry]:
@@ -136,7 +138,7 @@ class FeedbackStore:
         return self.feedback_entries.get(feedback_id)
 
     def get_agent_feedback(
-        self, 
+        self,
         agent_id: str,
         category: Optional[FeedbackCategory] = None,
         severity: Optional[FeedbackSeverity] = None,
@@ -270,7 +272,7 @@ class FeedbackAnalyzer:
         # Get feedback entries to analyze
         if feedback_ids:
             feedback_entries = [
-                self.feedback_store.get_feedback(fid) 
+                self.feedback_store.get_feedback(fid)
                 for fid in feedback_ids
                 if self.feedback_store.get_feedback(fid) is not None
             ]
@@ -314,20 +316,29 @@ class FeedbackAnalyzer:
 
             # Create improvement actions
             if is_strength:
-                improvement_actions = ["Maintain current approach", "Share best practices with other agents"]
+                improvement_actions = [
+                    "Maintain current approach",
+                    "Share best practices with other agents",
+                ]
             else:
                 # Use collected suggestions or generic ones if none available
                 if all_suggestions:
-                    improvement_actions = list(set(all_suggestions))[:5]  # Take up to 5 unique suggestions
+                    improvement_actions = list(set(all_suggestions))[
+                        :5
+                    ]  # Take up to 5 unique suggestions
                 else:
-                    improvement_actions = [f"Review and improve {category.value} capabilities"]
+                    improvement_actions = [
+                        f"Review and improve {category.value} capabilities"
+                    ]
 
             # Create the insight
             insight = FeedbackInsight(
                 agent_id=agent_id,
                 category=category,
                 description=description,
-                confidence=min(0.5 + (len(entries) / 10), 0.95),  # Higher confidence with more entries, max 0.95
+                confidence=min(
+                    0.5 + (len(entries) / 10), 0.95
+                ),  # Higher confidence with more entries, max 0.95
                 improvement_actions=improvement_actions,
                 source_feedback=[entry.feedback_id for entry in entries],
             )
@@ -343,7 +354,7 @@ class FeedbackAnalyzer:
         return insights
 
     def get_agent_insights(
-        self, 
+        self,
         agent_id: str,
         category: Optional[FeedbackCategory] = None,
         min_confidence: Optional[float] = None,
@@ -444,9 +455,9 @@ class FeedbackLearner:
     """
 
     def __init__(
-        self, 
+        self,
         feedback_analyzer: FeedbackAnalyzer,
-        learning_strategy: LearningStrategy = LearningStrategy.ADAPTIVE
+        learning_strategy: LearningStrategy = LearningStrategy.ADAPTIVE,
     ):
         """Initialize the feedback learner.
 
@@ -460,10 +471,10 @@ class FeedbackLearner:
         self.learning_strategy = learning_strategy
 
     def generate_adjustments(
-        self, 
+        self,
         agent_id: str,
         agent_parameters: Dict[str, Any],
-        insight_ids: Optional[List[str]] = None
+        insight_ids: Optional[List[str]] = None,
     ) -> List[AgentAdjustment]:
         """Generate adjustments for an agent based on insights.
 
@@ -478,7 +489,7 @@ class FeedbackLearner:
         # Get insights to use
         if insight_ids:
             insights = [
-                self.feedback_analyzer.insights[iid] 
+                self.feedback_analyzer.insights[iid]
                 for iid in insight_ids
                 if iid in self.feedback_analyzer.insights
             ]
@@ -553,25 +564,43 @@ class FeedbackLearner:
         # Define adjustment functions for different categories
         if category == FeedbackCategory.PERFORMANCE:
             return {
-                "response_time_target": lambda v, i: max(v * 0.9, 0.1) if i.confidence > 0.7 else v,
-                "max_tokens_per_response": lambda v, i: int(v * 1.1) if i.confidence > 0.7 else v,
+                "response_time_target": lambda v, i: max(v * 0.9, 0.1)
+                if i.confidence > 0.7
+                else v,
+                "max_tokens_per_response": lambda v, i: int(v * 1.1)
+                if i.confidence > 0.7
+                else v,
             }
         elif category == FeedbackCategory.QUALITY:
             return {
-                "quality_threshold": lambda v, i: min(v * 1.1, 0.95) if i.confidence > 0.7 else v,
-                "review_frequency": lambda v, i: max(v * 0.9, 0.1) if i.confidence > 0.7 else v,
+                "quality_threshold": lambda v, i: min(v * 1.1, 0.95)
+                if i.confidence > 0.7
+                else v,
+                "review_frequency": lambda v, i: max(v * 0.9, 0.1)
+                if i.confidence > 0.7
+                else v,
             }
         elif category == FeedbackCategory.ACCURACY:
             return {
-                "fact_checking_enabled": lambda v, i: True if i.confidence > 0.7 and not v else v,
-                "confidence_threshold": lambda v, i: min(v * 1.1, 0.95) if i.confidence > 0.7 else v,
+                "fact_checking_enabled": lambda v, i: True
+                if i.confidence > 0.7 and not v
+                else v,
+                "confidence_threshold": lambda v, i: min(v * 1.1, 0.95)
+                if i.confidence > 0.7
+                else v,
             }
         elif category == FeedbackCategory.COMMUNICATION:
             return {
-                "verbosity": lambda v, i: min(v * 1.1, 1.0) if "too brief" in i.description.lower() else 
-                              max(v * 0.9, 0.1) if "too verbose" in i.description.lower() else v,
-                "formality": lambda v, i: min(v * 1.1, 1.0) if "too informal" in i.description.lower() else 
-                             max(v * 0.9, 0.1) if "too formal" in i.description.lower() else v,
+                "verbosity": lambda v, i: min(v * 1.1, 1.0)
+                if "too brief" in i.description.lower()
+                else max(v * 0.9, 0.1)
+                if "too verbose" in i.description.lower()
+                else v,
+                "formality": lambda v, i: min(v * 1.1, 1.0)
+                if "too informal" in i.description.lower()
+                else max(v * 0.9, 0.1)
+                if "too formal" in i.description.lower()
+                else v,
             }
 
         # Default: no parameters to adjust
@@ -606,7 +635,10 @@ class FeedbackLearner:
 
             # Mark as applied
             adjustment.applied = True
-            adjustment.result = {"status": "applied", "timestamp": datetime.utcnow().isoformat()}
+            adjustment.result = {
+                "status": "applied",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
             logger.info(
                 f"Applied adjustment {adjustment_id} to agent {adjustment.agent_id}: "
@@ -620,7 +652,7 @@ class FeedbackLearner:
             return False, agent_parameters
 
     def get_agent_adjustments(
-        self, 
+        self,
         agent_id: str,
         category: Optional[FeedbackCategory] = None,
         min_confidence: Optional[float] = None,
@@ -701,10 +733,7 @@ class FeedbackManager:
         agent_metrics: Dictionary mapping agent IDs to sets of metric IDs
     """
 
-    def __init__(
-        self,
-        learning_strategy: LearningStrategy = LearningStrategy.ADAPTIVE
-    ):
+    def __init__(self, learning_strategy: LearningStrategy = LearningStrategy.ADAPTIVE):
         """Initialize the feedback manager.
 
         Args:
@@ -719,9 +748,7 @@ class FeedbackManager:
         self.agent_metrics: Dict[str, Set[str]] = {}
 
     def process_feedback(
-        self, 
-        feedback: FeedbackEntry,
-        agent_parameters: Dict[str, Any]
+        self, feedback: FeedbackEntry, agent_parameters: Dict[str, Any]
     ) -> Tuple[List[FeedbackInsight], List[AgentAdjustment], Dict[str, Any]]:
         """Process a feedback entry and update agent behavior.
 
@@ -753,7 +780,7 @@ class FeedbackManager:
         adjustments = self.feedback_learner.generate_adjustments(
             feedback.agent_id,
             agent_parameters,
-            [insight.insight_id for insight in insights]
+            [insight.insight_id for insight in insights],
         )
 
         # Apply adjustments
@@ -769,7 +796,7 @@ class FeedbackManager:
             category=feedback.category,
             name=f"{feedback.category.value}_rating",
             value=feedback.rating,
-            metadata={"feedback_id": feedback.feedback_id}
+            metadata={"feedback_id": feedback.feedback_id},
         )
 
         return insights, adjustments, updated_parameters
@@ -780,7 +807,7 @@ class FeedbackManager:
         category: FeedbackCategory,
         name: str,
         value: float,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Record a performance metric for an agent.
 

@@ -67,7 +67,9 @@ class OrchestratorAgent:
             ConditionalBranchManager()
         )  # Added for conditional branching
         self.workflow_optimizer = WorkflowOptimizer()  # Added for workflow optimization
-        self.metrics_collector = AgentMetricsCollector()  # Added for agent performance monitoring
+        self.metrics_collector = (
+            AgentMetricsCollector()
+        )  # Added for agent performance monitoring
 
     def register_agent(self, agent: BaseAgent) -> None:
         """Register an agent with the orchestrator.
@@ -309,7 +311,9 @@ class OrchestratorAgent:
             )
 
             # Collect metrics for the completed task
-            collected_metrics = self.metrics_collector.end_task(agent.agent_id, task.id, result)
+            collected_metrics = self.metrics_collector.end_task(
+                agent.agent_id, task.id, result
+            )
 
             # Update task in ledger
             if success:

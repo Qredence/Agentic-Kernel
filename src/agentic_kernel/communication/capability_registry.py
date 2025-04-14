@@ -190,7 +190,8 @@ class AgentInfo:
             AgentInfo instance
         """
         capabilities = [
-            AgentCapability.from_dict(cap_data) for cap_data in data.get("capabilities", [])
+            AgentCapability.from_dict(cap_data)
+            for cap_data in data.get("capabilities", [])
         ]
         agent_info = cls(
             agent_id=data["agent_id"],
@@ -261,7 +262,9 @@ class AgentInfo:
         Returns:
             List of capabilities of the specified type
         """
-        return [cap for cap in self.capabilities if cap.capability_type == capability_type]
+        return [
+            cap for cap in self.capabilities if cap.capability_type == capability_type
+        ]
 
 
 class CapabilityRegistry:
@@ -318,7 +321,9 @@ class CapabilityRegistry:
                 metadata=metadata,
             )
             self.agents[agent_id] = agent_info
-            logger.info(f"Agent {agent_id} registered with {len(capabilities or [])} capabilities")
+            logger.info(
+                f"Agent {agent_id} registered with {len(capabilities or [])} capabilities"
+            )
             return agent_info
 
     async def update_agent(
@@ -399,7 +404,9 @@ class CapabilityRegistry:
         """
         async with self._lock:
             if agent_id not in self.agents:
-                logger.warning(f"Attempted to add capability to unregistered agent {agent_id}")
+                logger.warning(
+                    f"Attempted to add capability to unregistered agent {agent_id}"
+                )
                 return None
 
             agent_info = self.agents[agent_id]
@@ -422,12 +429,16 @@ class CapabilityRegistry:
         """
         async with self._lock:
             if agent_id not in self.agents:
-                logger.warning(f"Attempted to remove capability from unregistered agent {agent_id}")
+                logger.warning(
+                    f"Attempted to remove capability from unregistered agent {agent_id}"
+                )
                 return None
 
             agent_info = self.agents[agent_id]
             if agent_info.remove_capability(capability_id):
-                logger.debug(f"Removed capability {capability_id} from agent {agent_id}")
+                logger.debug(
+                    f"Removed capability {capability_id} from agent {agent_id}"
+                )
             else:
                 logger.warning(
                     f"Capability {capability_id} not found for agent {agent_id}"
@@ -435,7 +446,9 @@ class CapabilityRegistry:
             agent_info.update_last_seen()
             return agent_info
 
-    async def get_agents_by_capability_type(self, capability_type: str) -> List[AgentInfo]:
+    async def get_agents_by_capability_type(
+        self, capability_type: str
+    ) -> List[AgentInfo]:
         """Get all agents that have a specific capability type.
 
         Args:
@@ -448,7 +461,9 @@ class CapabilityRegistry:
             return [
                 agent
                 for agent in self.agents.values()
-                if any(cap.capability_type == capability_type for cap in agent.capabilities)
+                if any(
+                    cap.capability_type == capability_type for cap in agent.capabilities
+                )
             ]
 
     async def get_agents_by_status(self, status: str) -> List[AgentInfo]:
@@ -472,7 +487,9 @@ class CapabilityRegistry:
         async with self._lock:
             return list(self.agents.values())
 
-    async def handle_agent_discovery_message(self, message: AgentDiscoveryMessage) -> None:
+    async def handle_agent_discovery_message(
+        self, message: AgentDiscoveryMessage
+    ) -> None:
         """Handle an agent discovery message.
 
         This method processes an agent discovery message, registering or
@@ -574,8 +591,8 @@ class CapabilityRegistry:
                         elif detail_level == "detailed":
                             # Keep most information but summarize metrics
                             if "performance_metrics" in cap_dict:
-                                performance_metrics[capability.capability_id] = cap_dict.pop(
-                                    "performance_metrics"
+                                performance_metrics[capability.capability_id] = (
+                                    cap_dict.pop("performance_metrics")
                                 )
                             if "limitations" in cap_dict:
                                 limitations[capability.capability_id] = cap_dict.pop(
@@ -596,8 +613,8 @@ class CapabilityRegistry:
                         cap_dict.pop("parameters", None)
                     elif detail_level == "detailed":
                         if "performance_metrics" in cap_dict:
-                            performance_metrics[capability.capability_id] = cap_dict.pop(
-                                "performance_metrics"
+                            performance_metrics[capability.capability_id] = (
+                                cap_dict.pop("performance_metrics")
                             )
                         if "limitations" in cap_dict:
                             limitations[capability.capability_id] = cap_dict.pop(
@@ -611,7 +628,9 @@ class CapabilityRegistry:
             request_id=message.message_id,
             recipient=message.sender,
             capabilities=capabilities,
-            performance_metrics=performance_metrics if detail_level != "basic" else None,
+            performance_metrics=performance_metrics
+            if detail_level != "basic"
+            else None,
             limitations=limitations if detail_level != "basic" else None,
         )
 

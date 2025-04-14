@@ -20,29 +20,22 @@ from rich.logging import RichHandler
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    handlers=[RichHandler(rich_tracebacks=True)]
+    level=logging.INFO, format="%(message)s", handlers=[RichHandler(rich_tracebacks=True)]
 )
 logger = logging.getLogger("cli")
 console = Console()
 
 app = typer.Typer(help="Agentic Kernel CLI Workflow Demo")
 
+
 @app.command()
 def execute_workflow(
     task: str = typer.Argument(..., help="The task to execute"),
     working_dir: Optional[Path] = typer.Option(
-        None,
-        "--working-dir",
-        "-d",
-        help="Working directory for file operations"
+        None, "--working-dir", "-d", help="Working directory for file operations"
     ),
     agents: Optional[List[str]] = typer.Option(
-        None,
-        "--agents",
-        "-a",
-        help="Specific agents to use (default: all)"
+        None, "--agents", "-a", help="Specific agents to use (default: all)"
     ),
 ):
     """Execute a workflow with the specified task."""
@@ -65,8 +58,7 @@ def execute_workflow(
         # Filter agents if specified
         if agents:
             selected_agents = {
-                name: agent for name, agent in available_agents.items()
-                if name in agents
+                name: agent for name, agent in available_agents.items() if name in agents
             }
         else:
             selected_agents = available_agents
@@ -80,15 +72,18 @@ def execute_workflow(
         )
 
         # Execute workflow
-        asyncio.run(_run_workflow(
-            orchestrator=orchestrator,
-            task=task,
-            working_dir=working_dir,
-        ))
+        asyncio.run(
+            _run_workflow(
+                orchestrator=orchestrator,
+                task=task,
+                working_dir=working_dir,
+            )
+        )
 
     except Exception as e:
         logger.error(f"Error executing workflow: {str(e)}", exc_info=True)
         raise typer.Exit(1)
+
 
 async def _run_workflow(
     orchestrator: OrchestratorAgent,
@@ -128,6 +123,7 @@ async def _run_workflow(
     except Exception as e:
         logger.error(f"Error in workflow execution: {str(e)}", exc_info=True)
         raise
+
 
 if __name__ == "__main__":
     app()

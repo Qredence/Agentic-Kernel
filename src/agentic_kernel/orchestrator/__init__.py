@@ -7,11 +7,11 @@ from .agent_selection import AgentSelector, AgentSkillMatrix
 from .workflow_history import WorkflowHistory, WorkflowVersion, ExecutionRecord
 from .condition_evaluator import ConditionEvaluator, ConditionalBranchManager
 from .workflow_optimizer import (
-    WorkflowOptimizer, 
+    WorkflowOptimizer,
     WorkflowOptimizationStrategy,
     ParallelizationOptimizer,
     AgentSelectionOptimizer,
-    ResourceOptimizer
+    ResourceOptimizer,
 )
 from .agent_metrics import AgentMetricsCollector, AgentMetric
 

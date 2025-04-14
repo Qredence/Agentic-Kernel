@@ -27,6 +27,17 @@ This guide will help you get started with Agentic Kernel, from installation to r
    uv pip install -e .
    ```
 
+4. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit the `.env` file to add your API keys and other configuration:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   GOOGLE_API_KEY=your_google_api_key
+   ```
+
 ## Basic Usage
 
 ### 1. Initialize the System

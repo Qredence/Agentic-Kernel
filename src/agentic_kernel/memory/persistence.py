@@ -268,7 +268,7 @@ class PostgresMemoryStore:
 
             if agent_id:
                 conditions.append(
-                    f"(agent_id = ${param_idx} OR ($1 = ANY(shared_with) AND ${param_idx+1}))"
+                    f"(agent_id = ${param_idx} OR ($1 = ANY(shared_with) AND ${param_idx + 1}))"
                 )
                 params.extend([agent_id, include_shared])
                 param_idx += 2
@@ -393,7 +393,7 @@ class PostgresMemoryStore:
                 updated = await conn.fetchrow(
                     f"""
                     UPDATE memories
-                    SET {', '.join(set_clauses)},
+                    SET {", ".join(set_clauses)},
                         last_accessed = NOW()
                     WHERE id = $1
                     RETURNING *

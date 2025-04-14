@@ -24,14 +24,14 @@ Example:
         }
     )
     agent = WebSurferAgent(config)
-    
+
     # Perform a web search
     task = Task(
         description="Find recent articles about Python 3.12",
         parameters={"max_results": 3}
     )
     result = await agent.execute(task)
-    
+
     # Print search results
     if result['status'] == 'success':
         for item in result['output']['search_results']:

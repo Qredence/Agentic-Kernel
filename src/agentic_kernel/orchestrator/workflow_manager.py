@@ -71,7 +71,9 @@ class WorkflowTemplate:
         self.metadata = metadata or {}
 
     def instantiate(
-        self, parameter_values: dict[str, Any], workflow_name: str | None = None,
+        self,
+        parameter_values: dict[str, Any],
+        workflow_name: str | None = None,
     ) -> list[WorkflowStep]:
         """Create a concrete workflow from the template.
 
@@ -122,7 +124,9 @@ class WorkflowTemplate:
         return workflow_steps
 
     def _substitute_parameters(
-        self, obj: Any, parameter_values: dict[str, Any],
+        self,
+        obj: Any,
+        parameter_values: dict[str, Any],
     ) -> Any:
         """Recursively substitute parameters in an object.
 
@@ -139,14 +143,20 @@ class WorkflowTemplate:
                 param_name = obj[2:-1]
                 if param_name in parameter_values:
                     return parameter_values[param_name]
-                if param_name in self.parameters and "default" in self.parameters[param_name]:
+                if (
+                    param_name in self.parameters
+                    and "default" in self.parameters[param_name]
+                ):
                     return self.parameters[param_name]["default"]
                 return obj  # Keep as is if no substitution found
             return obj
         if isinstance(obj, list):
             return [self._substitute_parameters(item, parameter_values) for item in obj]
         if isinstance(obj, dict):
-            return {k: self._substitute_parameters(v, parameter_values) for k, v in obj.items()}
+            return {
+                k: self._substitute_parameters(v, parameter_values)
+                for k, v in obj.items()
+            }
         return obj
 
 
@@ -214,7 +224,8 @@ class WorkflowManager:
         # Register specializations if provided
         if specializations:
             self.agent_selector.skill_matrix.register_agent_specialization(
-                agent.agent_id, specializations,
+                agent.agent_id,
+                specializations,
             )
 
         # Register with the capability registry if available
@@ -234,7 +245,8 @@ class WorkflowManager:
         logger.info(f"Registered agent: {agent.type} with ID {agent.agent_id}")
 
     async def discover_agents(
-        self, capability_types: list[str] | None = None,
+        self,
+        capability_types: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Discover agents with specific capabilities.
 
@@ -259,7 +271,8 @@ class WorkflowManager:
         return discovered
 
     async def register_workflow_template(
-        self, template: WorkflowTemplate,
+        self,
+        template: WorkflowTemplate,
     ) -> str:
         """Register a workflow template.
 
@@ -270,7 +283,9 @@ class WorkflowManager:
             The template ID
         """
         self.templates[template.template_id] = template
-        logger.info(f"Registered workflow template: {template.name} ({template.template_id})")
+        logger.info(
+            f"Registered workflow template: {template.name} ({template.template_id})"
+        )
 
         # Persist templates if path is configured
         if self.persistence_path:
@@ -310,7 +325,8 @@ class WorkflowManager:
         try:
             # Instantiate the template
             workflow_steps = template.instantiate(
-                parameter_values, workflow_name,
+                parameter_values,
+                workflow_name,
             )
 
             # Create the workflow
@@ -357,7 +373,8 @@ class WorkflowManager:
         try:
             # Start execution record in history
             execution = await self.workflow_history.start_execution(
-                workflow_id, version.version_id,
+                workflow_id,
+                version.version_id,
             )
             execution_id = execution.execution_id
 
@@ -416,9 +433,13 @@ class WorkflowManager:
                 )
 
                 try:
-                    result = await asyncio.wait_for(execution_task, timeout=execution_timeout)
+                    result = await asyncio.wait_for(
+                        execution_task, timeout=execution_timeout
+                    )
                 except asyncio.TimeoutError:
-                    logger.error(f"Workflow execution timed out after {execution_timeout} seconds")
+                    logger.error(
+                        f"Workflow execution timed out after {execution_timeout} seconds"
+                    )
                     result = {
                         "status": "timeout",
                         "error": f"Execution timed out after {execution_timeout} seconds",
@@ -452,7 +473,9 @@ class WorkflowManager:
             if non_skipped_steps > 0:
                 metrics["success_rate"] = len(completed_steps) / non_skipped_steps
             else:
-                metrics["success_rate"] = 1.0  # All relevant steps were skipped or succeeded
+                metrics["success_rate"] = (
+                    1.0  # All relevant steps were skipped or succeeded
+                )
 
             # Determine final status
             final_status = "success" if not failed_steps else "partial_success"
@@ -530,7 +553,10 @@ class WorkflowManager:
                     try:
                         # Get updated steps from replanning
                         updated_steps = await self._replan_workflow(
-                            workflow_id, version.steps, completed_steps, failed_steps,
+                            workflow_id,
+                            version.steps,
+                            completed_steps,
+                            failed_steps,
                         )
 
                         # Create new version with replanned steps
@@ -571,7 +597,10 @@ class WorkflowManager:
 
                     # Get steps ready for execution
                     ready_steps = await self._get_ready_steps(
-                        version.steps, completed_steps, failed_steps, skipped_steps,
+                        version.steps,
+                        completed_steps,
+                        failed_steps,
+                        skipped_steps,
                     )
 
                     if not ready_steps:
@@ -599,7 +628,8 @@ class WorkflowManager:
                         # Check if this step should be executed based on its condition
                         if step.condition:
                             should_execute = branch_manager.should_execute_step(
-                                step_name, step.condition,
+                                step_name,
+                                step.condition,
                             )
                             if not should_execute:
                                 # Skip this step due to condition evaluation
@@ -611,7 +641,10 @@ class WorkflowManager:
 
                         # Execute the step
                         result = await self._execute_step(
-                            workflow_id, step, execution_id, branch_manager,
+                            workflow_id,
+                            step,
+                            execution_id,
+                            branch_manager,
                         )
 
                         # Process result
@@ -621,12 +654,17 @@ class WorkflowManager:
                             failed_steps.append(step_name)
 
                             # Check if we need to replan
-                            if self._should_replan(version.steps, completed_steps, failed_steps):
+                            if self._should_replan(
+                                version.steps, completed_steps, failed_steps
+                            ):
                                 break
 
                     # Check for progress
                     progress = self._calculate_progress(
-                        version.steps, completed_steps, failed_steps, skipped_steps,
+                        version.steps,
+                        completed_steps,
+                        failed_steps,
+                        skipped_steps,
                     )
                     if progress < reflection_threshold and inner_loop_iterations > 3:
                         logger.info(
@@ -643,7 +681,9 @@ class WorkflowManager:
                     break
 
                 # Check if no more replanning is needed
-                if not self._should_replan(version.steps, completed_steps, failed_steps):
+                if not self._should_replan(
+                    version.steps, completed_steps, failed_steps
+                ):
                     break
 
             # Return final result
@@ -697,7 +737,9 @@ class WorkflowManager:
             # Select the best agent for this task
             context = {"workflow_id": workflow_id, "step_name": task.name}
             agent_id = await self.agent_selector.select_agent(
-                task, self.agents, context,
+                task,
+                self.agents,
+                context,
             )
 
             if not agent_id:
@@ -726,11 +768,16 @@ class WorkflowManager:
             # Record execution for future agent selection
             success = result.get("status") == "success"
             self.agent_selector.record_execution_result(
-                agent_id, task, success, execution_time,
+                agent_id,
+                task,
+                success,
+                execution_time,
             )
 
             # Collect metrics for the completed task
-            collected_metrics = self.metrics_collector.end_task(agent_id, task.id, result)
+            collected_metrics = self.metrics_collector.end_task(
+                agent_id, task.id, result
+            )
 
             # Add execution metrics
             if "metrics" not in result:
@@ -741,7 +788,9 @@ class WorkflowManager:
 
             # Record step result in workflow history
             await self.workflow_history.record_step_result(
-                execution_id=execution_id, step_name=task.name, result=result,
+                execution_id=execution_id,
+                step_name=task.name,
+                result=result,
             )
 
             # Record step result in branch manager for conditional branching
@@ -756,7 +805,9 @@ class WorkflowManager:
             # Record error in workflow history
             error_result = {"status": "failed", "error": str(e)}
             await self.workflow_history.record_step_result(
-                execution_id=execution_id, step_name=task.name, result=error_result,
+                execution_id=execution_id,
+                step_name=task.name,
+                result=error_result,
             )
 
             # Record error in branch manager for conditional branching
@@ -834,7 +885,9 @@ class WorkflowManager:
 
         # If critical steps have failed, we should replan
         critical_failures = any(
-            step.task.critical for step in workflow_steps if step.task.name in failed_steps
+            step.task.critical
+            for step in workflow_steps
+            if step.task.name in failed_steps
         )
         if critical_failures:
             logger.info("Critical step failures detected, replanning needed")
@@ -913,7 +966,9 @@ class WorkflowManager:
         while changed:
             changed = False
             for step_name, deps in dependency_map.items():
-                if step_name not in affected_steps and deps.intersection(affected_steps):
+                if step_name not in affected_steps and deps.intersection(
+                    affected_steps
+                ):
                     affected_steps.add(step_name)
                     changed = True
 
@@ -965,10 +1020,13 @@ class WorkflowManager:
 
             # Ensure all dependencies are still valid
             replanned_steps = self._validate_and_fix_dependencies(
-                replanned_steps, completed_steps,
+                replanned_steps,
+                completed_steps,
             )
 
-            logger.info(f"Successfully replanned workflow with {len(replanned_steps)} steps")
+            logger.info(
+                f"Successfully replanned workflow with {len(replanned_steps)} steps"
+            )
             return replanned_steps
 
         except Exception as e:
@@ -1025,7 +1083,9 @@ class WorkflowManager:
         return new_step
 
     def _validate_and_fix_dependencies(
-        self, steps: list[WorkflowStep], completed_steps: list[str],
+        self,
+        steps: list[WorkflowStep],
+        completed_steps: list[str],
     ) -> list[WorkflowStep]:
         """Validate and fix dependencies in replanned steps.
 
@@ -1044,9 +1104,7 @@ class WorkflowManager:
         fixed_steps = []
         for step in steps:
             # Filter out dependencies that no longer exist
-            valid_dependencies = [
-                dep for dep in step.dependencies if dep in step_names
-            ]
+            valid_dependencies = [dep for dep in step.dependencies if dep in step_names]
 
             # Create a new step with valid dependencies
             new_step = WorkflowStep(
@@ -1086,7 +1144,9 @@ class WorkflowManager:
             with open(templates_path, "w") as f:
                 json.dump(serialized_templates, f, indent=2)
 
-            logger.debug(f"Persisted {len(serialized_templates)} templates to {templates_path}")
+            logger.debug(
+                f"Persisted {len(serialized_templates)} templates to {templates_path}"
+            )
 
         except Exception as e:
             logger.error(f"Error persisting templates: {str(e)}")
@@ -1100,7 +1160,9 @@ class WorkflowManager:
         if not self.persistence_path:
             return
 
-        state_path = os.path.join(self.persistence_path, f"execution_{execution_id}.json")
+        state_path = os.path.join(
+            self.persistence_path, f"execution_{execution_id}.json"
+        )
 
         try:
             # Get workflow state
@@ -1163,11 +1225,15 @@ class WorkflowManager:
                         metadata=template_data["metadata"],
                     )
                     template.template_id = template_data["template_id"]
-                    template.created_at = datetime.fromisoformat(template_data["created_at"])
+                    template.created_at = datetime.fromisoformat(
+                        template_data["created_at"]
+                    )
 
                     self.templates[template.template_id] = template
 
-                logger.info(f"Loaded {len(self.templates)} templates from {templates_path}")
+                logger.info(
+                    f"Loaded {len(self.templates)} templates from {templates_path}"
+                )
 
             except Exception as e:
                 logger.error(f"Error loading templates: {str(e)}")

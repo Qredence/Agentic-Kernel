@@ -25,18 +25,18 @@ def create_request(
     request_id: str | int | None = None,
 ) -> JSONRPCRequest:
     """Create a JSON-RPC request.
-    
+
     Args:
         method: The method to call
         params: The parameters for the method
         request_id: The request ID (generated if not provided)
-        
+
     Returns:
         A JSON-RPC request object
     """
     if request_id is None:
         request_id = str(uuid.uuid4())
-        
+
     return JSONRPCRequest(
         jsonrpc="2.0",
         method=method,
@@ -50,11 +50,11 @@ def create_notification(
     params: dict[str, Any] | list[Any],
 ) -> JSONRPCRequest:
     """Create a JSON-RPC notification (a request without an ID).
-    
+
     Args:
         method: The method to call
         params: The parameters for the method
-        
+
     Returns:
         A JSON-RPC notification object
     """
@@ -71,11 +71,11 @@ def create_success_response(
     request_id: str | int,
 ) -> JSONRPCResponse:
     """Create a successful JSON-RPC response.
-    
+
     Args:
         result: The result of the method call
         request_id: The ID of the request being responded to
-        
+
     Returns:
         A JSON-RPC response object
     """
@@ -93,13 +93,13 @@ def create_error_response(
     request_id: str | int | None = None,
 ) -> JSONRPCResponse:
     """Create an error JSON-RPC response.
-    
+
     Args:
         error_code: The error code
         error_message: The error message
         error_data: Additional error data
         request_id: The ID of the request being responded to
-        
+
     Returns:
         A JSON-RPC response object
     """
@@ -114,12 +114,14 @@ def create_error_response(
     )
 
 
-def parse_request(request_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCRequest | None, JSONRPCResponse | None]:
+def parse_request(
+    request_data: str | bytes | dict[str, Any],
+) -> tuple[JSONRPCRequest | None, JSONRPCResponse | None]:
     """Parse a JSON-RPC request.
-    
+
     Args:
         request_data: The request data to parse
-        
+
     Returns:
         A tuple of (request, error_response). If parsing succeeds, request will be a JSONRPCRequest
         and error_response will be None. If parsing fails, request will be None and error_response
@@ -138,7 +140,7 @@ def parse_request(request_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCRe
             )
     else:
         request_dict = request_data
-    
+
     # Validate request
     try:
         # Check for required fields
@@ -148,21 +150,21 @@ def parse_request(request_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCRe
                 "Missing 'jsonrpc' field",
                 request_id=request_dict.get("id"),
             )
-        
+
         if request_dict["jsonrpc"] != "2.0":
             return None, create_error_response(
                 A2AErrorCode.INVALID_REQUEST,
                 f"Invalid jsonrpc version: {request_dict['jsonrpc']}",
                 request_id=request_dict.get("id"),
             )
-        
+
         if "method" not in request_dict:
             return None, create_error_response(
                 A2AErrorCode.INVALID_REQUEST,
                 "Missing 'method' field",
                 request_id=request_dict.get("id"),
             )
-        
+
         # Create request object
         request = JSONRPCRequest(
             jsonrpc=request_dict["jsonrpc"],
@@ -170,9 +172,9 @@ def parse_request(request_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCRe
             params=request_dict.get("params", {}),
             id=request_dict.get("id"),
         )
-        
+
         return request, None
-    
+
     except Exception as e:
         logger.error(f"Failed to validate JSON-RPC request: {e}")
         return None, create_error_response(
@@ -182,12 +184,14 @@ def parse_request(request_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCRe
         )
 
 
-def parse_response(response_data: str | bytes | dict[str, Any]) -> tuple[JSONRPCResponse | None, Exception | None]:
+def parse_response(
+    response_data: str | bytes | dict[str, Any],
+) -> tuple[JSONRPCResponse | None, Exception | None]:
     """Parse a JSON-RPC response.
-    
+
     Args:
         response_data: The response data to parse
-        
+
     Returns:
         A tuple of (response, error). If parsing succeeds, response will be a JSONRPCResponse
         and error will be None. If parsing fails, response will be None and error will be an Exception.
@@ -201,25 +205,27 @@ def parse_response(response_data: str | bytes | dict[str, Any]) -> tuple[JSONRPC
             return None, e
     else:
         response_dict = response_data
-    
+
     # Validate response
     try:
         # Check for required fields
         if "jsonrpc" not in response_dict:
             return None, ValueError("Missing 'jsonrpc' field")
-        
+
         if response_dict["jsonrpc"] != "2.0":
-            return None, ValueError(f"Invalid jsonrpc version: {response_dict['jsonrpc']}")
-        
+            return None, ValueError(
+                f"Invalid jsonrpc version: {response_dict['jsonrpc']}"
+            )
+
         if "id" not in response_dict:
             return None, ValueError("Missing 'id' field")
-        
+
         if "result" not in response_dict and "error" not in response_dict:
             return None, ValueError("Missing 'result' or 'error' field")
-        
+
         if "result" in response_dict and "error" in response_dict:
             return None, ValueError("Both 'result' and 'error' fields are present")
-        
+
         # Create response object
         if "result" in response_dict:
             response = JSONRPCResponse(
@@ -231,13 +237,13 @@ def parse_response(response_data: str | bytes | dict[str, Any]) -> tuple[JSONRPC
             error_dict = response_dict["error"]
             if not isinstance(error_dict, dict):
                 return None, ValueError(f"Invalid error object: {error_dict}")
-            
+
             if "code" not in error_dict:
                 return None, ValueError("Missing 'code' field in error object")
-            
+
             if "message" not in error_dict:
                 return None, ValueError("Missing 'message' field in error object")
-            
+
             response = JSONRPCResponse(
                 jsonrpc=response_dict["jsonrpc"],
                 error=JSONRPCError(
@@ -247,9 +253,9 @@ def parse_response(response_data: str | bytes | dict[str, Any]) -> tuple[JSONRPC
                 ),
                 id=response_dict["id"],
             )
-        
+
         return response, None
-    
+
     except Exception as e:
         logger.error(f"Failed to validate JSON-RPC response: {e}")
         return None, e

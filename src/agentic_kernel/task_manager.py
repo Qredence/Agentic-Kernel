@@ -15,17 +15,17 @@ Typical usage:
     task_ledger = TaskLedger()
     progress_ledger = ProgressLedger()
     manager = TaskManager(task_ledger, progress_ledger)
-    
+
     # Create and track a task
     task = manager.create_task(
         description="Process data",
         agent_type="DataProcessor",
         parameters={"input_file": "data.csv"}
     )
-    
+
     # Update task status
     manager.update_task_status(task.id, "running")
-    
+
     # Complete task
     manager.complete_task(task.id, {"result": "success"})
     ```

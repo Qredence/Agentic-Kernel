@@ -193,7 +193,7 @@ class TaskLedger:
 
                 # Get all completed tasks
                 completed_tasks = await ledger.get_tasks_by_status("completed")
-                
+
                 # Get all tasks
                 all_tasks = await ledger.get_tasks_by_status()
         """

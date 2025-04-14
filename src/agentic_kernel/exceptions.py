@@ -66,14 +66,14 @@ class AgenticKernelError(Exception):
     """
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = None,
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         category: ErrorCategory = ErrorCategory.SYSTEM,
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = False
+        retry_possible: bool = False,
     ) -> None:
         """Initialize the exception.
 
@@ -108,11 +108,12 @@ class AgenticKernelError(Exception):
             "category": self.category.value,
             "details": self.details,
             "recovery_hints": self.recovery_hints,
-            "retry_possible": self.retry_possible
+            "retry_possible": self.retry_possible,
         }
 
 
 # Task-related exceptions
+
 
 class TaskNotFoundError(AgenticKernelError):
     """Raised when attempting to access a task that doesn't exist.
@@ -132,11 +133,11 @@ class TaskNotFoundError(AgenticKernelError):
     """
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "TASK_NOT_FOUND",
         details: Optional[Dict[str, Any]] = None,
-        recovery_hints: Optional[List[str]] = None
+        recovery_hints: Optional[List[str]] = None,
     ) -> None:
         """Initialize the exception.
 
@@ -147,13 +148,13 @@ class TaskNotFoundError(AgenticKernelError):
             recovery_hints: Suggestions for recovering from the error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             category=ErrorCategory.TASK,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=False
+            retry_possible=False,
         )
 
 
@@ -176,12 +177,12 @@ class TaskExecutionError(AgenticKernelError):
     """
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "TASK_EXECUTION_ERROR",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -193,29 +194,30 @@ class TaskExecutionError(AgenticKernelError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             category=ErrorCategory.TASK,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
 # Agent-related exceptions
 
+
 class AgentError(AgenticKernelError):
     """Raised for errors related to agent operations (e.g., registration, configuration)."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "AGENT_ERROR",
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = False
+        retry_possible: bool = False,
     ) -> None:
         """Initialize the exception.
 
@@ -228,13 +230,13 @@ class AgentError(AgenticKernelError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=severity,
             category=ErrorCategory.AGENT,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -242,11 +244,11 @@ class AgentNotFoundError(AgentError):
     """Raised when attempting to access an agent that doesn't exist."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "AGENT_NOT_FOUND",
         details: Optional[Dict[str, Any]] = None,
-        recovery_hints: Optional[List[str]] = None
+        recovery_hints: Optional[List[str]] = None,
     ) -> None:
         """Initialize the exception.
 
@@ -257,12 +259,12 @@ class AgentNotFoundError(AgentError):
             recovery_hints: Suggestions for recovering from the error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=False
+            retry_possible=False,
         )
 
 
@@ -270,11 +272,11 @@ class AgentCapabilityError(AgentError):
     """Raised when an agent lacks a required capability."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "AGENT_CAPABILITY_ERROR",
         details: Optional[Dict[str, Any]] = None,
-        recovery_hints: Optional[List[str]] = None
+        recovery_hints: Optional[List[str]] = None,
     ) -> None:
         """Initialize the exception.
 
@@ -285,28 +287,29 @@ class AgentCapabilityError(AgentError):
             recovery_hints: Suggestions for recovering from the error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=False
+            retry_possible=False,
         )
 
 
 # Communication-related exceptions
 
+
 class CommunicationError(AgenticKernelError):
     """Base class for communication-related errors."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "COMMUNICATION_ERROR",
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -319,13 +322,13 @@ class CommunicationError(AgenticKernelError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=severity,
             category=ErrorCategory.COMMUNICATION,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -333,12 +336,12 @@ class MessageDeliveryError(CommunicationError):
     """Raised when a message cannot be delivered to its recipient."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "MESSAGE_DELIVERY_ERROR",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -350,12 +353,12 @@ class MessageDeliveryError(CommunicationError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -363,12 +366,12 @@ class MessageTimeoutError(CommunicationError):
     """Raised when a message response times out."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "MESSAGE_TIMEOUT_ERROR",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -380,12 +383,12 @@ class MessageTimeoutError(CommunicationError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.WARNING,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -393,12 +396,12 @@ class MessageValidationError(CommunicationError):
     """Raised when a message fails validation."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "MESSAGE_VALIDATION_ERROR",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = False
+        retry_possible: bool = False,
     ) -> None:
         """Initialize the exception.
 
@@ -410,12 +413,12 @@ class MessageValidationError(CommunicationError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -423,12 +426,12 @@ class ProtocolError(CommunicationError):
     """Raised when there's an error in the communication protocol."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "PROTOCOL_ERROR",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = False
+        retry_possible: bool = False,
     ) -> None:
         """Initialize the exception.
 
@@ -440,28 +443,29 @@ class ProtocolError(CommunicationError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
 # Consensus-related exceptions
 
+
 class ConsensusError(AgenticKernelError):
     """Base class for consensus-related errors."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "CONSENSUS_ERROR",
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -474,13 +478,13 @@ class ConsensusError(AgenticKernelError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=severity,
             category=ErrorCategory.CONSENSUS,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -488,12 +492,12 @@ class ConsensusNotReachedError(ConsensusError):
     """Raised when consensus cannot be reached."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "CONSENSUS_NOT_REACHED",
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = True
+        retry_possible: bool = True,
     ) -> None:
         """Initialize the exception.
 
@@ -505,28 +509,29 @@ class ConsensusNotReachedError(ConsensusError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.WARNING,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
 # System-level exceptions
 
+
 class SystemError(AgenticKernelError):
     """Raised for general system-level errors (e.g., configuration, initialization)."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "SYSTEM_ERROR",
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         details: Optional[Dict[str, Any]] = None,
         recovery_hints: Optional[List[str]] = None,
-        retry_possible: bool = False
+        retry_possible: bool = False,
     ) -> None:
         """Initialize the exception.
 
@@ -539,13 +544,13 @@ class SystemError(AgenticKernelError):
             retry_possible: Whether retry is possible for this error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=severity,
             category=ErrorCategory.SYSTEM,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=retry_possible
+            retry_possible=retry_possible,
         )
 
 
@@ -553,11 +558,11 @@ class ConfigurationError(SystemError):
     """Raised when there's an error in the system configuration."""
 
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: str = "CONFIGURATION_ERROR",
         details: Optional[Dict[str, Any]] = None,
-        recovery_hints: Optional[List[str]] = None
+        recovery_hints: Optional[List[str]] = None,
     ) -> None:
         """Initialize the exception.
 
@@ -568,10 +573,10 @@ class ConfigurationError(SystemError):
             recovery_hints: Suggestions for recovering from the error
         """
         super().__init__(
-            message, 
-            code, 
+            message,
+            code,
             severity=ErrorSeverity.ERROR,
             details=details,
             recovery_hints=recovery_hints,
-            retry_possible=False
+            retry_possible=False,
         )
