@@ -3,7 +3,7 @@
 This module sets up the core components and connects them to the Chainlit UI handlers.
 It provides:
 1. Environment configuration and initialization
-2. Chat agent setup with Azure OpenAI integration
+2. Chat agent setup with Gemini integration
 3. Chainlit UI handlers for chat interaction
 4. Task and progress management
 5. Database interaction utilities
@@ -19,7 +19,6 @@ Dependencies:
     - agentic_kernel: For AI model integration
     - pydantic: For configuration validation
     - python-dotenv: For environment variable management
-    - openai: For Azure OpenAI API integration
 """
 
 import logging
@@ -27,8 +26,6 @@ import os
 from typing import Dict, Optional
 
 from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI
-from pydantic import BaseModel
 
 # Try importing Chainlit, but only for the main execution block
 try:
@@ -47,7 +44,6 @@ from agentic_kernel.config import (
     AgentTeamConfig,
     ConfigLoader,
     LLMMapping,
-    env_config,
 )
 from agentic_kernel.ledgers.progress_ledger import ProgressLedger
 from agentic_kernel.ledgers.task_ledger import TaskLedger
@@ -65,27 +61,16 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 logger.info(".env file loaded (if exists).")
 
-
-class EnvironmentConfig(BaseModel):
-    """Configuration for the environment.
-
-    This model validates and stores essential environment configuration for Azure OpenAI
-    integration. It ensures all required fields are present and properly formatted.
-
-    Attributes:
-        azure_openai_endpoint (str): The full URL of the Azure OpenAI endpoint
-        azure_openai_api_key (str): The API key for Azure OpenAI authentication
-        azure_openai_api_version (str): The API version to use, defaults to latest stable
-    """
-
-    azure_openai_endpoint: str
-    azure_openai_api_key: str
-    azure_openai_api_version: str = "2023-12-01-preview"
-
+# Check for Gemini API Key
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+if not gemini_api_key:
+    logger.warning("GEMINI_API_KEY environment variable not set.")
+else:
+    logger.info("GEMINI_API_KEY found.")
 
 # --- Constants ---
-DEPLOYMENT_NAMES = {"Fast": "gpt-4o-mini", "Max": "gpt-4o"}
-DEFAULT_DEPLOYMENT = DEPLOYMENT_NAMES.get("Fast", "gpt-4o-mini")
+deployment_names = {"Fast": "gemini-1.5-flash", "Max": "gemini-1.5-pro"}
+default_deployment = deployment_names.get("Fast", "gemini-1.5-flash")
 
 # --- Core Initialization ---
 try:
@@ -106,28 +91,10 @@ progress_ledger = ProgressLedger()
 task_manager = TaskManager(task_ledger, progress_ledger)
 logger.info("TaskManager initialized with task and progress ledgers.")
 
-# Initialize environment config
-env_config = EnvironmentConfig(
-    azure_openai_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
-    azure_openai_api_key=os.getenv("AZURE_OPENAI_API_KEY", ""),
-    azure_openai_api_version=os.getenv(
-        "AZURE_OPENAI_API_VERSION", "2023-12-01-preview"
-    ),
-)
-
-# Initialize Azure OpenAI client
-client = AsyncAzureOpenAI(
-    api_key=env_config.azure_openai_api_key,
-    api_version=env_config.azure_openai_api_version,
-    azure_endpoint=env_config.azure_openai_endpoint,
-)
-
 # Initialize agent system
 agent_system = {
     "config_loader": config_loader,
     "task_manager": task_manager,
-    "env_config": env_config,
-    "client": client,
 }
 
 # Store components in handlers module
@@ -147,8 +114,8 @@ if not config_loader.config.default_team:
                 type="ChatAgent",
                 description="Primary chat agent",
                 llm_mapping=LLMMapping(
-                    model=DEFAULT_DEPLOYMENT,
-                    endpoint="azure_openai",
+                    model=default_deployment,
+                    endpoint="gemini",
                     temperature=0.7,
                     max_tokens=2000,
                 ),
@@ -173,7 +140,6 @@ async def on_chat_start() -> None:
         # Create chat agent with agent system
         agent = ChatAgent(
             config=config_loader.get_agent_config("chat"),
-            client=agent_system["client"],  # Use the client from agent_system
             config_loader=config_loader,
         )
 
@@ -194,7 +160,7 @@ async def on_chat_start() -> None:
 
 def get_chat_profile(profile_name: Optional[str] = None) -> Dict[str, str]:
     """Get chat profile configuration based on profile name."""
-    deployment = DEPLOYMENT_NAMES.get(profile_name, DEFAULT_DEPLOYMENT)
+    deployment = deployment_names.get(profile_name, default_deployment)
     return {"model": deployment}
 
 

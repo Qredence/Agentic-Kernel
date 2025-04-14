@@ -51,10 +51,10 @@ dependencies = [
     "openai>=1.72.0,<1.73.0",
     "langchain>=0.0.309,<1.0.0",
     "mem0ai>=0.1.90,<0.2.0",
-    "google-generativeai>=0.5.0,<0.6.0",
+    "google-generativeai>=0.5.4",
+    "pyautogen>=0.2.26,<0.3.0",
     # UI/Interaction dependencies
-    # Temporarily commented out due to dependency conflicts with google-generativeai
-    # "chainlit>=2.4.400,<3.0.0",
+    "chainlit>=2.0.0,<3.0.0",
     "playwright>=1.51.0,<2.0.0",
     "pyautogui>=0.9.54,<1.0.0",
     "fastapi>=0.115.12,<0.116.0",
@@ -74,8 +74,7 @@ dependencies = [
     "networkx>=3.4.2,<3.5.0",
     # CLI tools
     "typer[all]>=0.15.2,<1.0.0",
-    "google-adk>=0.1.1,<0.2.0",
-    "ruff>=0.11.4,<1.0.0",
+    "google-adk>=0.1.1,<0.2.0",    "ruff>=0.11.4,<1.0.0",
     "coverage>=7.4.0,<8.0.0",
     "isort>=5.13.2,<6.0.0",
     "pytest-asyncio>=0.26.0,<0.27.0",
@@ -100,11 +99,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/qredence/agentic-kernel"
-Documentation = "https://github.com/qredence/agentic-kernel/docs"
-Repository = "https://github.com/qredence/agentic-kernel.git"
-"Bug Tracker" = "https://github.com/qredence/agentic-kernel/issues"
-Changelog = "https://github.com/qredence/agentic-kernel/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/qredence/agentickernel"
+Documentation = "https://github.com/qredence/agentickernel/docs"
+Repository = "https://github.com/qredence/agentickernel.git"
+"Bug Tracker" = "https://github.com/qredence/agentickernel/issues"
+Changelog = "https://github.com/qredence/agentickernel/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agentic_kernel"]
