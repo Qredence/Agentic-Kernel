@@ -73,7 +73,7 @@ class ADKA2AAgent:
         import socket
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
+            s.bind(("localhost", 0))
             return s.getsockname()[1]
 
     def _create_agent_card(self) -> AgentCard:
