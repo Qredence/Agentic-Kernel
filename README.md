@@ -5,7 +5,8 @@
 
 
 <div align="center">
-
+  
+[![Weave Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fapp.workweave.ai%2Fapi%2Frepository%2Fbadge%2Forg_X84uIR347D2freSZkxeu4S9S%2F959239750&cacheSeconds=3600)](https://app.workweave.ai/reports/repository/org_X84uIR347D2freSZkxeu4S9S/959239750) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://badge.fury.io/py/agentic-kernel.svg)](https://badge.fury.io/py/agentic-kernel)
