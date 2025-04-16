@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.2.20"
+version = "0.2.30dev1"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"}

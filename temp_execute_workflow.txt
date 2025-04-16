@@ -1,0 +1,14 @@
+    async def execute_workflow(
+        self, workflow_id: str, version_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Execute a workflow.
+
+        Args:
+            workflow_id: ID of the workflow to execute
+            version_id: Optional version ID (uses current version if not specified)
+
+        Returns:
+            Dictionary containing workflow execution results
+        """
+        # Delegate to workflow executor
+        return await self.workflow_executor.execute_workflow(workflow_id, version_id)

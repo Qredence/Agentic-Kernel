@@ -21,7 +21,7 @@ resolution-markers = [
 
 [[package]]
 name = "agentic-kernel"
-version = "0.2.20"
+version = "0.2.30.dev1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
