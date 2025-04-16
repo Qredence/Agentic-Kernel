@@ -1,23 +1,31 @@
-"""Orchestrator Agent for managing multi-agent workflows."""
+"""Orchestrator Agent for managing multi-agent workflows.
 
-import asyncio
+This module provides a wrapper around the core OrchestratorAgent implementation
+in the orchestrator.core module. It maintains backward compatibility with code
+that imports OrchestratorAgent from the agents module.
+"""
+
 import logging
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import psutil
-
 from ..config_types import AgentConfig
 from ..ledgers import PlanStep, ProgressEntry, ProgressLedger, TaskLedger
-from ..types import Task
+from ..orchestrator.core import OrchestratorAgent as CoreOrchestratorAgent
+from ..types import Task, WorkflowStep
 from .base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
 class OrchestratorAgent(BaseAgent):
-    """Agent responsible for orchestrating multi-agent workflows."""
+    """Agent responsible for orchestrating multi-agent workflows.
+
+    This class is a wrapper around the core OrchestratorAgent implementation
+    in the orchestrator.core module. It delegates most of its functionality
+    to the core implementation while maintaining backward compatibility.
+    """
 
     def __init__(
         self,
@@ -25,18 +33,26 @@ class OrchestratorAgent(BaseAgent):
         task_ledger: TaskLedger,
         progress_ledger: ProgressLedger,
     ):
-        """Initialize the orchestrator agent."""
+        """Initialize the orchestrator agent.
+
+        Args:
+            config: Configuration for the agent
+            task_ledger: Ledger for tracking tasks
+            progress_ledger: Ledger for tracking workflow progress
+        """
         super().__init__(config)
+
+        # Create the core orchestrator agent
+        self._core_orchestrator = CoreOrchestratorAgent(
+            config=config,
+            task_ledger=task_ledger,
+            progress_ledger=progress_ledger,
+        )
+
+        # Store references to ledgers for backward compatibility
         self.task_ledger = task_ledger
         self.progress_ledger = progress_ledger
         self.available_agents: Dict[str, BaseAgent] = {}
-
-        # Default configuration
-        self.config = config or {
-            "max_planning_attempts": 3,
-            "reflection_threshold": 0.7,
-            "max_task_retries": 2,
-        }
 
     async def execute(self, task: Task) -> Dict[str, Any]:
         """Execute a task by orchestrating a workflow.
@@ -48,23 +64,45 @@ class OrchestratorAgent(BaseAgent):
             Dictionary containing workflow execution results
         """
         try:
-            result = await self.execute_workflow(
-                self.task_ledger,
-                self.progress_ledger,
-                allow_parallel=task.parameters.get("allow_parallel", False),
+            # Create a workflow step from the task
+            workflow_step = WorkflowStep(
+                task=task,
+                parallel=task.parameters.get("allow_parallel", False)
             )
+
+            # Create a workflow with the step
+            workflow_id = await self._core_orchestrator.create_workflow(
+                name=f"Task: {task.name}",
+                description=task.description or "Task execution workflow",
+                steps=[workflow_step],
+                creator="orchestrator_agent"
+            )
+
+            # Execute the workflow
+            result = await self._core_orchestrator.execute_workflow(workflow_id)
+
+            # Map the result to the expected format
             return {
-                "status": result["status"],
+                "status": result.get("status", "error"),
                 "output": result.get("output", ""),
                 "error": result.get("error", None),
                 "metrics": result.get("metrics", {}),
             }
         except Exception as e:
+            logger.error(f"Error executing task: {str(e)}")
             return {"status": "error", "error": str(e), "output": "", "metrics": {}}
 
     def register_agent(self, agent: BaseAgent) -> None:
-        """Register an agent with the orchestrator."""
+        """Register an agent with the orchestrator.
+
+        Args:
+            agent: Agent instance to register
+        """
+        # Store in local dictionary for backward compatibility
         self.available_agents[agent.__class__.__name__] = agent
+
+        # Delegate to core implementation
+        self._core_orchestrator.register_agent(agent)
 
     async def set_working_directory(self, working_dir: str) -> None:
         """Set the working directory for file operations.
@@ -77,9 +115,16 @@ class OrchestratorAgent(BaseAgent):
         self.working_dir = working_dir
 
         # Propagate to all registered agents that support working directories
+        # Use both local agents (for backward compatibility) and core agents
         for agent in self.available_agents.values():
             if hasattr(agent, "set_working_directory"):
                 await agent.set_working_directory(working_dir)
+
+        # Also propagate to agents registered with the core orchestrator
+        if hasattr(self._core_orchestrator, "agents"):
+            for agent in self._core_orchestrator.agents.values():
+                if hasattr(agent, "set_working_directory"):
+                    await agent.set_working_directory(working_dir)
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get metrics collected during workflow execution.
@@ -87,9 +132,15 @@ class OrchestratorAgent(BaseAgent):
         Returns:
             Dictionary of metrics
         """
-        # If progress_ledger is available, return its metrics
-        if hasattr(self, "progress_ledger") and self.progress_ledger:
+        # If progress_ledger is available, return its metrics (for backward compatibility)
+        if hasattr(self, "progress_ledger") and self.progress_ledger and hasattr(self.progress_ledger, "metrics"):
             return self.progress_ledger.metrics
+
+        # Try to get system health metrics from core implementation
+        if hasattr(self._core_orchestrator, "get_system_health"):
+            system_health = self._core_orchestrator.get_system_health()
+            if system_health:
+                return system_health
 
         # Otherwise return basic metrics
         return {
@@ -103,192 +154,77 @@ class OrchestratorAgent(BaseAgent):
         progress_ledger: ProgressLedger,
         allow_parallel: bool = False,
     ) -> Dict[str, Any]:
-        """Execute a workflow based on the task ledger and progress ledger."""
-        progress_ledger.current_status = "in_progress"
-        completed_steps = []
-        retry_count = 0
-        replanning_events = []
-        parallel_executions = 0
-        metrics = {}
-        success_rate = 1.0
+        """Execute a workflow based on the task ledger and progress ledger.
 
+        This method creates a workflow from the task ledger and executes it
+        using the core implementation.
+
+        Args:
+            task_ledger: Ledger containing the task plan
+            progress_ledger: Ledger for tracking progress
+            allow_parallel: Whether to allow parallel execution of steps
+
+        Returns:
+            Dictionary containing workflow execution results
+        """
         try:
-            while True:
-                # Get executable steps
-                executable_steps = self._get_executable_steps(
-                    task_ledger.plan, completed_steps
+            # Create workflow steps from the task ledger plan
+            steps = []
+            for plan_step in task_ledger.plan:
+                # Create a Task object for the step
+                task = Task(
+                    name=f"Step {plan_step.step_id}",
+                    description=plan_step.description,
+                    agent_type="auto",  # Let the orchestrator select the agent
+                    parameters=plan_step.context or {},
                 )
-                if not executable_steps:
-                    if not task_ledger.plan:  # No steps at all
-                        break
-                    if all(step.status == "completed" for step in task_ledger.plan):
-                        break  # All steps completed
-                    # If we have steps but none are executable, evaluate progress
-                    try:
-                        progress = await self._evaluate_progress(
-                            task_ledger, completed_steps
-                        )
-                        success_rate = progress.get("success_rate", 1.0)
-                        if progress["needs_replanning"]:
-                            # Attempt replanning
-                            new_plan = await self._replan_workflow(
-                                task_ledger, progress["suggestions"]
-                            )
-                            if new_plan:
-                                task_ledger.plan = new_plan
-                                replanning_events.append(
-                                    {
-                                        "timestamp": datetime.now().isoformat(),
-                                        "reason": "Progress evaluation",
-                                    }
-                                )
-                                continue  # Try again with new plan
-                    except Exception as e:
-                        return {
-                            "status": "error",
-                            "error": str(e),
-                            "completed_steps": completed_steps,
-                            "retry_count": retry_count,
-                            "replanning_events": replanning_events,
-                            "parallel_executions": parallel_executions,
-                            "metrics": metrics,
-                            "success_rate": success_rate,
-                        }
-                    # If we can't replan, we're stuck
-                    return {
-                        "status": "error",
-                        "error": "No executable steps available and replanning failed",
-                        "completed_steps": completed_steps,
-                        "retry_count": retry_count,
-                        "replanning_events": replanning_events,
-                        "parallel_executions": parallel_executions,
-                        "metrics": metrics,
-                        "success_rate": success_rate,
-                    }
 
-                # Execute steps (parallel if allowed)
-                if allow_parallel and len(executable_steps) > 1:
-                    tasks = [self._execute_step(step) for step in executable_steps]
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
-                    parallel_executions += 1
-                else:
-                    results = []
-                    for step in executable_steps:
-                        result = await self._execute_step(step)
-                        results.append(result)
+                # Create a WorkflowStep object
+                workflow_step = WorkflowStep(
+                    task=task,
+                    dependencies=plan_step.depends_on,
+                    parallel=allow_parallel,
+                )
 
-                # Process results
-                for step, result in zip(executable_steps, results):
-                    if isinstance(result, Exception) or (
-                        isinstance(result, dict) and result.get("status") == "error"
-                    ):
-                        # Handle step failure
-                        error_msg = (
-                            str(result)
-                            if isinstance(result, Exception)
-                            else result.get("error", "Unknown error")
-                        )
-                        retry_result = await self._handle_step_failure(
-                            step, error_msg, retry_count
-                        )
-                        if retry_result["status"] == "error":
-                            return {
-                                "status": "error",
-                                "error": error_msg,
-                                "completed_steps": completed_steps,
-                                "retry_count": retry_count,
-                                "replanning_events": replanning_events,
-                                "parallel_executions": parallel_executions,
-                                "metrics": metrics,
-                                "success_rate": success_rate,
-                            }
-                        retry_count = retry_result["retry_count"]
-                        if retry_result.get("replanned"):
-                            replanning_events.append(
-                                {
-                                    "step": step.step_id,
-                                    "timestamp": datetime.now().isoformat(),
-                                }
-                            )
-                        if retry_result["status"] == "retry":
-                            step.status = "pending"  # Reset status for retry
-                            continue
-                    else:
-                        step.status = "completed"
-                        completed_steps.append(step.step_id)
-                        # Collect metrics from successful execution
-                        if isinstance(result, dict) and "metrics" in result:
-                            metrics = {**metrics, **result["metrics"]}
+                steps.append(workflow_step)
 
-                try:
-                    # Evaluate progress
-                    progress = await self._evaluate_progress(
-                        task_ledger, completed_steps
-                    )
-                    success_rate = progress.get("success_rate", 1.0)
-                    if progress["needs_replanning"]:
-                        # Attempt replanning
-                        new_plan = await self._replan_workflow(
-                            task_ledger, progress["suggestions"]
-                        )
-                        if new_plan:
-                            task_ledger.plan = new_plan
-                            replanning_events.append(
-                                {
-                                    "timestamp": datetime.now().isoformat(),
-                                    "reason": "Progress evaluation",
-                                }
-                            )
-                        else:
-                            return {
-                                "status": "error",
-                                "error": "Failed to replan workflow",
-                                "completed_steps": completed_steps,
-                                "retry_count": retry_count,
-                                "replanning_events": replanning_events,
-                                "parallel_executions": parallel_executions,
-                                "metrics": metrics,
-                                "success_rate": success_rate,
-                            }
-                except Exception as e:
-                    return {
-                        "status": "error",
-                        "error": str(e),
-                        "completed_steps": completed_steps,
-                        "retry_count": retry_count,
-                        "replanning_events": replanning_events,
-                        "parallel_executions": parallel_executions,
-                        "metrics": metrics,
-                        "success_rate": success_rate,
-                    }
+            # Create a workflow with the steps
+            workflow_id = await self._core_orchestrator.create_workflow(
+                name=f"Workflow: {task_ledger.goal}",
+                description=task_ledger.goal,
+                steps=steps,
+                creator="orchestrator_agent"
+            )
 
-            # All steps completed
-            progress_ledger.current_status = "completed"
-            return {
-                "status": "success",
-                "completed_steps": completed_steps,
-                "retry_count": retry_count,
-                "replanning_events": replanning_events,
-                "parallel_executions": parallel_executions,
-                "success_rate": success_rate,
-                "metrics": metrics,
-            }
+            # Execute the workflow
+            result = await self._core_orchestrator.execute_workflow(workflow_id)
+
+            # Update progress ledger
+            progress_ledger.current_status = result.get("status", "completed")
+
+            return result
 
         except Exception as e:
+            logger.error(f"Error executing workflow: {str(e)}")
             progress_ledger.current_status = "failed"
             return {
                 "status": "error",
                 "error": str(e),
-                "completed_steps": completed_steps,
-                "retry_count": retry_count,
-                "replanning_events": replanning_events,
-                "parallel_executions": parallel_executions,
-                "metrics": metrics,
-                "success_rate": success_rate,
+                "completed_steps": [],
+                "retry_count": 0,
+                "replanning_events": [],
+                "parallel_executions": 0,
+                "metrics": {},
+                "success_rate": 0.0,
             }
 
     async def _execute_step(self, step: PlanStep) -> Dict[str, Any]:
-        """Execute a single step in the workflow."""
+        """Execute a single step in the workflow.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         try:
             agent = await self._determine_agent_for_step(step)
             if not agent:
@@ -325,7 +261,12 @@ class OrchestratorAgent(BaseAgent):
             return {"status": "error", "error": str(e)}
 
     def _determine_agent_for_step(self, step: PlanStep) -> Optional[BaseAgent]:
-        """Determine which agent should handle a step based on its description."""
+        """Determine which agent should handle a step based on its description.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         # Simple keyword matching for now
         keywords = {
             "WebSurferAgent": ["research", "documentation", "web", "online"],
@@ -352,7 +293,12 @@ class OrchestratorAgent(BaseAgent):
     def _get_executable_steps(
         self, plan: List[PlanStep], completed_steps: List[str]
     ) -> List[PlanStep]:
-        """Get steps that can be executed based on their dependencies."""
+        """Get steps that can be executed based on their dependencies.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         executable = []
         for step in plan:
             if step.status != "completed" and step.step_id not in completed_steps:
@@ -363,7 +309,12 @@ class OrchestratorAgent(BaseAgent):
     async def _handle_step_failure(
         self, step: PlanStep, error: str, current_retry_count: int
     ) -> Dict[str, Any]:
-        """Handle a failed step execution."""
+        """Handle a failed step execution.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         if current_retry_count < self.config["max_task_retries"]:
             # Retry the step
             return {"status": "retry", "retry_count": current_retry_count + 1}
@@ -394,13 +345,23 @@ class OrchestratorAgent(BaseAgent):
     async def _evaluate_progress(
         self, task_ledger: TaskLedger, completed_steps: List[str]
     ) -> Dict[str, Any]:
-        """Evaluate the current progress and determine if replanning is needed."""
+        """Evaluate the current progress and determine if replanning is needed.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         return await self.llm.evaluate_progress(task_ledger, completed_steps)
 
     async def _replan_workflow(
         self, task_ledger: TaskLedger, suggestions: List[str]
     ) -> Optional[List[PlanStep]]:
-        """Replan the workflow based on the current state and suggestions."""
+        """Replan the workflow based on the current state and suggestions.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
+        """
         try:
             return await self.llm.replan_task(task_ledger, suggestions)
         except Exception as e:
@@ -411,6 +372,10 @@ class OrchestratorAgent(BaseAgent):
         self, goal: str, initial_context: Optional[Dict[str, Any]] = None
     ) -> TaskLedger:
         """Creates the initial TaskLedger based on the goal and context.
+
+        .. deprecated:: 0.2.0
+           This method is deprecated and will be removed in a future version.
+           It is kept for backward compatibility.
 
         Args:
             goal: The high-level goal to achieve
