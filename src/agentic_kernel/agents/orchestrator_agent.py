@@ -66,6 +66,37 @@ class OrchestratorAgent(BaseAgent):
         """Register an agent with the orchestrator."""
         self.available_agents[agent.__class__.__name__] = agent
 
+    async def set_working_directory(self, working_dir: str) -> None:
+        """Set the working directory for file operations.
+
+        Args:
+            working_dir: Path to the working directory
+        """
+        logger.info(f"Setting working directory to: {working_dir}")
+        # Store the working directory for future use
+        self.working_dir = working_dir
+
+        # Propagate to all registered agents that support working directories
+        for agent in self.available_agents.values():
+            if hasattr(agent, "set_working_directory"):
+                await agent.set_working_directory(working_dir)
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get metrics collected during workflow execution.
+
+        Returns:
+            Dictionary of metrics
+        """
+        # If progress_ledger is available, return its metrics
+        if hasattr(self, "progress_ledger") and self.progress_ledger:
+            return self.progress_ledger.metrics
+
+        # Otherwise return basic metrics
+        return {
+            "registered_agents": len(self.available_agents),
+            "timestamp": datetime.now().isoformat(),
+        }
+
     async def execute_workflow(
         self,
         task_ledger: TaskLedger,

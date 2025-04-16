@@ -24,9 +24,9 @@ import logging
 import os
 from typing import Dict, Optional
 
-from dotenv import load_dotenv
 import mesop as mp
-from mesop.components import text_input, text_area, button, container, markdown
+from dotenv import load_dotenv
+from mesop.components import button, container, markdown, text_area, text_input
 
 # Import core components
 from agentic_kernel.agents.chat_agent import ChatAgent

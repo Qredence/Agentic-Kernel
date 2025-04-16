@@ -66,10 +66,13 @@ def execute_workflow(
         # Create orchestrator
         orchestrator = OrchestratorAgent(
             config=config.get_agent_config("orchestrator"),
-            agents=list(selected_agents.values()),
             task_ledger=task_ledger,
             progress_ledger=progress_ledger,
         )
+
+        # Register agents with the orchestrator
+        for agent in selected_agents.values():
+            orchestrator.register_agent(agent)
 
         # Execute workflow
         asyncio.run(
@@ -100,19 +103,29 @@ async def _run_workflow(
 
         # Execute the workflow
         with console.status("[bold green]Executing workflow...") as status:
-            result = await orchestrator.execute_workflow(task)
+            # Create a task in the task ledger
+            task_ledger.goal = task
+
+            # Execute the workflow
+            result = await orchestrator.execute_workflow(
+                task_ledger=task_ledger,
+                progress_ledger=progress_ledger,
+                allow_parallel=True
+            )
 
             # Display results
             console.print("\n[bold]Workflow Results:[/bold]")
             console.print(f"Task: {task}")
-            console.print(f"Status: {result.status}")
+            console.print(f"Status: {result['status']}")
             console.print("\nSteps Executed:")
-            for step in result.steps:
-                console.print(f"- {step.name}: {step.status}")
+            for step_id in result.get('completed_steps', []):
+                step = next((s for s in task_ledger.plan if s.step_id == step_id), None)
+                if step:
+                    console.print(f"- {step.description}: completed")
 
-            if result.output:
+            if result.get('output'):
                 console.print("\nOutput:")
-                console.print(result.output)
+                console.print(result['output'])
 
             # Display metrics
             console.print("\n[bold]Metrics:[/bold]")

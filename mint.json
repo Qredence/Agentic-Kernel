@@ -1,0 +1,59 @@
+{
+  "name": "Agentic Kernel Docs",
+  "root": "docs",
+  "colors": {
+    "primary": "#0078D4",
+    "background": {
+      "light": "#ffffff",
+      "dark": "#18181b"
+    }
+  },
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": [
+        "README.md"
+      ]
+    },
+    {
+      "group": "Architecture",
+      "pages": [
+        "architecture/component_interaction.md"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "source/api/agentic_kernel.a2a.rst",
+        "source/api/agentic_kernel.adk_chat.rst",
+        "source/api/agentic_kernel.communication.rst"
+      ]
+    },
+    {
+      "group": "AgenticKernel",
+      "pages": [
+        "agentic-kernel/introduction.md",
+        "agentic-kernel/getting-started.md",
+        "agentic-kernel/architecture.md",
+        "agentic-kernel/concepts.md",
+        {
+          "group": "Guides",
+          "pages": [
+            "agentic-kernel/guides/usage-guide.md",
+            "agentic-kernel/guides/advanced.md",
+            "agentic-kernel/guides/agent-communication.md",
+            "agentic-kernel/guides/memory.md",
+            "agentic-kernel/guides/orchestrator.md",
+            "agentic-kernel/guides/plugins.md"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Comparisons",
+      "pages": [
+        "shared/kernel-vs-fleet.md"
+      ]
+    }
+  ]
+}

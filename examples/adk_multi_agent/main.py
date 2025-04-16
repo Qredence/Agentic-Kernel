@@ -30,11 +30,12 @@ async def main():
     task_manager = TaskManagerAgent(coordination_manager=coordination_manager)
     worker = WorkerAgent(coordination_manager=coordination_manager)
     validator = ValidatorAgent(
-        coordination_manager=coordination_manager, trust_manager=trust_manager
+        coordination_manager=coordination_manager,
+        trust_manager=trust_manager,
     )
 
     # Create a session
-    session = session_service.create_session(
+    session_service.create_session(
         state={},
         app_name="multi_agent_system",
         user_id="user1",
@@ -54,11 +55,11 @@ async def main():
     # Check if task was created and scheduled successfully (based on TaskManagerAgent changes)
     if not task_result or task_result.get("status") != "scheduled":
         logger.error(
-            f"Task Manager: Failed to create/schedule task. Result: {task_result}"
+            f"Task Manager: Failed to create/schedule task. Result: {task_result}",
         )
         return  # Stop execution if task creation failed
     logger.info(
-        f"Task Manager: Task {task_result['activity_id']} created and scheduled."
+        f"Task Manager: Task {task_result['activity_id']} created and scheduled.",
     )
 
     # Worker executes task
@@ -74,7 +75,7 @@ async def main():
     # Update trust metrics based on validation
     validation_successful = validation_result["status"] == "valid"
     logger.info(
-        f"Validator Agent: Updating trust for worker based on validation ({'Success' if validation_successful else 'Failure'})..."
+        f"Validator Agent: Updating trust for worker based on validation ({'Success' if validation_successful else 'Failure'})...",
     )
     trust_update = await validator.update_trust(
         agent_id="worker",  # Assuming worker agent's name/ID is 'worker'
