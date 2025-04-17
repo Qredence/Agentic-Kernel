@@ -111,7 +111,11 @@ Follow these steps to get Agentic Kernel up and running on your local machine.
 2. **Configure Environment Variables:** Ensure you have the necessary API keys set in your `.env` file (or the specific `.env` within the `adk_chat` directory if you prefer):
    ```
    OPENAI_API_KEY=your_openai_api_key
-   GOOGLE_API_KEY=your_google_api_key
+   GOOGLE_VERTIAI_API_KEY=your_google_vertai_api_key
+   GEMINI_API_KEY=your_google_ai_studio_key
+
+   # Note: The old GOOGLE_API_KEY is deprecated. Please migrate to GOOGLE_VERTIAI_API_KEY and GEMINI_API_KEY.
+
    ```
 
 ## Running the Example
@@ -222,7 +226,7 @@ bug fixes and improvements, and coding standards.
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
 
 ## 🐛 Debugging
 

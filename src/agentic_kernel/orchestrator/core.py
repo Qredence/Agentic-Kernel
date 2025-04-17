@@ -1,6 +1,12 @@
-"""Core orchestrator implementation for managing workflow execution."""
+"""Core orchestrator implementation for managing workflow execution.
+
+This module provides the OrchestratorAgent class, which coordinates the execution
+of workflows by delegating to specialized components for agent management,
+workflow execution, planning, and metrics collection.
+"""
 
 import logging
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -8,10 +14,13 @@ from ..agents import BaseAgent
 from ..config import AgentConfig
 from ..ledgers import ProgressLedger, TaskLedger
 from ..types import Task, WorkflowStep
-from .agent_selection import AgentSelector
-from .condition_evaluator import ConditionalBranchManager
+from .agent_manager import AgentManager
+from .workflow_executor import WorkflowExecutor
+from .workflow_planner import WorkflowPlanner
+from .metrics_manager import MetricsManager
 from .workflow_history import WorkflowHistory
 from .workflow_optimizer import WorkflowOptimizer
+from .condition_evaluator import ConditionalBranchManager
 from .agent_metrics import AgentMetricsCollector
 
 logger = logging.getLogger(__name__)
@@ -56,20 +65,32 @@ class OrchestratorAgent:
         self.config = config
         self.task_ledger = task_ledger
         self.progress_ledger = progress_ledger
-        self.agents: Dict[str, BaseAgent] = {}
-        self.agent_selector = AgentSelector()
-        self.workflow_history = WorkflowHistory()
         self.history_storage_path = history_storage_path
+
+        # Initialize component managers
+        self.workflow_history = WorkflowHistory()
+        self.workflow_optimizer = WorkflowOptimizer()
+        self.metrics_collector = AgentMetricsCollector()
+
+        # Create specialized component managers
+        self.agent_manager = AgentManager()
+        self.metrics_manager = MetricsManager(self.metrics_collector)
+        self.workflow_planner = WorkflowPlanner(
+            workflow_history=self.workflow_history,
+            workflow_optimizer=self.workflow_optimizer,
+        )
+        self.workflow_executor = WorkflowExecutor(
+            agent_manager=self.agent_manager,
+            progress_ledger=self.progress_ledger,
+            workflow_history=self.workflow_history,
+        )
+
+        # Keep these for backward compatibility
+        self.agents = self.agent_manager.agents
+        self.branch_manager = ConditionalBranchManager()
         self.max_planning_attempts = 3
         self.max_inner_loop_iterations = 10
-        self.reflection_threshold = 0.7  # Progress threshold before reflection
-        self.branch_manager = (
-            ConditionalBranchManager()
-        )  # Added for conditional branching
-        self.workflow_optimizer = WorkflowOptimizer()  # Added for workflow optimization
-        self.metrics_collector = (
-            AgentMetricsCollector()
-        )  # Added for agent performance monitoring
+        self.reflection_threshold = 0.7
 
     def register_agent(self, agent: BaseAgent) -> None:
         """Register an agent with the orchestrator.
@@ -77,9 +98,15 @@ class OrchestratorAgent:
         Args:
             agent: Agent instance to register
         """
-        self.agents[agent.agent_id] = agent
-        # Register agent with the metrics collector
-        self.metrics_collector.register_agent(agent.agent_id, agent.type)
+        # Register with agent manager
+        self.agent_manager.register_agent(agent)
+
+        # Register with metrics manager
+        self.metrics_manager.register_agent(agent.agent_id, agent.type)
+
+        # Update local reference for backward compatibility
+        self.agents = self.agent_manager.agents
+
         logger.info(f"Registered agent: {agent.type} with ID {agent.agent_id}")
 
     def register_agent_specialization(self, agent_id: str, domains: list[str]) -> None:
@@ -89,15 +116,8 @@ class OrchestratorAgent:
             agent_id: The ID of the agent
             domains: List of specialized domains
         """
-        if agent_id in self.agents:
-            self.agent_selector.skill_matrix.register_agent_specialization(
-                agent_id, domains
-            )
-            logger.info(f"Registered specializations for agent {agent_id}: {domains}")
-        else:
-            logger.warning(
-                f"Cannot register specialization for unknown agent: {agent_id}"
-            )
+        # Delegate to agent manager
+        self.agent_manager.register_agent_specialization(agent_id, domains)
 
     async def _reset_agent_state(self, agent: BaseAgent) -> None:
         """Reset an agent's state.
@@ -105,12 +125,8 @@ class OrchestratorAgent:
         Args:
             agent: Agent to reset
         """
-        try:
-            await agent.reset()
-            logger.info(f"Reset state for agent: {agent.type}")
-        except Exception as e:
-            logger.error(f"Failed to reset agent {agent.type}: {str(e)}")
-            raise
+        # Delegate to agent manager
+        await self.agent_manager.reset_agent_state(agent)
 
     async def select_agent_for_task(
         self, task: Task, context: Optional[Dict[str, Any]] = None
@@ -127,14 +143,8 @@ class OrchestratorAgent:
         Returns:
             Selected agent instance, or None if no suitable agent found
         """
-        # Use the agent selector to find the best agent for this task
-        agent_id = await self.agent_selector.select_agent(task, self.agents, context)
-
-        if not agent_id:
-            logger.warning(f"No suitable agent found for task: {task.name}")
-            return None
-
-        return self.agents.get(agent_id)
+        # Delegate to agent manager
+        return await self.agent_manager.select_agent_for_task(task, context)
 
     async def create_workflow(
         self,
@@ -156,16 +166,14 @@ class OrchestratorAgent:
         Returns:
             ID of the created workflow
         """
-        # Create workflow in history tracker
-        workflow_id, version_id = await self.workflow_history.create_workflow(
+        # Delegate to workflow planner
+        workflow_id = await self.workflow_planner.create_workflow(
             name=name,
             description=description,
-            creator=creator,
             steps=steps,
+            creator=creator,
             tags=tags,
         )
-
-        logger.info(f"Created workflow '{name}' with ID {workflow_id}")
 
         # Persist history if storage path configured
         if self.history_storage_path:
@@ -376,49 +384,8 @@ class OrchestratorAgent:
         Returns:
             Dictionary containing workflow execution results
         """
-        # Get the workflow version to execute
-        version = await self.workflow_history.get_version(workflow_id, version_id)
-        if not version:
-            error_msg = (
-                f"Workflow version not found: {workflow_id}/{version_id or 'current'}"
-            )
-            logger.error(error_msg)
-            return {"status": "failed", "error": error_msg}
-
-        # Start execution record in history
-        execution = await self.workflow_history.start_execution(
-            workflow_id, version.version_id
-        )
-        execution_id = execution.execution_id
-
-        # Register workflow with progress ledger
-        await self.progress_ledger.register_workflow(execution_id, version.steps)
-
-        # Initialize workflow tracking variables
-        completed_steps = []
-        failed_steps = []
-        retried_steps = []
-        skipped_steps = []  # New: track skipped steps due to conditions
-        replanned = False
-        planning_attempts = 0
-        metrics = {
-            "execution_time": 0.0,
-            "resource_usage": {},
-            "success_rate": 0.0,
-            "replanning_count": 0,
-        }
-
-        # Initialize branch manager with workflow context
-        self.branch_manager = ConditionalBranchManager(
-            {
-                "workflow_id": workflow_id,
-                "execution_id": execution_id,
-                "version_id": version.version_id,
-                "start_time": datetime.now().isoformat(),
-            }
-        )
-
-        start_time = datetime.now()
+        # Delegate to workflow executor
+        return await self.workflow_executor.execute_workflow(workflow_id, version_id)
 
         try:
             # OUTER LOOP: Manages the task ledger and planning
@@ -928,11 +895,8 @@ class OrchestratorAgent:
         Returns:
             List of metric dictionaries
         """
-        if agent_id not in self.agents:
-            logger.warning(f"Cannot get metrics for unknown agent: {agent_id}")
-            return []
-
-        return self.metrics_collector.get_agent_metrics(agent_id, metric_name, limit)
+        # Delegate to metrics manager
+        return self.metrics_manager.get_agent_metrics(agent_id, metric_name, limit)
 
     def get_agent_metric_summary(
         self, agent_id: str, metric_name: str
@@ -946,17 +910,8 @@ class OrchestratorAgent:
         Returns:
             Dictionary with statistical summary
         """
-        if agent_id not in self.agents:
-            logger.warning(f"Cannot get metric summary for unknown agent: {agent_id}")
-            return {
-                "count": 0,
-                "min": None,
-                "max": None,
-                "mean": None,
-                "median": None,
-            }
-
-        return self.metrics_collector.get_agent_metric_summary(agent_id, metric_name)
+        # Delegate to metrics manager
+        return self.metrics_manager.get_agent_metric_summary(agent_id, metric_name)
 
     def get_all_agent_summaries(self) -> Dict[str, Dict[str, Any]]:
         """Get performance summaries for all registered agents.
@@ -964,7 +919,8 @@ class OrchestratorAgent:
         Returns:
             Dictionary mapping agent IDs to their performance summaries
         """
-        return self.metrics_collector.get_all_agent_summaries()
+        # Delegate to metrics manager
+        return self.metrics_manager.get_all_agent_summaries()
 
     def get_system_health(self) -> Dict[str, Any]:
         """Get overall system health metrics.
@@ -972,7 +928,8 @@ class OrchestratorAgent:
         Returns:
             Dictionary with system health indicators
         """
-        return self.metrics_collector.get_system_health()
+        # Delegate to metrics manager
+        return self.metrics_manager.get_system_health()
 
     def export_agent_metrics(self, format_type: str = "json") -> Dict[str, Any]:
         """Export all agent metrics in a specified format.
@@ -983,4 +940,5 @@ class OrchestratorAgent:
         Returns:
             Dictionary with exported metrics data
         """
-        return self.metrics_collector.export_metrics(format_type)
+        # Delegate to metrics manager
+        return self.metrics_manager.export_metrics(format_type)

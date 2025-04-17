@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentic-kernel"
-version = "0.2.20"
+version = "0.2.30dev1"
 description = "A Python library for building agentic applications"
 authors = [
     {name = "Qredence.ai", email = "contact@qredence.ai"}
@@ -29,13 +29,13 @@ classifiers = [
 ]
 dependencies = [
     # Core dependencies
-    "pydantic>=2.6.3,<3.0.0",
-    "aiohttp>=3.11.14,<4.0.0",
-    "python-dotenv>=1.1.0,<1.2.0",
-    "requests>=2.31.0,<3.0.0",
+    "pydantic>=2.7.1,<3.0.0",
+    "aiohttp>=3.9.3,<4.0.0",
+    "python-dotenv>=1.1.0,<2.0.0",
+    "requests>=2.32.3,<3.0.0",
     "asyncio>=3.4.3,<4.0.0",
-    "httpx>=0.28.1,<0.29.0",
-    "psutil>=5.9.5,<6.0.0",
+    "httpx>=0.27.0,<0.29.0",
+    "psutil>=5.9.8,<6.0.0",
     # Azure dependencies
     "azure-core>=1.30.1,<2.0.0",
     "azure-identity>=1.15.0,<2.0.0",
@@ -45,57 +45,67 @@ dependencies = [
     # Temporarily commented out due to dependency conflicts
     # "azure-ai-evaluation>=1.5.0,<1.6.0",
     "azure-search-documents>=11.6.0b10,<12.0.0",
-    "azure-ai-documentintelligence>=1.0.2,<1.1.0",
+    "azure-ai-documentintelligence>=1.0.2,<2.0.0",
     # AI/ML dependencies
-    "semantic-kernel>=1.28.0,<1.29.0",
-    "openai>=1.72.0,<1.73.0",
-    "langchain>=0.0.309,<1.0.0",
-    "mem0ai>=0.1.90,<0.2.0",
-    "google-generativeai>=0.5.4",
-    "pyautogen>=0.2.26,<0.3.0",
+    "semantic-kernel>=1.28.0",
+    "openai>=1.75.0",
+    "langchain>=0.1.0",
+    "mem0ai>=0.1.90",
+    "google-generativeai>=0.8.4",
+    "pyautogen>=0.5.0",
     # UI/Interaction dependencies
-    "chainlit>=2.0.0,<3.0.0",
-    "playwright>=1.51.0,<2.0.0",
-    "pyautogui>=0.9.54,<1.0.0",
-    "fastapi>=0.115.12,<0.116.0",
-    "starlette>=0.41.3,<0.42.0",
-    "rich>=14.0.0,<15.0.0",
-    "tabulate>=0.9.0,<0.10.0",
-    "markitdown>=0.1.1,<0.2.0",
-    "prompt_toolkit>=3.0.43,<4.0.0",
-    "mesop>=0.0.1,<0.15.0",
-    "uvicorn>=0.34.0,<0.35.0",
+    "chainlit>=2.5.5",
+    "playwright>=1.51.0",
+    "pyautogui>=0.9.54",
+    "fastapi>=0.115.9",
+    "starlette>=0.41.3",
+    "rich>=14.0.0",
+    "tabulate>=0.9.0",
+    "markitdown>=0.1.1",
+    "prompt_toolkit>=3.0.43",
+    "mesop>=0.0.1",
+    "uvicorn>=0.34.0",
     # Database/Storage
     "asyncpg>=0.29.0,<1.0.0",
     "beautifulsoup4>=4.13.3,<4.14.0",
     # Data visualization and analysis
-    "matplotlib>=3.10.1,<3.11.0",
+    "matplotlib>=3.10.1,<4.0.0",
     "pydot>=3.0.4,<3.1.0",
     "networkx>=3.4.2,<3.5.0",
     # CLI tools
     "typer[all]>=0.15.2,<1.0.0",
-    "google-adk>=0.1.1,<0.2.0",    "ruff>=0.11.4,<1.0.0",
-    "coverage>=7.4.0,<8.0.0",
-    "isort>=5.13.2,<6.0.0",
-    "pytest-asyncio>=0.26.0,<0.27.0",
-    "pylint>=3.1.0,<4.0.0",
+    "google-adk>=0.1.1,<0.2.0",
+    "ruff>=0.11.4",
+    "coverage>=7.4.0",
+    "isort>=5.13.2",
+    "pytest-asyncio>=0.26.0",
+    "pylint>=3.1.0",
+    "pyyaml>=6.0.1",
+    "autogen-agentchat<=0.5.2",
+    "autogen-core<=0.5.2",
+    "autogen_ext[azure,openai]<=0.5.2",
+    "autogen_ext[task-centric-memory]<=0.5.2",
+    "autogen_ext[langchain,chainlit,rich,pyyaml]<=0.5.2",
+    "autogen_ext[docker,file-surfer,web-surfer,magentic-one,gemini]<=0.5.2",
+    "autogen_ext[rich,mcp,grpc,httpx,diskcache,redis]<=0.5.2",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black>=24.10.0,<25.0.0",
     "isort>=5.13.2,<6.0.0",
-    "mypy>=1.15.0,<2.0.0",
+    "mypy>=1.9.0,<2.0.0",
     "pylint>=3.1.0,<4.0.0",
-    "ruff>=0.11.4,<1.0.0",
-    "pytest>=8.3.5,<9.0.0",
-    "pytest-asyncio>=0.26.0,<0.27.0",
-    "responses>=0.25.0,<1.0.0",
-    "sphinx>=7.0.0,<8.0.0",
-    "sphinx-rtd-theme>=1.3.0,<1.4.0",
-    "coverage[toml]>=7.4.0,<8.0.0",
-    "types-requests>=2.31.0,<3.0.0",
-    "types-tabulate>=0.9.0,<0.10.0"
+    "ruff>=0.3.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "responses>=0.25.0",
+    "sphinx>=7.3.7,<8.0.0",
+    "sphinx-rtd-theme>=2.0.0,<3.0.0",
+    "coverage[toml]>=7.4.3,<8.0.0",
+    "types-requests>=2.32.0,<3.0.0",
+    "types-tabulate>=0.9.0,<0.10.0",
+    "pre-commit>=3.7.0,<4.0.0"
 ]
 
 [project.urls]
@@ -110,15 +120,15 @@ packages = ["src/agentic_kernel"]
 
 [tool.hatch.envs.default]
 dependencies = [
-    "coverage[toml]>=7.4.0,<8.0.0",
+    "coverage[toml]>=7.4.3,<8.0.0",
     "pytest>=8.3.5,<9.0.0"
 ]
 
 [tool.hatch.envs.test]
 dependencies = [
-    "coverage[toml]>=7.4.0,<8.0.0",
-    "pytest>=8.3.5,<9.0.0",
-    "pytest-asyncio>=0.26.0,<0.27.0"
+    "coverage[toml]>=7.4.3",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0"
 ]
 
 [tool.hatch.envs.test.scripts]
@@ -144,7 +154,7 @@ asyncio_mode = "auto"
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py313']
 include = '\.pyi?$'
 exclude = [
     ".git",
@@ -167,7 +177,7 @@ force_grid_wrap = 0
 use_parentheses = true
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -200,7 +210,7 @@ max-line-length = 88
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py313"
 select = [
     "E", # pycodestyle errors
     "F", # pyflakes
