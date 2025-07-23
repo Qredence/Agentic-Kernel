@@ -9,3 +9,4 @@ pydot>=1.4.2  # For dot layout in networkx
 # Additional utilities
 pytest>=7.0.0
 python-dotenv>=1.0.0 
+starlette>=0.47.2 # not directly required, pinned by Snyk to avoid a vulnerability
