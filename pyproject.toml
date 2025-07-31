@@ -52,7 +52,7 @@ dependencies = [
     "langchain>=0.1.0",
     "mem0ai>=0.1.90",
     "google-generativeai>=0.8.4",
-    "pyautogen>=0.5.0",
+    "ag2>=0.5.0",
     # UI/Interaction dependencies
     "chainlit>=2.5.5",
     "playwright>=1.51.0",
